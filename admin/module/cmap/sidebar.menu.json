@@ -1,0 +1,40 @@
+[{
+  "heading": "Concept Mapping",
+  "menu": [
+    {
+      "id": "compose-cmap",
+      "label": "Compose Concept Map",
+      "url": "cmap/compose/cmap",
+      "icon": "file-plus"
+    },
+    {
+      "id": "compose-kit",
+      "label": "Compose Kit",
+      "url": "cmap/compose/kit",
+      "icon": "layout-wtf"
+    },
+    {
+      "id": "runtime-cmap",
+      "label": "Runtime Settings",
+      "url": "cmap/compose/settings",
+      "icon": "gear"
+    }
+  ] 
+}, {
+  "heading": "Kit-Building",
+  "menu": [
+    {
+      "id": "recompose",
+      "label": "Recompose",
+      "url": "cmap/kitbuild/recompose",
+      "icon": "ui-checks-grid"
+    },
+    {
+      "id": "runtime-recompose",
+      "label": "Runtime Settings",
+      "url": "cmap/kitbuild/settings",
+      "icon": "gear"
+    }
+  ]
+}
+]

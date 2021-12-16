@@ -1,0 +1,35 @@
+{
+  "heading": "User Management",
+  "menu": [
+    {
+      "label": "User and Role",
+      "icon": "file-person",
+      "menu": [
+        {
+          "id": "user-manager",
+          "label": "User",
+          "url": "user/manager",
+          "icon": "list"
+        },
+        {
+          "id": "role",
+          "label": "Role",
+          "url": "user/role",
+          "icon": "file-person"
+        }
+      ]
+    },
+    {
+      "id": "group",
+      "label": "Group/Class",
+      "url": "user/group",
+      "icon": "people-fill"
+    },
+    {
+      "id": "authorization",
+      "label": "Authorization",
+      "url": "user/authorization",
+      "icon": "key"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "heading": "Content",
+  "menu": [
+    {
+      "id": "topic",
+      "label": "Topic",
+      "url": "content/topic",
+      "icon": "book"
+    },
+    {
+      "id": "text",
+      "label": "Text",
+      "url": "content/text",
+      "icon": "file-text"
+    },
+    {
+      "label": "Concept Maps",
+      "icon": "diagram-3",
+      "menu": [
+        {
+          "id": "goalmaps-kits",
+          "label": "Goalmaps and Kits",
+          "url": "m.user/list",
+          "icon": "list"
+        },
+        {
+          "id": "learnermaps",
+          "label": "Learnermaps",
+          "url": "m.user/role",
+          "icon": "file-person"
+        }
+      ]
+    }
+  ]
+}

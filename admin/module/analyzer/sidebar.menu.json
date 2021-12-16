@@ -1,0 +1,17 @@
+{
+  "heading": "Analyzer",
+  "menu": [
+    {
+      "id": "analyzer-static",
+      "label": "Static Analyzer",
+      "url": "analyzer/static",
+      "icon": "bar-chart-line"
+    },
+    {
+      "id": "analyzer-dynamic",
+      "label": "Dynamic Analyzer",
+      "url": "analyzer/dynamic",
+      "icon": "graph-up-arrow"
+    }
+  ]
+}

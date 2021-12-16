@@ -1,0 +1,22 @@
+{
+  "heading": "RBAC",
+  "menu": [{
+      "id": "role-app",
+      "label": "Role &mdash; App Module",
+      "url": "rbac/role/app",
+      "icon": "grid"
+    },
+    {
+      "id": "role-menu",
+      "label": "Role &mdash; App Menu",
+      "url": "rbac/role/menu",
+      "icon": "menu-button"
+    },
+    {
+      "id": "role-function",
+      "label": "Role &mdash; App Function",
+      "url": "rbac/role/funct",
+      "icon": "gear-wide"
+    }
+  ]
+}

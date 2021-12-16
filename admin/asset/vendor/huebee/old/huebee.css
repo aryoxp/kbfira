@@ -1,0 +1,11 @@
+.huebee__container {
+  border: 1px solid #ccc;
+  background-color: #f4f4f4;
+}
+.huebee__cursor {
+  width: 20px;
+  height: 20px;
+}
+.huebee__close-button {
+  display: none;
+}

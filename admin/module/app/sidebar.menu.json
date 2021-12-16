@@ -1,0 +1,11 @@
+{
+  "heading": "App/Module",
+  "menu": [
+    {
+      "id": "app",
+      "label": "App",
+      "url": "app/home/index",
+      "icon": "app"
+    }
+  ]
+}
