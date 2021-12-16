@@ -1,0 +1,113 @@
+CoreLite Framework
+Developed by Aryo Pinandito (aryoxp at gmail dot com)
+
+Copyright (c) 2012-2019, Aryo Pinandito. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, 
+are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this 
+  list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice, this 
+  list of conditions and the following disclaimer in the documentation and/or 
+  other materials provided with the distribution.
+* All advertising materials mentioning features or use of this software must 
+  display the following acknowledgement: This product includes software 
+  developed by Iskandar Soesman.
+* Neither the name of the Panada Framework nor the names of its contributors 
+  may be used to endorse or promote products derived from this software without 
+  specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY COPYRIGHT HOLDER ''AS IS'' AND ANY EXPRESS OR 
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO 
+EVENT SHALL COPYRIGHT HOLDER BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED 
+OF THE POSSIBILITY OF SUCH DAMAGE.
+
+This framework derived from:
+
+Panada Framework
+Version 0.3.1
+Website: http://panadaframework.com
+Twitter: http://twitter.com/panadaframework
+Copyright (C) 2011  Iskandar Soesman (iskandarsoesman at gmaildotcom)
+License: http://www.opensource.org/licenses/bsd-license.php
+
+FEATURES
+
+1.  New naming conventions for easy-to-extend panada built in libraries to
+    your own coded library.
+2.  Interface implementation in database and session libraries. Provides
+    better standardization in database and session libraries' method 
+	naming.
+3.  Much smaller size of it's parent framework size. Less disk space.
+4.  Compatible to PHP 5.1.2 and newer.
+5.  New core design in view files handling. Better handling in view, 
+    now supports combination of alphanumerics and other symbol characters, 
+	including but not limited to '-', '.', and supports loading other 
+	view-files extensions other than .php files.
+6.  Multiple applications supported for a single PanadaLite
+
+LIMITATIONS
+
+1.  Currently tested to be compatible only on Apache httpd webserver.
+2.  MySQL is the only provided database driver.
+3.  PHP native session is the only provided driver for session library.
+4.  No autoloading features, except for the configuration and error 
+    handling library is loaded at startup.
+5.  No caching support yet.
+6.  No various fancy helpers added yet as in Panada Framework other than
+    configuration, session, database, URI, error, and autoloader 
+	libraries.
+7.  No fancy active record database functional provided built-in.
+8.  No aliasing features on controllers and methods.
+9.  Less documented (sorry! :P).
+
+WORK-IN-PROGRESS
+
+1.  Develop and test mysqli database driver
+2.  Develop plug-and-play libraries to improve features as close as 
+    it's successor Panada Framework.
+3.  Tests on other web platform and environment.
+4.  Develop in-application helpers supports.
+5.  Documentations (including core blue-print design).
+
+DEVELOPER NOTES
+
+-   Eventhough this lite version framework file size is only 11% from 
+    it's parent framework file size, don't expect to gain 89% 
+	application performance increase with this framework. Performance
+	increase may occur as this framework is developed to minimize the 
+	framework base in developing web based applications. But the main
+	core system design is basically the same with Panada Framework.
+	
+CHANGE LOG
+
+1.2 (Air) 25 Jun 2013
+	- Add mysqli database driver support
+	- Add support for changing HTTP/HTTPS protocol
+
+1.1 (Air) 20 Mar 2012
+	- Add method aliasing support
+	- Miscellaneous fix
+	
+1.0a (Air alpha) 05 Jan 2012
+    First alpha release. Simple.
+
+ATTRIBUTION
+
+PHP Duck (http://phpduck.com)
+For it's tool in determining PHP version required to run PHP applications
+URL: http://phpduck.com/minimum-php-version-script
+
+CONTRIBUTION
+
+Iskandar Soesman (Panada Framework core developer) - http://kandar.info
+Aris S Ripandi - @riespandi or http://twitter.com/#!/riespandi
+
+MADE IN INDONESIA
