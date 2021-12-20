@@ -202,6 +202,7 @@ CmapApp.handleEvent = (kbui) => {
       author: this.user ? this.user.username : null,
       create_time: null
     }, KitBuildUI.buildConceptMapData(this.canvas)); // console.log(data); return
+    if (data.cmid === null) delete data.cmid;
     this.ajax.post("kitBuildApi/saveConceptMap", { data: Core.compress(data) })
       .then(conceptMap => { 
         CmapApp.inst.setConceptMap(conceptMap);

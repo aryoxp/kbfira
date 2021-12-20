@@ -33,9 +33,9 @@ class UserApp {
     userDialog.setUser = (user) => {
       userDialog.user = user;
       $('#user-dialog .dialog-title').html('Edit User');
-      $('#input-name').val(user.name);
-      $('#input-username').val(user.username);
-      $('#input-password').val('');
+      $('#input-user-name').val(user.name);
+      $('#input-user-username').val(user.username);
+      $('#input-user-password').val('');
       $(`#input-rid`).prop('disabled', true);
       $(`#input-gid`).prop('disabled', true);
       return userDialog
@@ -68,9 +68,9 @@ class UserApp {
     $('.bt-new').on('click', (e) => {
       userDialog.user = null;
       $('#user-dialog .dialog-title').html('New User');
-      $('#input-name').val('');
-      $('#input-username').val('');
-      $('#input-password').val('');
+      $('#input-user-name').val('');
+      $('#input-user-username').val('');
+      $('#input-user-password').val('');
       $('#input-rid option[default]').prop('selected', true);
       $('#input-gid option[default]').prop('selected', true);
       userDialog.show()
@@ -129,9 +129,9 @@ class UserApp {
       e.preventDefault()
       e.stopPropagation()
       $('#user-dialog form.form-user').addClass('was-validated')
-      let name = $('#input-name').val().trim();
-      let username = $('#input-username').val().trim();
-      let password = $('#input-password').val().trim();
+      let name = $('#input-user-name').val().trim();
+      let username = $('#input-user-username').val().trim();
+      let password = $('#input-user-password').val().trim();
       let rid = $('#input-rid').val().trim();
       let gid = $('#input-gid').val().trim();
       let data = {

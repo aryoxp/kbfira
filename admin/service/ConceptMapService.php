@@ -45,41 +45,44 @@ class ConceptMapService extends CoreService {
       $cmid = $db->getInsertId();
       // var_dump($cmid);
 
-      foreach($concepts as &$c) {
-        $c = (array)$c;
-        $c['cmid'] = $cmid;
-        $c['label'] = QB::esc($c['label']);
-        $c['data'] = QB::esc($c['data']);
+      if ($concepts) {
+        foreach($concepts as &$c) {
+          $c = (array)$c;
+          $c['cmid'] = $cmid;
+          $c['label'] = QB::esc($c['label']);
+          $c['data'] = QB::esc($c['data']);
+        }
+        $qb = QB::instance('concept')->insert($concepts);
+        $db->query($qb->get());
       }
-
-      // var_dump($concepts);
-
-      $qb = QB::instance('concept')->insert($concepts);
-      $db->query($qb->get());
 
       // Preparing links and its source edge
-      foreach($links as &$l) {
-        $l = (array)$l;
-        $l['cmid'] = $cmid;
-        $l['label'] = QB::esc($l['label']);
-        $l['data'] = QB::esc($l['data']);
-        if ($l['source_cid']) {
-          $l['source_cmid'] = $cmid;
-          $l['source_data'] = QB::esc($l['source_data']);
+      if ($links) {
+        foreach($links as &$l) {
+          $l = (array)$l;
+          $l['cmid'] = $cmid;
+          $l['label'] = QB::esc($l['label']);
+          $l['data'] = QB::esc($l['data']);
+          if ($l['source_cid']) {
+            $l['source_cmid'] = $cmid;
+            $l['source_data'] = QB::esc($l['source_data']);
+          }
         }
+        $qb = QB::instance('link')->insert($links);
+        $db->query($qb->get());
       }
-      $qb = QB::instance('link')->insert($links);
-      $db->query($qb->get());
 
       // Preparing linktarget edges
-      foreach($linktargets as &$l) {
-        $l = (array)$l;
-        $l['cmid'] = $cmid;
-        $l['target_cmid'] = $cmid;
-        $l['target_data'] = QB::esc($l['target_data']);
+      if ($linktargets) {
+        foreach($linktargets as &$l) {
+          $l = (array)$l;
+          $l['cmid'] = $cmid;
+          $l['target_cmid'] = $cmid;
+          $l['target_data'] = QB::esc($l['target_data']);
+        }
+        $qb = QB::instance('linktarget')->insert($linktargets);
+        $db->query($qb->get());
       }
-      $qb = QB::instance('linktarget')->insert($linktargets);
-      $db->query($qb->get());
 
       $conceptMap = $this->getConceptMap($cmid);
       

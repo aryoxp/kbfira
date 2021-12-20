@@ -91,7 +91,7 @@
     <form class="row form-user g-3 needs-validation flex-fill mt-1" novalidate>
       <div class="row gx-2 mb-2">
         <div class="col mt-2 d-flex flex-column">
-          <input type="text"class="form-control" id="input-name" placeholder="Full Name" required>
+          <input type="text"class="form-control" id="input-user-name" placeholder="Full Name" required>
           <div class="invalid-feedback">
             Please provide a name.
           </div>
@@ -99,14 +99,14 @@
       </div>
       <div class="row gx-2">
         <div class="col">
-          <input type="text" class="form-control" id="input-username" placeholder="Username" required>
+          <input type="text" class="form-control" id="input-user-username" placeholder="Username" required>
           <div class="invalid-feedback">
             Please provide a username.
           </div>
         </div>
         <div class="col">
           <div class="input-group mb-3">
-            <input type="text" class="form-control" id="input-password" placeholder="Password">
+            <input type="text" class="form-control" id="input-user-password" placeholder="Password">
             <button class="btn btn-outline-primary bt-generate-password" type="button"><i class="bi bi-magic"></i></button>
             <div class="text-primary update-role-group-info d-non px-3 mt-2" style="line-height: 1rem;"><small class="fst-italic">Left password field empty to keep the password intact.</small></div>
           </div>
