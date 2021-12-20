@@ -1,26 +1,29 @@
-const { createServer } = require("http");
+const fs = require('fs');
+const ini = require('ini')
+
+var config = ini.parse(fs.readFileSync('./config.ini', 'utf-8')); // console.log(config)
+
+
+const { createServer } = (config.server.useSSL) ? require("https") : require("http");
 const { App } = require("uWebSockets.js");
 const { Server } = require("socket.io");
-const ini = require('ini')
-const fs = require('fs');
 const { resolve } = require("path");
 const { rejects } = require("assert");
 const { channel } = require("diagnostics_channel");
 
-var config = ini.parse(fs.readFileSync('./config.ini', 'utf-8')); console.log(config)
 
 class ServerApp {
   constructor() {
-    // console.log(config.server.port, config.server.useSSL)
-    // const app = config.server.useSSL ? new SSLApp({
-    //   key_file_name: 'misc/key.pem',
-    //   cert_file_name: 'misc/cert.pem',
-    // }) : new App();
-    this.httpServer = createServer();
+    console.log(`Collaboration server listening on port: ${config.server.port} ${config.server.useSSL ? "with" : "without"} SSL.`);
+    const options = (config.server.useSSL) ? {
+      key: fs.readFileSync(config.server.privkey),
+      cert: fs.readFileSync(config.server.cert)
+    } : {};
+    this.httpServer = createServer(options);
     this.io = new Server(this.httpServer, {
       port: config.server.port,
       cors: {
-        origin: "*",
+        origin: config.server.corsOrigin,
         methods: ["GET", "POST"]
       }
     });
@@ -45,7 +48,7 @@ class ServerApp {
       })
     });
 
-    this.httpServer.listen(3000);
+    this.httpServer.listen(config.server.port);
   }
 
   static instance(config) {
@@ -74,10 +77,12 @@ class ServerApp {
         return
 
       // broadcast groups left by this user
-      user.groups.forEach(group => {
-        console.log("DISCONNECT GROUPS:", `GC/${group}`);
-        io.in(`GC/${group}`).emit('user-leave-room', user, `GC/${group}`)
-      })
+      if (user.groups) {
+        user.groups.forEach(group => {
+          console.log("DISCONNECT GROUPS:", `GC/${group}`);
+          io.in(`GC/${group}`).emit('user-leave-room', user, `GC/${group}`)
+        })
+      }
 
       ServerApp.inst.users.delete(socket.id)
       ServerApp.inst.rooms.forEach((roomData, room) => {
@@ -558,26 +563,28 @@ class ServerApp {
       // broadcast this new room to all users of the same groups
       // a new room has been created or user has join a room
       let user = ServerApp.inst.users.get(socket.id)
-      user.groups.forEach(groupRoom => {
-
-        let namespace = socket.nsp;
-        let prefix = namespace.name == '/cmap' ? 'GC' : 'GK'
-        groupRoom = `${prefix}/${groupRoom}`
-        
-        // if the group room has not been created in the group ... 
-        if (!ServerApp.inst.groups.has(groupRoom))
-          ServerApp.inst.groups.set(groupRoom, new Map())
+      if (user.groups) {
+        user.groups.forEach(groupRoom => {
   
-        let group = ServerApp.inst.groups.get(groupRoom)
-        group.set(room, roomData)
-  
-        // clean deleted room from group room cache
-        if (deletedRoom) group.delete(deletedRoom)
-  
-        // io.in: to all sockets in room, including sender
-        // socket.in: to all sockets in room, excluding sender
-        io.in(groupRoom).emit('user-join-room', user, ServerApp.inst.rooms.get(room))
-      });
+          let namespace = socket.nsp;
+          let prefix = namespace.name == '/cmap' ? 'GC' : 'GK'
+          groupRoom = `${prefix}/${groupRoom}`
+          
+          // if the group room has not been created in the group ... 
+          if (!ServerApp.inst.groups.has(groupRoom))
+            ServerApp.inst.groups.set(groupRoom, new Map())
+    
+          let group = ServerApp.inst.groups.get(groupRoom)
+          group.set(room, roomData)
+    
+          // clean deleted room from group room cache
+          if (deletedRoom) group.delete(deletedRoom)
+    
+          // io.in: to all sockets in room, including sender
+          // socket.in: to all sockets in room, excluding sender
+          io.in(groupRoom).emit('user-join-room', user, ServerApp.inst.rooms.get(room))
+        });
+      }
   
       // console.log(callback)
       // returns rooms (and group rooms) joined by this user.
