@@ -186,7 +186,11 @@ class KitBuildLogger extends Logger { // TODO: SET lmid
       console.error('KitBuildLogger requires Core, Analyzer, and Concept Map to be loaded.')
       return null
     }
-    let currentLearnerMap = KitBuildUI.buildConceptMapData(this.canvas)
+  
+    let conceptsMap = new Map(this.conceptMap.concepts.map(concept => [concept.cid, concept]));
+    let linksMap = new Map(this.conceptMap.links.map(link => [link.lid, link]));
+
+    let currentLearnerMap = KitBuildUI.buildConceptMapData(this.canvas, conceptsMap, linksMap)
     currentLearnerMap.conceptMap = this.conceptMap
     let propositions = Analyzer.composePropositions(currentLearnerMap);
     let compare = Analyzer.compare(currentLearnerMap, this.conceptMap.map.direction)

@@ -5,6 +5,7 @@
  * will contain an app key
  */
 
+define('CORE_ENV', 'kb');
 define('CORE_MULTI_APPS', true);
 
 /**

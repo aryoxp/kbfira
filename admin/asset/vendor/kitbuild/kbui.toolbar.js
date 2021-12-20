@@ -59,6 +59,11 @@ class KitBuildToolbarTool {
       .off(event, element).on(event, element, callback)
   }
 
+  enable(enabled = true) {}
+  disable(disabled = true) {
+    this.enable(!disabled);
+  }
+
 }
 
 class NodeCreationTool extends KitBuildToolbarTool {
@@ -74,7 +79,11 @@ class NodeCreationTool extends KitBuildToolbarTool {
       'font-family': 'Fira Sans, Helvetica, Arial, sans-serif',
       defaultColor: "#000000",
       defaultConceptColor: "#FFBF40",
-      defaultLinkColor: "#DEDEDE"
+      defaultLinkColor: "#DEDEDE",
+      'direction': true,
+      'color': true,
+      'concept': true,
+      'link': true,
     }, options)
   }
 
@@ -107,6 +116,13 @@ class NodeCreationTool extends KitBuildToolbarTool {
           data-tippy-content="New Link"><i class="bi bi-node-plus-fill"></i></button>
       </div>`
     return controlHtml
+  }
+
+  postRender() {
+    if (!this.settings.direction) this.toolbarElement('#dd-direction').remove()
+    if (!this.settings.color) this.toolbarElement('.bt-huebee').remove()
+    if (!this.settings.concept) this.toolbarElement('.bt-new-concept').remove()
+    if (!this.settings.link) this.toolbarElement('.bt-new-link').remove()
   }
 
   showCreateDialog(type, node) {
@@ -254,6 +270,13 @@ class NodeCreationTool extends KitBuildToolbarTool {
         })
       })
     })
+  }
+
+  enable(enabled = true) {
+    this.toolbarElement('.bt-new-concept').prop('disabled', !enabled)
+    this.toolbarElement('.bt-new-link').prop('disabled', !enabled)
+    this.toolbarElement('.bt-huebee').prop('disabled', !enabled)
+    this.toolbarElement('#dd-direction').prop('disabled', !enabled)
   }
 
   applyConceptColor(data) {
@@ -715,6 +738,11 @@ class UndoRedoTool extends KitBuildToolbarTool {
     })
   }
 
+  enable(enabled = true) {
+    this.toolbarElement('.bt-undo').prop('disabled', !enabled)
+    this.toolbarElement('.bt-redo').prop('disabled', !enabled)
+  }
+
   clearStacks() {
     this.undoStack = []
     this.redoStack = []
@@ -794,6 +822,14 @@ class CameraTool extends KitBuildToolbarTool {
     this.handleEvent('click', '.bt-fit-screen', (e) => this.fit())
     this.handleEvent('click', '.bt-center-screen', (e) => this.center())
     this.handleEvent('click', '.bt-reset', (e) => this.reset())
+  }
+
+  enable(enabled = true) {
+    this.toolbarElement('.bt-zoom-in').prop('disabled', !enabled)
+    this.toolbarElement('.bt-zoom-out').prop('disabled', !enabled)
+    this.toolbarElement('.bt-fit-screen').prop('disabled', !enabled)
+    this.toolbarElement('.bt-center-screen').prop('disabled', !enabled)
+    this.toolbarElement('.bt-reset').prop('disabled', !enabled)
   }
 
   /* Viewport Camera Manipulation */
@@ -1050,6 +1086,12 @@ class UtilityTool extends KitBuildToolbarTool {
 
   }
 
+  enable(enabled = true) {
+    this.toolbarElement('.bt-search').prop('disabled', !enabled)
+    this.toolbarElement('.bt-screen-capture').prop('disabled', !enabled)
+    this.toolbarElement('.bt-clear-canvas').prop('disabled', !enabled)
+  }
+
   updateSearchToolbarUI() {
     // console.log(this.searchItemIndex, this.foundNodes.size)
     this.toolbarElement('.kb-search-toolbar .bt-next').prop('disabled', !(this.foundNodes.size > 1 && this.searchItemIndex < this.foundNodes.size - 1));
@@ -1233,6 +1275,11 @@ class CanvasStateTool extends KitBuildToolbarTool {
     })
   }
 
+  enable(enabled = true) {
+    this.toolbarElement('.bt-save').prop('disabled', !enabled)
+    this.toolbarElement('.bt-load').prop('disabled', !enabled)
+  }
+
 }
 
 class ShareTool extends KitBuildToolbarTool {
@@ -1263,6 +1310,11 @@ class ShareTool extends KitBuildToolbarTool {
           <i class="bi bi-clipboard"></i></button>
       </div>`
     return controlHtml
+  }
+
+  enable(enabled = true) {
+    this.toolbarElement('.bt-copy').prop('disabled', !enabled)
+    this.toolbarElement('.bt-paste').prop('disabled', !enabled)
   }
 
   showDialog(type) { // console.log(type)
@@ -1388,7 +1440,7 @@ class LayoutTool extends KitBuildToolbarTool {
     let pasteText = "Paste"
     let controlHtml = 
       `<div class="btn-group ms-2">
-        <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="false" aria-expanded="false">
+        <button class="btn btn-outline-primary btn-sm dropdown-toggle dd-layout" type="button" data-bs-toggle="dropdown" data-bs-auto-close="false" aria-expanded="false">
           <i class="bi bi-grid-1x2"></i>
         </button>
         <div class="dropdown-menu fs-small px-2">
@@ -1474,6 +1526,11 @@ class LayoutTool extends KitBuildToolbarTool {
       }
     })
   }
+
+  enable(enabled = true) {
+    this.toolbarElement('.dd-layout').prop('disabled', !enabled)
+  }
+
   layoutElements(nodes) {
 
     let doLayout = (eles) => {
@@ -1554,7 +1611,7 @@ class CompareSwitchTool extends KitBuildToolbarTool {
   control() {
     let controlHtml = 
       `<div class="btn-group btn-group-sm">
-        <button id="bt-dd-compare-switches" class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="false" aria-expanded="false">
+        <button id="bt-dd-compare-switches" class="btn btn-outline-primary btn-sm dropdown-toggle dd-compare" type="button" data-bs-toggle="dropdown" data-bs-auto-close="false" aria-expanded="false">
           <i class="bi bi-toggles"></i>
         </button>
         <div id="dd-menu-compare-switches" class="dropdown-menu p-2" style="min-width:0">
@@ -1579,6 +1636,10 @@ class CompareSwitchTool extends KitBuildToolbarTool {
     $('#dd-menu-compare-switches input[type="checkbox"]').on('change', e => {
       this.apply()
     })
+  }
+
+  enable(enabled = true) {
+    this.toolbarElement('.dd-compare').prop('disabled', !enabled)
   }
 
   apply() {

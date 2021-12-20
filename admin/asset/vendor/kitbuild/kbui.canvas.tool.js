@@ -168,6 +168,11 @@ class KitBuildDeleteTool extends KitBuildCanvasTool {
     }, options))
   }
 
+  showOn(what, node) {
+    return super.showOn(what, node) 
+      && node.data('lock') != "locked"
+  }
+
   action(event, e, node) {
     if (!node) return
     // KitBuildUI.confirm("Delete node?").then(() => {
@@ -196,7 +201,9 @@ class KitBuildDeleteTool extends KitBuildCanvasTool {
     nodes.unselectify()
     KitBuildUI.confirm(`Do you want to delete all ${nodes.length} selected<br>concepts and/or links?`).then(() => {
       nodes.selectify()
-      let nodesAndEdgesJson = nodes.union(nodes.connectedEdges()).jsons()
+      // console.error(nodes, nodes.not(`[lock="locked"]`), nodes.not(`[lock="locked"]`).union(nodes.not(`[lock="locked"]`).connectedEdges()));
+      let unlockedNodes = nodes.not(`[lock="locked"]`);
+      let nodesAndEdgesJson = unlockedNodes.union(unlockedNodes.connectedEdges()).jsons()
       let undoRedo = this.canvas.toolbar.tools.get(KitBuildToolbar.UNDO_REDO) 
       if (undoRedo) 
         undoRedo.post('delete-multi-nodes', {
@@ -213,7 +220,7 @@ class KitBuildDeleteTool extends KitBuildCanvasTool {
           }
       })
       this.broadcastEvent(`delete-multi-nodes`, nodesAndEdgesJson)
-      nodes.remove()
+      unlockedNodes.remove()
       this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas()
     }).catch(() => {
       nodes.selectify()
@@ -240,8 +247,8 @@ class KitBuildDuplicateTool extends KitBuildCanvasTool {
     duplicate.data.id = node.data('type') == 'concept' 
       ? "c" + this.canvas.getNextConceptId()
       : "l" + this.canvas.getNextLinkId()
-    console.warn(duplicate)
-    let duplicateNode = this.canvas.cy.add(duplicate)
+    // console.warn(duplicate)
+    let duplicateNode = this.canvas.cy.add(duplicate).removeData('lock')
     this.canvas.applyElementStyle()
     let newPos = this.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).placement(duplicateNode)
     setTimeout(() => {
@@ -307,6 +314,11 @@ class KitBuildEditTool extends KitBuildCanvasTool {
     }, options))
   }
 
+  showOn(what, node) {
+    return super.showOn(what, node) 
+      && node.data('lock') != "locked"
+  }
+
   action(event, e, node) {
     let n = {
       id: node.id(),
@@ -330,8 +342,8 @@ class KitBuildSwitchTool extends KitBuildCanvasTool {
 
   showOn(what, node) { // console.log(node)
     if (!node) return
-    let left = node.connectedEdges('[type="left"]').length == 1
-    let right = node.connectedEdges('[type="right"]').length == 1
+    let left = node.connectedEdges('[type="left"]').not('[lock="locked"]').length == 1
+    let right = node.connectedEdges('[type="right"]').not('[lock="locked"]').length == 1
     return super.showOn(what, node) && left && right
   }
 

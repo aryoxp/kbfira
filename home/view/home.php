@@ -28,9 +28,9 @@
       <h1 class="display-4 fw-normal">Kit-Build Concept Map</h1>
       <p class="mx-auto col-6 col-md-8 mt-5 mb-5"><span class="fst-italic fw-bold">The idea:</span> Learning with concept map is fun. <strong>Solve the puzzle:</strong> Learn by recomposing a kit while sharing one's knowledge and understanding. And <strong>what's great?</strong> Kit-Build made analysis to the recomposition easy. <strong>Real-time collaboration</strong> in concept mapping? No worries, Kit-Build system supports it!</p>
       <div class="mx-auto">
-        <button type="button" class="btn btn-lg btn-primary mx-2"><i class="bi bi-check-circle"></i> Try the demo</button>
-        <button type="button" class="btn btn-lg btn-danger mx-2"><i class="bi bi-youtube"></i> Watch Intro</button>
-        <button type="button" class="btn btn-lg btn-warning mx-2"><i class="bi bi-book"></i> Publications</button>
+        <a type="button" href="<?php echo $this->location('../demo'); ?>" class="btn btn-lg btn-primary mx-2"><i class="bi bi-check-circle"></i> Try the demo</a>
+        <a type="button" class="btn btn-lg btn-danger mx-2"><i class="bi bi-youtube"></i> Watch Intro</a>
+        <a type="button" class="btn btn-lg btn-warning mx-2"><i class="bi bi-book"></i> Publications</a>
       </div>
     </div>
   </header>
@@ -63,8 +63,8 @@
           </div>
           <div class="px-3 pb-3">
             <div class="btn-group">
-              <button type="button" class="btn btn-lg btn-danger">Get started</button>
-              <button type="button" class="btn btn-lg btn-outline-danger"><i class="bi bi-book"></i></button>
+              <a type="button" href="<?php echo $this->location('../cmap'); ?>" class="btn btn-lg btn-danger">Get started</a>
+              <a type="button" class="btn btn-lg btn-outline-danger"><i class="bi bi-book"></i></a>
             </div>
           </div>
         </div>
@@ -81,8 +81,8 @@
           </div>
           <div class="px-3 pb-3">
             <div class="btn-group">
-              <button type="button" class="btn btn-lg btn-primary">Get started</button>
-              <button type="button" class="btn btn-lg btn-outline-primary"><i class="bi bi-book"></i></button>
+              <a type="button" href="<?php echo $this->location('../kitbuild'); ?>" class="btn btn-lg btn-primary">Get started</a>
+              <a type="button" class="btn btn-lg btn-outline-primary"><i class="bi bi-book"></i></a>
             </div>
           </div>
         </div>
@@ -99,8 +99,8 @@
           </div>
           <div class="px-3 pb-3">
             <div class="btn-group">
-              <button type="button" class="btn btn-lg btn-warning">Get started</button>
-              <button type="button" class="btn btn-lg btn-outline-warning text-dark"><i class="bi bi-book"></i></button>
+              <a type="button" href="<?php echo $this->location('../extend'); ?>" class="btn btn-lg btn-warning">Get started</a>
+              <a type="button" class="btn btn-lg btn-outline-warning text-dark"><i class="bi bi-book"></i></a>
             </div>
           </div>
         </div>
@@ -117,8 +117,8 @@
           </div>
           <div class="px-3 pb-3">
             <div class="btn-group">
-              <button type="button" class="btn btn-lg btn-success">Get started</button>
-              <button type="button" class="btn btn-lg btn-outline-success text-success"><i class="bi bi-book"></i></button>
+              <a type="button" href="<?php echo $this->location('../reciprocal'); ?>" class="btn btn-lg btn-success">Get started</a>
+              <a type="button" class="btn btn-lg btn-outline-success text-success"><i class="bi bi-book"></i></a>
             </div>
           </div>
         </div>

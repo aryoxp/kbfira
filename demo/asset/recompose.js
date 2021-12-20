@@ -656,12 +656,12 @@ KitBuildApp.handleEvent = (kbui) => {
             // TODO: check if kit allow review to show full comparison?
             // TODO: set session of submitted learner map for review
             Core.instance().session().set('flmid', learnerMap.map.lmid).then((result) => {
-              UI.success("Concept map has been submitted. Redirecting to Review page...").show();
+              UI.success("Concept map has been submitted.").show();
               setTimeout(() => {
                 // TODO: and then change state to full feedback if set in kit options
                 let baseurl = Core.instance().config().get('baseurl')
                 window.location.href = baseurl + "review";
-              }, 2000)
+              }, 3000)
             }).catch(() => {
               UI.error('Unable to proceed to review.').show()
             });
@@ -736,33 +736,46 @@ KitBuildApp.handleEvent = (kbui) => {
    * Sign In
   */
   $('.app-navbar .bt-sign-in').on('click', (e) => {
-    KitBuildApp.inst.modalSignIn = UI.modal('#modal-sign-in', {
+    KitBuildApp.inst.modalRegister = UI.modal('#register-dialog', {
       width: 350,
       onShow: () => {}
     })
-    KitBuildApp.inst.modalSignIn.show()
+    KitBuildApp.inst.modalRegister.show()
   })
 
-  $('#modal-sign-in').on('click', '.bt-sign-in', (e) => {
+  $('#register-dialog').on('click', '.bt-register', (e) => {
     e.preventDefault()
-    let username = $('#input-username').val();
-    let password = $('#input-password').val();
-    KitBuildRBAC.signIn(username, password).then(user => { console.log(user)
+    let name = $('#input-name').val();
+    let username = 'demo-' + Math.random().toString(36).slice(2);
+    let password = null;
+    let rid = 'DEMO-STUDENT';
+    let gid = 'DEMO';
+
+    if (name.trim().length == 0) {
+      UI.dialog('Please provide a name.', {
+        icon: 'exclamation-triangle-fill',
+        iconStyle: 'warning'
+      }).show();
+    }
+
+    console.log(name, username, password, rid, gid);
+
+    KitBuildRBAC.register(name, username, password, rid, gid).then(user => { console.log(user)
       if (typeof user == 'object' && user) {
         Core.instance().session().set('user', user).then(() => {
           KitBuildApp.updateSignInOutButton();
           KitBuildApp.enableNavbarButton();
           KitBuildApp.initCollab(user);
         })
-        KitBuildApp.inst.modalSignIn.hide()
+        KitBuildApp.inst.modalRegister.hide()
         KitBuildApp.inst.user = user;
 
         let status = `<span class="mx-2 d-flex align-items-center status-user">`
         + `<small class="text-dark fw-bold">${user.name}</small>`
         + `</span>`
         StatusBar.instance().remove('.status-user').prepend(status);
-      }
-    }).catch(error => UI.error(error).show());
+      } else UI.error(`Error: ${user}`).show();
+    }).catch(error => UI.error(`Error: ${error}`).show());
   })
 
 }
@@ -832,7 +845,7 @@ KitBuildApp.handleRefresh = (kbui) => {
       + `<small class="text-dark fw-bold">${sessions.user.name}</small>`
       + `</span>`
       StatusBar.instance().remove('.status-user').prepend(status);
-    } else $('.bt-sign-in').trigger('click')
+    } else $('.app-navbar .bt-sign-in').trigger('click')
 
     // listen to events for broadcast to collaboration room as commands
     KitBuildApp.inst.canvas.on('event', KitBuildApp.onCanvasEvent)

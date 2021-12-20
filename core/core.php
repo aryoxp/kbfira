@@ -16,12 +16,10 @@ if (!defined('CORE_MULTI_APPS'))
 // setting session name for different apps running on the same server
 // avoiding session variables being mixed up among apps
 if (!defined('CORE_APP')) define('CORE_APP', $coreConfig['runtime']['default_app']);
+if (!defined('CORE_ENV')) define('CORE_ENV', $coreConfig['runtime']['default_app']);
 
 if (version_compare(PHP_VERSION, '7.3.0') >= 0)
   session_set_cookie_params(['Secure' => false, 'SameSite' => 'Lax']);
-
-session_name("CORESID-" . CORE_APP);
-session_start();
 
 // defining system and application structure paths
 define('CORE_ROOT_PATH', getcwd() . DS);
@@ -57,15 +55,18 @@ try {
   $controller = Core::lib(Core::URI)->get(CoreUri::CONTROLLER);
   $method     = Core::lib(Core::URI)->get(CoreUri::METHOD);
   $args       = Core::lib(Core::URI)->get(CoreUri::ARGS);
-  
+  // var_dump($controller, $method, $args, $app);
+
   define('CORE_APP_PATH', CORE_ROOT_PATH . $app . DS);
-  
-  if (!file_exists(CORE_APP_PATH)) 
-    throw CoreError::instance("Invalid app: " . $app . ".");
-  
-  // var_dump(get_defined_constants(true)['user']);
-  // var_dump($controller, $method, $args);
+  // var_dump(get_defined_constants(true)['user']);  
   // var_dump(file_exists(CORE_APP_PATH . CORE_APP_CONTROLLER . $controller . ".php"));
+
+  if (!file_exists(CORE_APP_PATH)) 
+  throw CoreError::instance("Invalid app: " . $app . ".");
+
+  // Start the session!
+  session_name("CORESID-" . CORE_ENV . DS . $app);
+  session_start();
 
   // try to instantiate the controller and execute method with the provided args
   if (file_exists(CORE_APP_PATH . CORE_APP_CONTROLLER . $controller . ".php") 

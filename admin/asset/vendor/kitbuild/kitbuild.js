@@ -18,6 +18,10 @@ class KitBuild {
     this.ajax = Core.instance().ajax()
     return this.ajax.get(`kitBuildApi/openLearnerMap/${lmid}`)
   }
+  static openExtendedLearnerMap(lmid) {
+    this.ajax = Core.instance().ajax()
+    return this.ajax.get(`kitBuildApi/openExtendedLearnerMap/${lmid}`)
+  }
 }
 
 class KitBuildRBAC {
@@ -27,6 +31,18 @@ class KitBuildRBAC {
     return this.ajax.post(`RBACApi/signIn`, {
       username: username,
       password: password
+    })
+  }
+  static register (name, username, password, rid = null, gid = null) {
+    if (!username) console.error('Invalid username');
+    console.log(name, username, password, rid, gid)
+    this.ajax = Core.instance().ajax()
+    return this.ajax.post(`RBACApi/register`, {
+      username: username,
+      password: password,
+      name: name,
+      rid: rid,
+      gid: gid
     })
   }
 }

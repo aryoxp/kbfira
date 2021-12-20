@@ -1,22 +1,33 @@
-<div class="app-navbar d-flex p-2 border-bottom">
-  <div class="btn-group btn-group-sm">
-    <button class="bt-new btn btn-primary"><i class="bi bi-asterisk"></i> New</button>
-    <button class="bt-open btn btn-sm btn-primary"><i class="bi bi-folder2-open"></i> Open</button>
+<div class="d-flex flex-column vh-100">
+  <a class="position-absolute d-flex align-items-center text-white px-3 text-decoration-none" href="<?php echo $this->location('../home'); ?>">
+    <i class="bi bi-house pe-2" style="font-size: 1.8rem;"></i> <span>Home</span>
+  </a>
+  <div class="app-navbar d-flex p-2 ps-4" style="border-left: 125px solid #ff4444;">
+    <span class="app-buttons">
+      <div class="btn-group btn-group-sm">
+        <button class="bt-new btn btn-primary"><i class="bi bi-asterisk"></i> New</button>
+        <button class="bt-open btn btn-sm btn-primary"><i class="bi bi-folder2-open"></i> Open</button>
+      </div>
+      <div class="btn-group btn-group-sm ms-2">
+        <button class="bt-save btn btn-primary"><i class="bi bi-save"></i> Save</button>
+        <button class="bt-save-as btn btn-primary"><i class="bi bi-front"></i> Save As...</button>
+        <button class="bt-export btn btn-primary"><i class="bi bi-send"></i> Export</button>
+      </div>
+    </span>
+    <div class="flex-fill">&nbsp;</div>
+    <span>
+      <button class="btn btn-danger btn-sm bt-logout <?php if (!isset($_SESSION['user'])) echo 'd-none'; ?>"><i class="bi bi-power"></i> Logout</button>
+      <button class="btn btn-primary btn-sm bt-sign-in <?php if (isset($_SESSION['user'])) echo 'd-none'; ?>"><i class="bi bi-power"></i> Sign In</button>
+    </span>
   </div>
-  <div class="btn-group btn-group-sm ms-2">
-    <button class="bt-save btn btn-primary"><i class="bi bi-save"></i> Save</button>
-    <button class="bt-save-as btn btn-primary"><i class="bi bi-front"></i> Save As...</button>
-    <button class="bt-export btn btn-primary"><i class="bi bi-send"></i> Export</button>
+  <div class="d-flex flex-fill align-items-stretch p-2">
+    <?php $this->pluginView('kitbuild-ui', ["id" => "goalmap-canvas"], 0); ?>
   </div>
-  <!-- <div class="btn-group btn-group-sm ms-2">
-    <button class="bt-copy btn btn-primary"><i class="bi bi-files"></i> Copy</button>
-    <button class="bt-paste btn btn-primary"><i class="bi bi-clipboard"></i> Paste</button>
-  </div> -->
+  <div class="d-flex">
+    <div class="status-panel flex-fill m-2 mt-0 d-flex"></div>
+    <div class="status-control text-end m-2 mt-0"></div>
+  </div>
 </div>
-<div class="d-flex flex-fill align-items-stretch">
-  <?php $this->pluginView('kitbuild-ui', ["id" => "goalmap-canvas"], 0); ?>
-</div>
-
 
 
 

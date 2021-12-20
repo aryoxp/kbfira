@@ -1,18 +1,32 @@
 $(() => { // jQuery onReady callback
-  let app = KitBuildApp.instance()
+  let app = ExtKitBuildApp.instance()
 })
 
-class KitBuildApp {
+class ExtKitBuildApp {
   constructor() {
-    this.kbui = KitBuildUI.instance(KitBuildApp.canvasId)
-    let canvas = this.kbui.canvases.get(KitBuildApp.canvasId)
+    this.kbui = KitBuildUI.instance(ExtKitBuildApp.canvasId)
+    let canvas = this.kbui.canvases.get(ExtKitBuildApp.canvasId)
+    canvas.addToolbarTool(KitBuildToolbar.NODE_CREATE, { priority: 1, direction: false })
     canvas.addToolbarTool(KitBuildToolbar.UNDO_REDO, { priority: 3 })
     canvas.addToolbarTool(KitBuildToolbar.CAMERA, { priority: 4 })
     canvas.addToolbarTool(KitBuildToolbar.UTILITY, { priority: 5, trash: false })
     canvas.addToolbarTool(KitBuildToolbar.LAYOUT, { stack: 'right' })
     canvas.toolbar.render()
 
+    canvas.addCanvasTool(KitBuildCanvasTool.DELETE)
+    canvas.addCanvasTool(KitBuildCanvasTool.DUPLICATE)
+    canvas.addCanvasTool(KitBuildCanvasTool.EDIT)
+    canvas.addCanvasTool(KitBuildCanvasTool.SWITCH)
+    canvas.addCanvasTool(KitBuildCanvasTool.DISCONNECT)
     canvas.addCanvasTool(KitBuildCanvasTool.CENTROID)
+    canvas.addCanvasTool(KitBuildCanvasTool.CREATE_CONCEPT)
+    canvas.addCanvasTool(KitBuildCanvasTool.CREATE_LINK)
+    // canvas.addCanvasTool(KitBuildCanvasTool.LOCK) // also UNLOCK toggle
+
+    canvas.addCanvasMultiTool(KitBuildCanvasTool.DELETE)
+    canvas.addCanvasMultiTool(KitBuildCanvasTool.DUPLICATE)
+    // canvas.addCanvasMultiTool(KitBuildCanvasTool.LOCK)
+    // canvas.addCanvasMultiTool(KitBuildCanvasTool.UNLOCK)
     
     this.canvas = canvas
 
@@ -20,31 +34,31 @@ class KitBuildApp {
     // Hack for sidebar-panel show/hide
     // To auto-resize the canvas.
     // AA
-    // let observer = new MutationObserver((mutations) => $(`#${KitBuildApp.canvasId} > div`).css('width', 0))
+    // let observer = new MutationObserver((mutations) => $(`#${ExtKitBuildApp.canvasId} > div`).css('width', 0))
     // observer.observe(document.querySelector('#admin-sidebar-panel'), {attributes: true})
     // Enable tooltip
     $('[data-bs-toggle="tooltip"]').tooltip({ html: true })
 
     if (typeof KitBuildCollab == 'function')
-      KitBuildApp.collabInst = KitBuildCollab.instance('kitbuild', null, canvas)
+      ExtKitBuildApp.collabInst = KitBuildCollab.instance('kitbuild', null, canvas)
 
     // Browser lifecycle event
-    KitBuildUI.addLifeCycleListener(KitBuildApp.onBrowserStateChange)
+    KitBuildUI.addLifeCycleListener(ExtKitBuildApp.onBrowserStateChange)
 
     // Logger
     if (typeof KitBuildLogger != 'undefined') {
       this.logger = KitBuildLogger.instance(null, 0, null, canvas)
         .enable();
-      KitBuildApp.loggerListener = 
+      ExtKitBuildApp.loggerListener = 
         this.logger.onCanvasEvent.bind(this.logger)
-      canvas.on("event", KitBuildApp.loggerListener)
+      canvas.on("event", ExtKitBuildApp.loggerListener)
     }
   }
 
   static instance() {
-    KitBuildApp.inst = new KitBuildApp()
-    KitBuildApp.handleEvent(KitBuildApp.inst.kbui)
-    KitBuildApp.handleRefresh(KitBuildApp.inst.kbui)
+    ExtKitBuildApp.inst = new ExtKitBuildApp()
+    ExtKitBuildApp.handleEvent(ExtKitBuildApp.inst.kbui)
+    ExtKitBuildApp.handleRefresh(ExtKitBuildApp.inst.kbui)
   }
 
   setConceptMap(conceptMap) { console.warn("CONCEPT MAP SET:", conceptMap)
@@ -107,11 +121,11 @@ class KitBuildApp {
   }
 }
 
-KitBuildApp.canvasId = "recompose-canvas"
+ExtKitBuildApp.canvasId = "recompose-canvas"
 
-KitBuildApp.handleEvent = (kbui) => {
+ExtKitBuildApp.handleEvent = (kbui) => {
 
-  let canvas = kbui.canvases.get(KitBuildApp.canvasId)
+  let canvas = kbui.canvases.get(ExtKitBuildApp.canvasId)
   let ajax = Core.instance().ajax()
   let session = Core.instance().session()
 
@@ -129,7 +143,7 @@ KitBuildApp.handleEvent = (kbui) => {
         $(`#input-layout-${saveAsDialog.kitMap.map.layout}`).prop('checked', true)
         $('#input-enabled').prop('checked', saveAsDialog.kitMap.map.enabled == "1" ? true : false)
       } else {
-        $('#kit-save-as-dialog .input-title').val('Kit of ' + KitBuildApp.inst.conceptMap.map.title)
+        $('#kit-save-as-dialog .input-title').val('Kit of ' + ExtKitBuildApp.inst.conceptMap.map.title)
         $('#kit-save-as-dialog .input-title').focus().select()
         $('#kit-save-as-dialog .bt-generate-fid').trigger('click')
         $('#input-layout-preset').prop('checked', true)
@@ -224,7 +238,7 @@ KitBuildApp.handleEvent = (kbui) => {
 
 
   /** 
-   * Open or Create New Kit
+   * Open Kit
    * */
 
   $('.app-navbar').on('click', '.bt-open-kit', () => {
@@ -322,10 +336,10 @@ KitBuildApp.handleEvent = (kbui) => {
   })
   
   $('#concept-map-open-dialog .bt-refresh-topic-list').on('click', () => {
-    console.log(KitBuildApp.inst.user, this);
-    if (!KitBuildApp.inst || !KitBuildApp.inst.user || !KitBuildApp.inst.user.groups) return;
+    console.log(ExtKitBuildApp.inst.user, this);
+    if (!ExtKitBuildApp.inst || !ExtKitBuildApp.inst.user || !ExtKitBuildApp.inst.user.groups) return;
     this.ajax.post(`kitBuildApi/getTopicListOfGroup`, {
-      gids: KitBuildApp.inst.user.groups.split(",")
+      gids: ExtKitBuildApp.inst.user.groups.split(",")
     }).then(topics => { // console.log(topics)
       let topicsHtml = '';
       topics.forEach(t => { // console.log(t);
@@ -352,13 +366,14 @@ KitBuildApp.handleEvent = (kbui) => {
     }
     KitBuild.openKitMap(openDialog.kid).then(kitMap => {
       try {
-        KitBuildApp.parseKitMapOptions(kitMap)
+        ExtKitBuildApp.parseKitMapOptions(kitMap)
         let proceed = () => {
-          KitBuildApp.inst.setKitMap(kitMap)
-          KitBuildApp.inst.setLearnerMap()
-          KitBuildApp.resetMapToKit(kitMap, this.canvas).then(() => {
+          ExtKitBuildApp.inst.setKitMap(kitMap)
+          ExtKitBuildApp.inst.setLearnerMap()
+          ExtKitBuildApp.enableNavbarButton()
+          ExtKitBuildApp.resetMapToKit(kitMap, this.canvas).then(() => {
             let cyData = this.canvas.cy.elements().jsons();
-            KitBuildApp.collab("command", "set-kit-map", kitMap, cyData)
+            ExtKitBuildApp.collab("command", "set-kit-map", kitMap, cyData)
           })
           openDialog.hide()
         }
@@ -395,8 +410,8 @@ KitBuildApp.handleEvent = (kbui) => {
    * Content
    * */
 
-  $('.app-navbar').on('click', '.bt-content', () => { // console.log(KitBuildApp.inst)
-    if (!KitBuildApp.inst.kitMap) return
+  $('.app-navbar').on('click', '.bt-content', () => { // console.log(ExtKitBuildApp.inst)
+    if (!ExtKitBuildApp.inst.kitMap) return
     else contentDialog.setContent().show()
   })
 
@@ -425,35 +440,35 @@ KitBuildApp.handleEvent = (kbui) => {
    * Save Load Learner Map
    * */
 
-  $('.app-navbar').on('click', '.bt-save', () => { // console.log(KitBuildApp.inst)
-    let learnerMap = KitBuildApp.inst.learnerMap
-    let kitMap = KitBuildApp.inst.kitMap
+  $('.app-navbar').on('click', '.bt-save', () => { // console.log(ExtKitBuildApp.inst)
+    let learnerMap = ExtKitBuildApp.inst.learnerMap
+    let kitMap = ExtKitBuildApp.inst.kitMap
     if (!kitMap) {
       UI.warning('Please open a kit.').show()
       return
     }
     if (feedbackDialog.learnerMapEdgesData) 
-      $('.app-navbar .bt-clear-feedback').trigger('click')
-    console.log(learnerMap)
+      $('.app-navbar .bt-clear-feedback').trigger('click')      
+    let elements = KitBuildUI.buildConceptMapData(this.canvas, kitMap.conceptMap);
     let data = Object.assign({
-      lmid: learnerMap ? learnerMap.map.lmid : null,
+      lmid: learnerMap && learnerMap.map ? learnerMap.map.lmid : null,
       kid: kitMap.map.kid,
-      author: KitBuildApp.inst.user ? KitBuildApp.inst.user.username : null,
+      author: ExtKitBuildApp.inst.user ? ExtKitBuildApp.inst.user.username : null,
       type: 'draft',
       cmid: kitMap.map.cmid,
       create_time: null,
       data: null,
-    }, KitBuildUI.buildConceptMapData(this.canvas)); console.log(data); // return
-    this.ajax.post("kitBuildApi/saveLearnerMap", { data: Core.compress(data) })
-      .then(learnerMap => { // console.log(kitMap);
-        KitBuildApp.inst.setLearnerMap(learnerMap);
+    }, elements); console.log(data); // return
+    this.ajax.post("kitBuildApi/saveLearnerMapExtended", { data: Core.compress(data) })
+      .then(learnerMap => { // console.log(learnerMap);
+        ExtKitBuildApp.inst.setLearnerMap(learnerMap);
         UI.success("Concept map has been saved successfully.").show(); 
       })
       .catch(error => { UI.error(error).show(); })
   })
 
   $('.app-navbar').on('click', '.bt-load', () => {
-    let kitMap = KitBuildApp.inst.kitMap
+    let kitMap = ExtKitBuildApp.inst.kitMap
     if (!kitMap) {
       UI.warning('Please open a kit.').show()
       return
@@ -463,11 +478,11 @@ KitBuildApp.handleEvent = (kbui) => {
     
     let data = {
       kid: kitMap.map.kid,
-      username: KitBuildApp.inst.user.username
+      username: ExtKitBuildApp.inst.user.username
     }
     if (!data.username) delete data.username
     console.log(data);
-    this.ajax.post('kitBuildApi/getLastDraftLearnerMapOfUser', data).then(learnerMap => { console.log(learnerMap)
+    this.ajax.post('kitBuildApi/getLastDraftExtendedLearnerMapOfUser', data).then(learnerMap => { console.log(learnerMap)
       if (!learnerMap) {
         UI.warning("No user saved map data for this kit.").show()
         return
@@ -478,20 +493,25 @@ KitBuildApp.handleEvent = (kbui) => {
             learnerMap.kitMap = kitMap;
             learnerMap.conceptMap = kitMap.conceptMap;
             canvas.cy.elements().remove()
-            canvas.cy.add(KitBuildUI.composeLearnerMap(learnerMap))
+            console.log(learnerMap);
+            let cyData = KitBuildUI.composeLearnerMap(learnerMap);
+            cyData.forEach(el => { // console.error(el.data);
+              if (["nodes"].includes(el.group) && el.data?.extension !== true) el.data.lock = "locked";
+            }); // console.log(cyData);
+            canvas.cy.add(cyData)
             canvas.applyElementStyle()
             canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0}).then(() => {
-              KitBuildApp.collab("command", "set-kit-map", kitMap, 
+              ExtKitBuildApp.collab("command", "set-kit-map", kitMap, 
                 canvas.cy.elements().jsons())
             })
-            KitBuildApp.inst.setLearnerMap(learnerMap);
+            ExtKitBuildApp.inst.setLearnerMap(learnerMap);
             
             UI.info("Concept map loaded.").show()
             confirm.hide()
           }).show()
           return
       }
-      KitBuildApp.openLearnerMap(learnerMap.map.lmid, this.canvas);
+      ExtKitBuildApp.openLearnerMap(learnerMap.map.lmid, this.canvas);
     }).catch(error => {
       console.error(error)
       UI.error("Unable to load saved concept map.").show()
@@ -510,7 +530,7 @@ KitBuildApp.handleEvent = (kbui) => {
    * */
 
   $('.app-navbar').on('click', '.bt-reset', e => {
-    if (!KitBuildApp.inst.kitMap) {
+    if (!ExtKitBuildApp.inst.kitMap) {
       UI.info('Please open a kit.')
       return
     }
@@ -518,11 +538,11 @@ KitBuildApp.handleEvent = (kbui) => {
       $('.app-navbar .bt-clear-feedback').trigger('click')
 
     let confirm = UI.confirm('Do you want to reset this concept map as defined in the kit?').positive(() => {
-      KitBuild.openKitMap(KitBuildApp.inst.kitMap.map.kid)
+      KitBuild.openKitMap(ExtKitBuildApp.inst.kitMap.map.kid)
         .then(kitMap => {
-          KitBuildApp.parseKitMapOptions(kitMap)
-          KitBuildApp.resetMapToKit(kitMap, this.canvas).then(() => {
-            KitBuildApp.collab("command", "set-kit-map", kitMap, 
+          ExtKitBuildApp.parseKitMapOptions(kitMap)
+          ExtKitBuildApp.resetMapToKit(kitMap, this.canvas).then(() => {
+            ExtKitBuildApp.collab("command", "set-kit-map", kitMap, 
               this.canvas.cy.elements().jsons())
           })
           let undoRedo = this.canvas.toolbar.tools.get(KitBuildToolbar.UNDO_REDO)
@@ -550,36 +570,37 @@ KitBuildApp.handleEvent = (kbui) => {
    */
   $('.app-navbar').on('click', '.bt-feedback', () => {
 
-    if (!KitBuildApp.inst.kitMap) return
+    if (!ExtKitBuildApp.inst.kitMap) return
     if (feedbackDialog.learnerMapEdgesData) 
       $('.app-navbar .bt-clear-feedback').trigger('click')
 
-    let learnerMapData = KitBuildUI.buildConceptMapData(this.canvas)
+    let kitMap = ExtKitBuildApp.inst.kitMap
+    
     feedbackDialog.learnerMapEdgesData = this.canvas.cy.edges().jsons()
 
-    let feedbacksave = KitBuildApp.inst.kitMap.parsedOptions.feedbacksave
+    let elements = KitBuildUI.buildConceptMapData(this.canvas, kitMap.conceptMap);
+    let feedbacksave = ExtKitBuildApp.inst.kitMap.parsedOptions.feedbacksave
     if (feedbacksave) {
-      let kitMap = KitBuildApp.inst.kitMap
       let data = Object.assign({
         lmid: null, // so it will insert new rather than update
         kid: kitMap.map.kid,
-        author: this.user ? this.user.username : null,
+        author: ExtKitBuildApp.inst.user ? ExtKitBuildApp.inst.user.username : null,
         type: 'feedback',
         cmid: kitMap.map.cmid,
         create_time: null,
         data: null,
-      }, learnerMapData); console.log(data); // return
-      this.ajax.post("kitBuildApi/saveLearnerMap", { data: Core.compress(data) })
-        .then(learnerMap => {
+      }, elements); // console.log(data); // return
+      this.ajax.post("kitBuildApi/saveLearnerMapExtended", { data: Core.compress(data) })
+        .then(learnerMap => { console.error(learnerMap);
           console.warn("Concept map save-on-feedback has been saved successfully.");
         }).catch(error => { console.error(error); })
     }
 
-    learnerMapData.conceptMap = KitBuildApp.inst.conceptMap
-    Analyzer.composePropositions(learnerMapData)
-    let direction = learnerMapData.conceptMap.map.direction
-    let feedbacklevel = KitBuildApp.inst.kitMap.parsedOptions.feedbacklevel
-    let compare = Analyzer.compare(learnerMapData, direction)
+    elements.conceptMap = ExtKitBuildApp.inst.conceptMap
+    Analyzer.composePropositions(elements)
+    let direction = elements.conceptMap.map.direction
+    let feedbacklevel = ExtKitBuildApp.inst.kitMap.parsedOptions.feedbacklevel
+    let compare = Analyzer.compare(elements, direction)
     let level = Analyzer.NONE
     let dialogLevel = Analyzer.NONE;
     switch(feedbacklevel) {
@@ -634,29 +655,28 @@ KitBuildApp.handleEvent = (kbui) => {
   $('.app-navbar').on('click', '.bt-submit', () => {
     if (feedbackDialog.learnerMapEdgesData) 
       $('.app-navbar .bt-clear-feedback').trigger('click')
-
-    let learnerMapData = KitBuildUI.buildConceptMapData(this.canvas)
+    
+    let kitMap = ExtKitBuildApp.inst.kitMap;
+    let learnerMapData = KitBuildUI.buildConceptMapData(this.canvas, kitMap.conceptMap);
     let confirm = UI.confirm("Do you want to submit your concept map?<br/>This will end your concept map recomposition session.")
       .positive(() => {
-        let kitMap = KitBuildApp.inst.kitMap
         let data = Object.assign({
           lmid: null, // so it will insert new rather than update
           kid: kitMap.map.kid,
-          author: KitBuildApp.inst.user ? KitBuildApp.inst.user.username : null,
+          author: ExtKitBuildApp.inst.user ? ExtKitBuildApp.inst.user.username : null,
           type: 'fix',
           cmid: kitMap.map.cmid,
           create_time: null,
           data: null,
-        }, learnerMapData); console.log(data); // return
+        }, learnerMapData); // console.log(data); // return
         confirm.hide()
-        
-        this.ajax.post("kitBuildApi/saveLearnerMap", { data: Core.compress(data) })
+        this.ajax.post("kitBuildApi/saveLearnerMapExtended", { data: Core.compress(data) })
           .then(learnerMap => {
             
             // TODO: check if kit allow review to show full comparison?
             // TODO: set session of submitted learner map for review
             Core.instance().session().set('flmid', learnerMap.map.lmid).then((result) => {
-              UI.success("Concept map has been submitted. Redirecting to Review page...").show();
+              UI.success("Concept map has been submitted. Now redirecting to review page...").show();
               setTimeout(() => {
                 // TODO: and then change state to full feedback if set in kit options
                 let baseurl = Core.instance().config().get('baseurl')
@@ -696,13 +716,13 @@ KitBuildApp.handleEvent = (kbui) => {
   $('.app-navbar .bt-logout').on('click', (e) => {
     let confirm = UI.confirm('Do you want to logout?<br>This will <strong class="text-danger">END</strong> your concept mapping session.').positive(() => {
       Core.instance().session().unset('user').then(() => {
-        KitBuildApp.inst.setKitMap(null);
-        KitBuildApp.inst.setLearnerMap(null);
+        ExtKitBuildApp.inst.setKitMap(null);
+        ExtKitBuildApp.inst.setLearnerMap(null);
         KitBuildCollab.enableControl(false);
-        KitBuildApp.enableNavbarButton(false);
-        KitBuildApp.updateSignInOutButton();
+        ExtKitBuildApp.enableNavbarButton(false);
+        ExtKitBuildApp.updateSignInOutButton();
         StatusBar.instance().remove('.status-user');
-        if (KitBuildApp.collabInst) KitBuildApp.collabInst.disconnect();
+        if (ExtKitBuildApp.collabInst) ExtKitBuildApp.collabInst.disconnect();
         this.canvas.cy.elements().remove();
         this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
         this.canvas.toolbar.tools.get(KitBuildToolbar.UNDO_REDO).clearStacks().updateStacksStateButton();
@@ -736,11 +756,11 @@ KitBuildApp.handleEvent = (kbui) => {
    * Sign In
   */
   $('.app-navbar .bt-sign-in').on('click', (e) => {
-    KitBuildApp.inst.modalSignIn = UI.modal('#modal-sign-in', {
+    ExtKitBuildApp.inst.modalSignIn = UI.modal('#modal-sign-in', {
       width: 350,
       onShow: () => {}
     })
-    KitBuildApp.inst.modalSignIn.show()
+    ExtKitBuildApp.inst.modalSignIn.show()
   })
 
   $('#modal-sign-in').on('click', '.bt-sign-in', (e) => {
@@ -750,12 +770,12 @@ KitBuildApp.handleEvent = (kbui) => {
     KitBuildRBAC.signIn(username, password).then(user => { console.log(user)
       if (typeof user == 'object' && user) {
         Core.instance().session().set('user', user).then(() => {
-          KitBuildApp.updateSignInOutButton();
-          KitBuildApp.enableNavbarButton();
-          KitBuildApp.initCollab(user);
+          ExtKitBuildApp.updateSignInOutButton();
+          ExtKitBuildApp.enableNavbarButton();
+          ExtKitBuildApp.initCollab(user);
         })
-        KitBuildApp.inst.modalSignIn.hide()
-        KitBuildApp.inst.user = user;
+        ExtKitBuildApp.inst.modalSignIn.hide()
+        ExtKitBuildApp.inst.user = user;
 
         let status = `<span class="mx-2 d-flex align-items-center status-user">`
         + `<small class="text-dark fw-bold">${user.name}</small>`
@@ -780,84 +800,88 @@ KitBuildApp.handleEvent = (kbui) => {
  * Handle refresh web browser
  */
 
-KitBuildApp.handleRefresh = (kbui) => {
+ExtKitBuildApp.handleRefresh = (kbui) => {
   let session = Core.instance().session()
-  let canvas  = kbui.canvases.get(KitBuildApp.canvasId)
-  let stateData = JSON.parse(localStorage.getItem(KitBuildApp.name))
+  let canvas  = kbui.canvases.get(ExtKitBuildApp.canvasId)
+  let stateData = JSON.parse(localStorage.getItem(ExtKitBuildApp.name))
   // console.warn("RESTORE STATE:", stateData)
   session.getAll().then(sessions => { // console.log(sessions)
     let kid  = sessions.kid
     let lmid = sessions.lmid
     let promises = []
     if (kid) promises.push(KitBuild.openKitMap(kid))
-    if (lmid) promises.push(KitBuild.openLearnerMap(lmid))
+    if (lmid) promises.push(KitBuild.openExtendedLearnerMap(lmid))
     Promise.all(promises).then(maps => {
       let kitMap = maps[0]
       let learnerMap = maps[1]
-      KitBuildApp.parseKitMapOptions(kitMap)
-      if (kitMap && !learnerMap) KitBuildApp.resetMapToKit(kitMap, canvas)
+      ExtKitBuildApp.parseKitMapOptions(kitMap)
+      if (kitMap && !learnerMap) ExtKitBuildApp.resetMapToKit(kitMap, canvas)
       if (kitMap) {
         try {
           if (stateData && stateData.logger) {
             // reinstantiate and enable logger
-            KitBuildApp.inst.logger = 
+            ExtKitBuildApp.inst.logger = 
             KitBuildLogger.instance(stateData.logger.username, stateData.logger.seq, stateData.logger.sessid, canvas, kitMap.conceptMap).enable();
             // reattach logger
-            if (KitBuildApp.loggerListener)
-              canvas.off("event", KitBuildApp.loggerListener)
-            KitBuildApp.loggerListener = KitBuildApp.inst.logger.onCanvasEvent.bind(KitBuildApp.inst.logger)
-            canvas.on("event", KitBuildApp.loggerListener)
+            if (ExtKitBuildApp.loggerListener)
+              canvas.off("event", ExtKitBuildApp.loggerListener)
+            ExtKitBuildApp.loggerListener = ExtKitBuildApp.inst.logger.onCanvasEvent.bind(ExtKitBuildApp.inst.logger)
+            canvas.on("event", ExtKitBuildApp.loggerListener)
           }
         } catch (error) { console.warn(error) }
       }
       if (learnerMap) {
-        KitBuildApp.inst.setKitMap(kitMap)
-        KitBuildApp.inst.setLearnerMap(learnerMap)
+        ExtKitBuildApp.inst.setKitMap(kitMap)
+        ExtKitBuildApp.inst.setLearnerMap(learnerMap)
         learnerMap.kitMap = kitMap
         learnerMap.conceptMap = kitMap.conceptMap
         canvas.cy.elements().remove()
-        canvas.cy.add(KitBuildUI.composeLearnerMap(learnerMap))
-        canvas.applyElementStyle()
+        let cyData = KitBuildUI.composeLearnerMap(learnerMap);
+        cyData.forEach(el => { // console.error(el.data);
+          if (["nodes"].includes(el.group) && el.data?.extension !== true) el.data.lock = "locked";
+        })
+        canvas.cy.add(cyData)
         canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
+        canvas.applyElementStyle()
       } // else UI.warning('Unable to display kit.').show()
     })
 
-    KitBuildApp.enableNavbarButton(false)
+    ExtKitBuildApp.enableNavbarButton(false)
     if (sessions.user) {
-      KitBuildApp.initCollab(sessions.user)
-      KitBuildApp.enableNavbarButton()
+      ExtKitBuildApp.initCollab(sessions.user)
+      ExtKitBuildApp.enableNavbarButton()
       KitBuildCollab.enableControl()
 
       let status = `<span class="mx-2 d-flex align-items-center status-user">`
       + `<small class="text-dark fw-bold">${sessions.user.name}</small>`
       + `</span>`
       StatusBar.instance().remove('.status-user').prepend(status);
-    } else $('.bt-sign-in').trigger('click')
+    } else $('.app-navbar .bt-sign-in').trigger('click')
 
     // listen to events for broadcast to collaboration room as commands
-    KitBuildApp.inst.canvas.on('event', KitBuildApp.onCanvasEvent)
+    ExtKitBuildApp.inst.canvas.on('event', ExtKitBuildApp.onCanvasEvent)
 
 
   })
 }
 
-KitBuildApp.onBrowserStateChange = event => { console.warn(event)
+ExtKitBuildApp.onBrowserStateChange = event => { console.warn(event)
   if (event.newState == "terminated") {
     let stateData = {}
-    console.log(KitBuildApp.inst.logger)
-    if (KitBuildApp.inst && KitBuildApp.inst.logger) 
+    console.log(ExtKitBuildApp.inst.logger)
+    if (ExtKitBuildApp.inst && ExtKitBuildApp.inst.logger) 
       stateData.logger = {
-        username: KitBuildApp.inst.logger.username,
-        seq: KitBuildApp.inst.logger.seq,
-        sessid: KitBuildApp.inst.logger.sessid,
-        enabled: KitBuildApp.inst.logger.enabled,
+        username: ExtKitBuildApp.inst.logger.username,
+        seq: ExtKitBuildApp.inst.logger.seq,
+        sessid: ExtKitBuildApp.inst.logger.sessid,
+        enabled: ExtKitBuildApp.inst.logger.enabled,
       }
-    stateData.map = Core.compress(KitBuildApp.inst.canvas.cy.elements().jsons())
-    // console.warn(JSON.stringify(KitBuildApp.inst.canvas.cy.elements().jsons()), 
-      // JSON.stringify(KitBuildApp.inst.canvas.cy.nodes().jsons()))
+    stateData.map = Core.compress(ExtKitBuildApp.inst.canvas.cy.elements().jsons())
+    // console.warn(JSON.stringify(ExtKitBuildApp.inst.canvas.cy.elements().jsons()), 
+      // JSON.stringify(ExtKitBuildApp.inst.canvas.cy.nodes().jsons()))
     let cmapAppStateData = JSON.stringify(Object.assign({}, stateData)) 
     console.warn("STATE STORE:", cmapAppStateData)
-    localStorage.setItem(KitBuildApp.name, cmapAppStateData)
+    localStorage.setItem(ExtKitBuildApp.name, cmapAppStateData)
   }
 }
 
@@ -870,29 +894,29 @@ KitBuildApp.onBrowserStateChange = event => { console.warn(event)
 
 // convert concept mapping event to collaboration command
 // App --> Server
-KitBuildApp.collab = (action, ...data) => {
+ExtKitBuildApp.collab = (action, ...data) => {
   // not connected? skip.
-  if (!KitBuildApp.collabInst || !KitBuildApp.collabInst.connected()) return
+  if (!ExtKitBuildApp.collabInst || !ExtKitBuildApp.collabInst.connected()) return
   if (!KitBuildCollab.room()) return
   
   switch(action) {
     case "command": {
       let command = data.shift()
       // console.warn(command, data);
-      KitBuildApp.collabInst.command(command, ...data).then(result => {
+      ExtKitBuildApp.collabInst.command(command, ...data).then(result => {
         console.error(command, result);
       }).catch(error => console.error(command, error))
     } break;
     case "get-map-state": {
-      KitBuildApp.collabInst.getMapState().then(result => {})
+      ExtKitBuildApp.collabInst.getMapState().then(result => {})
         .catch(error => UI.error("Unable to get map state: " + error).show())
     } break;
     case "send-map-state": {
-      KitBuildApp.collabInst.sendMapState(...data).then(result => {})
+      ExtKitBuildApp.collabInst.sendMapState(...data).then(result => {})
         .catch(error => UI.error("Unable to send map state: " + error).show())
     } break;
     case "get-channels": { 
-      KitBuildApp.collabInst.tools.get('channel').getChannels()
+      ExtKitBuildApp.collabInst.tools.get('channel').getChannels()
         .then(channels => {})
         .catch(error => UI.error("Unable to get channels: " + error)
         .show())
@@ -900,66 +924,66 @@ KitBuildApp.collab = (action, ...data) => {
   }
 }
 
-KitBuildApp.onCanvasEvent = (canvasId, event, data) => {
-  KitBuildApp.collab("command", event, canvasId, data);
+ExtKitBuildApp.onCanvasEvent = (canvasId, event, data) => {
+  ExtKitBuildApp.collab("command", event, canvasId, data);
 }
 
 // handles incoming collaboration event
 // Server --> App
-KitBuildApp.onCollabEvent = (event, ...data) => {
+ExtKitBuildApp.onCollabEvent = (event, ...data) => {
   // console.warn(event, data)
   switch(event) {
     case 'connect':
     case 'reconnect':
       break;
     case 'join-room': {
-      KitBuildApp.collab("get-map-state")
+      ExtKitBuildApp.collab("get-map-state")
     } break;
     case 'socket-command': {
       let command = data.shift()
-      KitBuildApp.processCollabCommand(command, data)
+      ExtKitBuildApp.processCollabCommand(command, data)
     } break;
     case 'socket-get-map-state': {
       let requesterSocketId = data.shift()
-      KitBuildApp.generateMapState()
+      ExtKitBuildApp.generateMapState()
         .then(mapState => {
-          KitBuildApp.collab("send-map-state", requesterSocketId, mapState)
+          ExtKitBuildApp.collab("send-map-state", requesterSocketId, mapState)
         })
     }  break;
     case 'socket-set-map-state': {
       let mapState = data.shift()
-      KitBuildApp.applyMapState(mapState).then(() => {
-        KitBuildApp.collab("get-channels")
+      ExtKitBuildApp.applyMapState(mapState).then(() => {
+        ExtKitBuildApp.collab("get-channels")
       });
     }  break;
   }
 }
-KitBuildApp.processCollabCommand = (command, data) => {
+ExtKitBuildApp.processCollabCommand = (command, data) => {
   console.log(command, data)
   switch(command) {
     case "set-kit-map": {
       let kitMap = data.shift()
       let cyData = data.shift()
-      console.log(kitMap, cyData, KitBuildApp.inst.learnerMap)
-      KitBuildApp.inst.setKitMap(kitMap)
-
+      console.log(kitMap, cyData, ExtKitBuildApp.inst.learnerMap)
+      ExtKitBuildApp.inst.setKitMap(kitMap)
+      ExtKitBuildApp.enableNavbarButton()
       // if current user has no saved learnerMap
       // or it is different kit, then reset the learnermap
-      if (KitBuildApp.inst.learnerMap
-        && KitBuildApp.inst.learnerMap.map.kid == kitMap.map.kid) {} 
-      else KitBuildApp.inst.setLearnerMap() // remove save data
+      if (ExtKitBuildApp.inst.learnerMap
+        && ExtKitBuildApp.inst.learnerMap.map.kid == kitMap.map.kid) {} 
+      else ExtKitBuildApp.inst.setLearnerMap() // remove save data
       
-      // KitBuildApp.inst.setLearnerMap()
-      KitBuildApp.resetMapToKit(kitMap, KitBuildApp.inst.canvas)
+      // ExtKitBuildApp.inst.setLearnerMap()
+      ExtKitBuildApp.resetMapToKit(kitMap, ExtKitBuildApp.inst.canvas)
         .then(() => {
           console.log(cyData)
-          KitBuildApp.inst.canvas.cy.elements().remove()
-          KitBuildApp.inst.canvas.cy.add(cyData)
-          KitBuildApp.inst.canvas.applyElementStyle()
-          KitBuildApp.inst.canvas.canvasTool.clearCanvas().clearIndicatorCanvas()
-          KitBuildApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
-          // KitBuildApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(kitMap.conceptMap.map.direction)
-          KitBuildApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.UNDO_REDO).clearStacks().updateStacksStateButton();
+          ExtKitBuildApp.inst.canvas.cy.elements().remove()
+          ExtKitBuildApp.inst.canvas.cy.add(cyData)
+          ExtKitBuildApp.inst.canvas.applyElementStyle()
+          ExtKitBuildApp.inst.canvas.canvasTool.clearCanvas().clearIndicatorCanvas()
+          ExtKitBuildApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
+          // ExtKitBuildApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(kitMap.conceptMap.map.direction)
+          ExtKitBuildApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.UNDO_REDO).clearStacks().updateStacksStateButton();
           UI.info('Concept map has been set by peer.').show()
         })
     } break;
@@ -968,7 +992,7 @@ KitBuildApp.processCollabCommand = (command, data) => {
       let moves = data.shift()
       let nodes = moves.later;
       if (Array.isArray(nodes)) nodes.forEach(node => 
-      KitBuildApp.inst.canvas.moveNode(node.id, node.x, node.y, 200))
+      ExtKitBuildApp.inst.canvas.moveNode(node.id, node.x, node.y, 200))
     } break;
     case "redo-move-nodes":
     case "undo-move-nodes": {
@@ -976,14 +1000,14 @@ KitBuildApp.processCollabCommand = (command, data) => {
       let moves = data.shift()
       let nodes = moves;
       if (Array.isArray(nodes)) nodes.forEach(node => 
-      KitBuildApp.inst.canvas.moveNode(node.id, node.x, node.y, 200))
+      ExtKitBuildApp.inst.canvas.moveNode(node.id, node.x, node.y, 200))
     } break;
     case "undo-centroid":
     case "undo-move-link":
     case "undo-move-concept": {
       let canvasId = data.shift()
       let move = data.shift()
-      KitBuildApp.inst.canvas.moveNode(move.from.id, move.from.x, move.from.y, 200)
+      ExtKitBuildApp.inst.canvas.moveNode(move.from.id, move.from.x, move.from.y, 200)
     } break;
     case "centroid":
     case "redo-centroid":
@@ -993,14 +1017,14 @@ KitBuildApp.processCollabCommand = (command, data) => {
     case "move-concept": {
       let canvasId = data.shift()
       let move = data.shift()
-      KitBuildApp.inst.canvas.moveNode(move.to.id, move.to.x, move.to.y, 200)
+      ExtKitBuildApp.inst.canvas.moveNode(move.to.id, move.to.x, move.to.y, 200)
     } break;
     case "layout-elements": {
       let canvasId = data.shift()
       let layoutMoves = data.shift()
       let nodes = layoutMoves.later;
       if (Array.isArray(nodes)) nodes.forEach(node => 
-      KitBuildApp.inst.canvas.moveNode(node.id, node.position.x, node.position.y, 200))
+      ExtKitBuildApp.inst.canvas.moveNode(node.id, node.position.x, node.position.y, 200))
     } break;
     case "redo-layout-elements":
     case "undo-layout-elements":
@@ -1008,7 +1032,7 @@ KitBuildApp.processCollabCommand = (command, data) => {
       let canvasId = data.shift()
       let nodes = data.shift()
       if (Array.isArray(nodes)) nodes.forEach(node => 
-      KitBuildApp.inst.canvas.moveNode(node.id, node.position.x, node.position.y, 200))
+      ExtKitBuildApp.inst.canvas.moveNode(node.id, node.position.x, node.position.y, 200))
     } break;
     case "undo-disconnect-right":
     case "undo-disconnect-left":
@@ -1018,7 +1042,7 @@ KitBuildApp.processCollabCommand = (command, data) => {
     case "connect-left": {
       let canvasId = data.shift()
       let edge = data.shift()
-      KitBuildApp.inst.canvas.createEdge(edge.data)
+      ExtKitBuildApp.inst.canvas.createEdge(edge.data)
     } break;
     case "undo-connect-right":
     case "undo-connect-left":
@@ -1028,13 +1052,13 @@ KitBuildApp.processCollabCommand = (command, data) => {
     case "disconnect-right": { 
       let canvasId = data.shift()
       let edge = data.shift()
-      KitBuildApp.inst.canvas.removeEdge(edge.data.source, edge.data.target)
+      ExtKitBuildApp.inst.canvas.removeEdge(edge.data.source, edge.data.target)
     } break;
     case "undo-move-connect-left":
     case "undo-move-connect-right": { 
       let canvasId = data.shift()
       let moveData = data.shift()
-      KitBuildApp.inst.canvas.moveEdge(moveData.later, moveData.prior)
+      ExtKitBuildApp.inst.canvas.moveEdge(moveData.later, moveData.prior)
     } break;
     case "redo-move-connect-left":
     case "redo-move-connect-right":
@@ -1042,19 +1066,19 @@ KitBuildApp.processCollabCommand = (command, data) => {
     case "move-connect-right": { 
       let canvasId = data.shift()
       let moveData = data.shift()
-      KitBuildApp.inst.canvas.moveEdge(moveData.prior, moveData.later)
+      ExtKitBuildApp.inst.canvas.moveEdge(moveData.prior, moveData.later)
     } break;
     case "switch-direction": { 
       let canvasId = data.shift()
       let switchData = data.shift()
-      KitBuildApp.inst.canvas.switchDirection(switchData.prior, switchData.later)
+      ExtKitBuildApp.inst.canvas.switchDirection(switchData.prior, switchData.later)
     } break;
     case "undo-disconnect-links": { 
       let canvasId = data.shift()
       let edges = data.shift()
       if (!Array.isArray(edges)) break;
       edges.forEach(edge => {
-        KitBuildApp.inst.canvas.createEdge(edge.data)
+        ExtKitBuildApp.inst.canvas.createEdge(edge.data)
       })
     } break;
     case "redo-disconnect-links":
@@ -1064,164 +1088,165 @@ KitBuildApp.processCollabCommand = (command, data) => {
       if (!Array.isArray(edges)) break;
       console.log(edges)
       edges.forEach(edge => {
-        KitBuildApp.inst.canvas.removeEdge(edge.data.source, edge.data.target)
+        ExtKitBuildApp.inst.canvas.removeEdge(edge.data.source, edge.data.target)
       })
     } break;
-    // case "create-link":
-    // case "create-concept":
-    // case "redo-duplicate-link":
-    // case "redo-duplicate-concept":
-    // case "duplicate-link":
-    // case "duplicate-concept": { 
-    //   let canvasId = data.shift()
-    //   let node = data.shift()
-    //   console.log(node)
-    //   KitBuildApp.inst.canvas.addNode(node.data, node.position)
-    // } break;
-    // case "undo-duplicate-link":
-    // case "undo-duplicate-concept": { 
-    //   let canvasId = data.shift()
-    //   let node = data.shift()
-    //   console.log(node)
-    //   KitBuildApp.inst.canvas.removeElements([node.data])
-    // } break;
-    // case "duplicate-nodes": { 
-    //   let canvasId = data.shift()
-    //   let nodes = data.shift()
-    //   if (!Array.isArray(nodes)) break;
-    //   nodes.forEach(node =>
-    //     KitBuildApp.inst.canvas.addNode(node.data, node.position))
-    // } break;
-    // case "undo-delete-node":
-    // case "undo-clear-canvas":
-    // case "undo-delete-multi-nodes": { 
-    //   let canvasId = data.shift()
-    //   let elements = data.shift()
-    //   KitBuildApp.inst.canvas.addElements(elements)
-    // } break;
-    // case "delete-link":
-    // case "delete-concept": 
-    // case "redo-delete-multi-nodes":
-    // case "delete-multi-nodes": {
-    //   let canvasId = data.shift()
-    //   let elements = data.shift()
-    //   KitBuildApp.inst.canvas.removeElements(elements.map(element => element.data))
-    // } break;
-    // case "undo-update-link":
-    // case "undo-update-concept": {
-    //   let canvasId = data.shift()
-    //   let node = data.shift()
-    //   KitBuildApp.inst.canvas.updateNodeData(node.id, node.prior.data)
-    // } break;
-    // case "redo-update-link":
-    // case "redo-update-concept":
-    // case "update-link":
-    // case "update-concept": {
-    //   let canvasId = data.shift()
-    //   let node = data.shift()
-    //   KitBuildApp.inst.canvas.updateNodeData(node.id, node.later.data)
-    // } break;
-    // case "redo-concept-color-change":
-    // case "undo-concept-color-change": {
-    //   let canvasId = data.shift()
-    //   let changes = data.shift()
-    //   KitBuildApp.inst.canvas.changeNodesColor(changes)
-    // } break;
-    // case "concept-color-change": {
-    //   let canvasId = data.shift()
-    //   let changes = data.shift()
-    //   let nodesData = changes.later
-    //   KitBuildApp.inst.canvas.changeNodesColor(nodesData)
-    // } break;
-    // case "undo-lock":
-    // case "undo-unlock":
-    // case "redo-lock":
-    // case "redo-unlock":
-    // case "lock-edge":
-    // case "unlock-edge": {
-    //   let canvasId = data.shift()
-    //   let edge = data.shift()
-    //   KitBuildApp.inst.canvas.updateEdgeData(edge.id, edge)
-    // } break;
-    // case "undo-lock-edges":
-    // case "undo-unlock-edges":
-    // case "redo-lock-edges":
-    // case "redo-unlock-edges": {
-    //   let canvasId = data.shift()
-    //   let lock = data.shift()
-    //   if (!lock) break;
-    //   if (!Array.isArray(lock.edges)) break;
-    //   lock.edges.forEach(edge =>
-    //     KitBuildApp.inst.canvas.updateEdgeData(edge.substring(1), { lock: lock.lock }))
-    // } break;
-    // case "lock-edges":
-    // case "unlock-edges": {
-    //   let canvasId = data.shift()
-    //   let edges = data.shift()
-    //   if (!Array.isArray(edges)) return;
-    //   edges.forEach(edge =>
-    //     KitBuildApp.inst.canvas.updateEdgeData(edge.data.id, edge.data))
-    // } break;
-    // case "redo-clear-canvas":
-    // case "clear-canvas": {
-    //   KitBuildApp.inst.canvas.reset()
-    // } break;
-    // case "convert-type": {
-    //   let canvasId = data.shift()
-    //   let map = data.shift()
-    //   let elements = map.later
-    //   let direction = map.to
-    //   KitBuildApp.inst.canvas.convertType(direction, elements)
-    // } break;
+    case "create-link":
+    case "create-concept":
+    case "redo-duplicate-link":
+    case "redo-duplicate-concept":
+    case "duplicate-link":
+    case "duplicate-concept": { 
+      let canvasId = data.shift()
+      let node = data.shift()
+      console.log(node)
+      ExtKitBuildApp.inst.canvas.addNode(node.data, node.position)
+    } break;
+    case "undo-duplicate-link":
+    case "undo-duplicate-concept": { 
+      let canvasId = data.shift()
+      let node = data.shift()
+      console.log(node)
+      ExtKitBuildApp.inst.canvas.removeElements([node.data])
+    } break;
+    case "duplicate-nodes": { 
+      let canvasId = data.shift()
+      let nodes = data.shift()
+      if (!Array.isArray(nodes)) break;
+      nodes.forEach(node =>
+        ExtKitBuildApp.inst.canvas.addNode(node.data, node.position))
+    } break;
+    case "undo-delete-node":
+    case "undo-clear-canvas":
+    case "undo-delete-multi-nodes": { 
+      let canvasId = data.shift()
+      let elements = data.shift()
+      ExtKitBuildApp.inst.canvas.addElements(elements)
+    } break;
+    case "delete-link":
+    case "delete-concept": 
+    case "redo-delete-multi-nodes":
+    case "delete-multi-nodes": {
+      let canvasId = data.shift()
+      let elements = data.shift()
+      ExtKitBuildApp.inst.canvas.removeElements(elements.map(element => element.data))
+    } break;
+    case "undo-update-link":
+    case "undo-update-concept": {
+      let canvasId = data.shift()
+      let node = data.shift()
+      ExtKitBuildApp.inst.canvas.updateNodeData(node.id, node.prior.data)
+    } break;
+    case "redo-update-link":
+    case "redo-update-concept":
+    case "update-link":
+    case "update-concept": {
+      let canvasId = data.shift()
+      let node = data.shift()
+      ExtKitBuildApp.inst.canvas.updateNodeData(node.id, node.later.data)
+    } break;
+    case "redo-concept-color-change":
+    case "undo-concept-color-change": {
+      let canvasId = data.shift()
+      let changes = data.shift()
+      ExtKitBuildApp.inst.canvas.changeNodesColor(changes)
+    } break;
+    case "concept-color-change": {
+      let canvasId = data.shift()
+      let changes = data.shift()
+      let nodesData = changes.later
+      ExtKitBuildApp.inst.canvas.changeNodesColor(nodesData)
+    } break;
+    case "undo-lock":
+    case "undo-unlock":
+    case "redo-lock":
+    case "redo-unlock":
+    case "lock-edge":
+    case "unlock-edge": {
+      let canvasId = data.shift()
+      let edge = data.shift()
+      ExtKitBuildApp.inst.canvas.updateEdgeData(edge.id, edge)
+    } break;
+    case "undo-lock-edges":
+    case "undo-unlock-edges":
+    case "redo-lock-edges":
+    case "redo-unlock-edges": {
+      let canvasId = data.shift()
+      let lock = data.shift()
+      if (!lock) break;
+      if (!Array.isArray(lock.edges)) break;
+      lock.edges.forEach(edge =>
+        ExtKitBuildApp.inst.canvas.updateEdgeData(edge.substring(1), { lock: lock.lock }))
+    } break;
+    case "lock-edges":
+    case "unlock-edges": {
+      let canvasId = data.shift()
+      let edges = data.shift()
+      if (!Array.isArray(edges)) return;
+      edges.forEach(edge =>
+        ExtKitBuildApp.inst.canvas.updateEdgeData(edge.data.id, edge.data))
+    } break;
+    case "redo-clear-canvas":
+    case "clear-canvas": {
+      ExtKitBuildApp.inst.canvas.reset()
+    } break;
+    case "convert-type": {
+      let canvasId = data.shift()
+      let map = data.shift()
+      let elements = map.later
+      let direction = map.to
+      ExtKitBuildApp.inst.canvas.convertType(direction, elements)
+    } break;
     case "select-nodes": {
       let canvasId = data.shift()
       let ids = data.shift()
       ids = ids.map(id => `#${id}`)
-      KitBuildApp.inst.canvas.cy.nodes(ids.join(", ")).addClass('peer-select')
+      ExtKitBuildApp.inst.canvas.cy.nodes(ids.join(", ")).addClass('peer-select')
     } break;
     case "unselect-nodes": {
       let canvasId = data.shift()
       let ids = data.shift()
       ids = ids.map(id => `#${id}`)
-      KitBuildApp.inst.canvas.cy.nodes(ids.join(", ")).removeClass('peer-select')
+      ExtKitBuildApp.inst.canvas.cy.nodes(ids.join(", ")).removeClass('peer-select')
     } break;
 
   }
 }
 
 // generate/apply map state
-KitBuildApp.generateMapState = () => {
+ExtKitBuildApp.generateMapState = () => {
   return new Promise((resolve, reject) => {
     let mapState = {
       kitMap: null,
       cyData: []
     }  
-    if (KitBuildApp.inst.kitMap) {
-      KitBuildApp.inst.kitMap.conceptMap.map.direction = KitBuildApp.inst.canvas.direction
+    if (ExtKitBuildApp.inst.kitMap) {
+      ExtKitBuildApp.inst.kitMap.conceptMap.map.direction = ExtKitBuildApp.inst.canvas.direction
       mapState = {
-        kitMap: KitBuildApp.inst.kitMap,
-        cyData: KitBuildApp.inst.canvas.cy.elements().jsons()
+        kitMap: ExtKitBuildApp.inst.kitMap,
+        cyData: ExtKitBuildApp.inst.canvas.cy.elements().jsons()
       }
     }
     resolve(mapState)
   })
 }
-KitBuildApp.applyMapState = (mapState) => {
+ExtKitBuildApp.applyMapState = (mapState) => {
   return new Promise((resolve, reject) => {
     let kitMap = mapState.kitMap
     let cyData = mapState.cyData
-    KitBuildApp.inst.setKitMap(kitMap)
-    KitBuildApp.inst.canvas.cy.elements().remove()
+    ExtKitBuildApp.inst.setKitMap(kitMap)
+    ExtKitBuildApp.inst.canvas.cy.elements().remove()
+    ExtKitBuildApp.enableNavbarButton()
     if (!kitMap || !cyData) {
       // console.log(mapState)
     } else {
-      KitBuildApp.inst.canvas.cy.add(cyData ? cyData : {}).unselect()
-      KitBuildApp.inst.canvas.applyElementStyle()
-      KitBuildApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
-      // KitBuildApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(conceptMap.map.direction)
-      KitBuildApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.UNDO_REDO).clearStacks().updateStacksStateButton()
+      ExtKitBuildApp.inst.canvas.cy.add(cyData ? cyData : {}).unselect()
+      ExtKitBuildApp.inst.canvas.applyElementStyle()
+      ExtKitBuildApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
+      // ExtKitBuildApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(conceptMap.map.direction)
+      ExtKitBuildApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.UNDO_REDO).clearStacks().updateStacksStateButton()
     }
-    KitBuildApp.inst.canvas.canvasTool.clearCanvas().clearIndicatorCanvas()
+    ExtKitBuildApp.inst.canvas.canvasTool.clearCanvas().clearIndicatorCanvas()
     resolve(mapState)
   })
 }
@@ -1232,9 +1257,9 @@ KitBuildApp.applyMapState = (mapState) => {
  * Helpers
 */
 
-KitBuildApp.parseKitMapOptions = (kitMap) => {
+ExtKitBuildApp.parseKitMapOptions = (kitMap) => {
   if (!kitMap) return
-  kitMap.parsedOptions = KitBuildApp.parseOptions(kitMap.map.options, {
+  kitMap.parsedOptions = ExtKitBuildApp.parseOptions(kitMap.map.options, {
     feedbacklevel: 2,
     fullfeedback: 1,
     modification: 1,
@@ -1246,12 +1271,14 @@ KitBuildApp.parseKitMapOptions = (kitMap) => {
   })
 }
 
-KitBuildApp.resetMapToKit = (kitMap, canvas) => {
+ExtKitBuildApp.resetMapToKit = (kitMap, canvas) => {
   return new Promise((resolve, reject) => {
     // will also set and cache the concept map
-    KitBuildApp.inst.setKitMap(kitMap)
+    ExtKitBuildApp.inst.setKitMap(kitMap)
+    ExtKitBuildApp.enableNavbarButton()
     canvas.cy.elements().remove()
     canvas.cy.add(KitBuildUI.composeKitMap(kitMap))
+    canvas.cy.nodes().data('lock', 'locked');
     canvas.applyElementStyle()
     if (kitMap.map.layout == "random") {
       canvas.cy.elements().layout({name: 'fcose', animationDuration: 0, fit: false, stop: () => {
@@ -1285,7 +1312,7 @@ KitBuildApp.resetMapToKit = (kitMap, canvas) => {
   })
 }
 
-KitBuildApp.parseOptions = (optionJsonString, defaultValueIfNull) => {
+ExtKitBuildApp.parseOptions = (optionJsonString, defaultValueIfNull) => {
   if (optionJsonString === null) return defaultValueIfNull
   let option, defopt = defaultValueIfNull
   try {
@@ -1295,15 +1322,15 @@ KitBuildApp.parseOptions = (optionJsonString, defaultValueIfNull) => {
   return option
 }
 
-KitBuildApp.initCollab = (user) => {
-  KitBuildApp.inst.user = user;
-  KitBuildApp.collabInst = KitBuildCollab.instance('kitbuild', user, canvas)
-  KitBuildApp.collabInst.off('event', KitBuildApp.onCollabEvent)
-  KitBuildApp.collabInst.on('event', KitBuildApp.onCollabEvent)
+ExtKitBuildApp.initCollab = (user) => {
+  ExtKitBuildApp.inst.user = user;
+  ExtKitBuildApp.collabInst = KitBuildCollab.instance('kitbuild', user, canvas)
+  ExtKitBuildApp.collabInst.off('event', ExtKitBuildApp.onCollabEvent)
+  ExtKitBuildApp.collabInst.on('event', ExtKitBuildApp.onCollabEvent)
   KitBuildCollab.enableControl()
 }
 
-KitBuildApp.updateSignInOutButton = () => {
+ExtKitBuildApp.updateSignInOutButton = () => {
   Core.instance().session().getAll().then(sessions => { // console.log(sessions)
     if (sessions.user) {
       $('.bt-sign-in').addClass('d-none')
@@ -1316,14 +1343,17 @@ KitBuildApp.updateSignInOutButton = () => {
 }
 
 
-KitBuildApp.enableNavbarButton = (enabled = true) => {
+ExtKitBuildApp.enableNavbarButton = (enabled = true) => {
   $('#recompose-readcontent button').prop('disabled', !enabled);
   $('#recompose-saveload button').prop('disabled', !enabled);
   $('#recompose-reset button').prop('disabled', !enabled);
   $('#recompose-feedbacklevel button').prop('disabled', !enabled);
   $('.bt-submit').prop('disabled', !enabled);
   $('.bt-open-kit').prop('disabled', !enabled);
-  KitBuildApp.inst.canvas.toolbar.tools.forEach(tool => {
-    tool.enable(enabled);
+  ExtKitBuildApp.inst.canvas.toolbar.tools.forEach((tool, key) => {
+    if (key == KitBuildToolbar.NODE_CREATE) {
+      if (ExtKitBuildApp.inst.kitMap) tool.enable(enabled)
+      else tool.enable(false)
+    } else tool.enable(enabled);
   });
 }

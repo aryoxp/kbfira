@@ -175,7 +175,7 @@ class Session {
     });
   }
 
-  destroy(callback = null, errorCallback = null) {
+  destroy() {
     return new Promise((resolve, reject) => {
       Core.instance()
         .ajax()

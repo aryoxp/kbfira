@@ -1,13 +1,16 @@
 class Analyzer {
 
   static composePropositions(conceptMap) {
+    // console.error(conceptMap)
+    if (!conceptMap) return;
+    
     let propositions = []
     let cMap = conceptMap
     let gMap = conceptMap.conceptMap ? conceptMap.conceptMap : conceptMap
 
     let concepts = new Map(gMap.concepts.map(concept => [concept.cid, concept]));
     let links = new Map(gMap.links.map(link => [link.lid, link]));
-    // console.error(concepts, links)
+
     if (!gMap.propositions) {
       gMap.linktargets.forEach(linktarget => {
         let prop = {
@@ -21,28 +24,61 @@ class Analyzer {
     } else propositions = gMap.propositions
 
     if (gMap == cMap) return propositions
-
     propositions = []
     if (!cMap.propositions) {
       let lLinks = new Map(cMap.links.map(link => [link.lid, link]));
+      let concepts_ext = cMap.concepts_ext ? new Map(cMap.concepts_ext.map(concept => [concept.cid, concept])) : new Map();
+      let links_ext = cMap.links_ext ? new Map(cMap.links_ext.map(link => [link.lid, link])) : new Map();
       cMap.linktargets.forEach(linktarget => {
+        let link = lLinks.has(linktarget.lid)
+          ? lLinks.get(linktarget.lid)
+          : links_ext.get(linktarget.lid);
+        let sourceConcept = concepts.has(link.source_cid)
+          ? concepts.get(link.source_cid)
+          : concepts_ext.get(link.source_cid);
+        let targetConcept = concepts.has(linktarget.target_cid)
+          ? concepts.get(linktarget.target_cid)
+          : concepts_ext.get(linktarget.target_cid);
         let prop = {
-          source: concepts.get(lLinks.get(linktarget.lid).source_cid),
-          link: links.get(lLinks.get(linktarget.lid).lid),
-          target: concepts.get(linktarget.target_cid)
+          source: sourceConcept,
+          link: link,
+          target: targetConcept
         }
+        if (!prop.link) prop.link = lLinks.get(linktarget.lid)
         if (prop.source && prop.target) propositions.push(prop)
       });
+      if (cMap.linktargets_ext) {
+        cMap.linktargets_ext.forEach(linktarget => {
+          let link = lLinks.has(linktarget.lid) 
+            ? lLinks.get(linktarget.lid) 
+            : links_ext.get(linktarget.lid)
+          let sourceConcept = concepts.has(link.source_cid) 
+            ? concepts.get(link.source_cid)
+            : concepts_ext.get(link.source_cid)
+          let targetConcept = concepts.has(linktarget.target_cid) 
+          ? concepts.get(linktarget.target_cid)
+          : concepts_ext.get(linktarget.target_cid)
+          let prop = {
+            source: sourceConcept,
+            link: link,
+            target: targetConcept
+          }
+          if (prop.source && prop.target) propositions.push(prop)
+        });
+      }
       cMap.propositions = propositions
     } else propositions = cMap.propositions
     return propositions
   }
 
   static compare(conceptMap, direction = 'multi') {
-    if (!conceptMap.conceptMap) return // this is a goalmap, nothing to compare with
-    
+    if (!conceptMap.conceptMap) return // this is a goalmap, so nothing to compare with
     let gPropositions = conceptMap.conceptMap.propositions.map(p => {
       // console.warn(p)
+      if (!p.source || !p.link || !p.target) {
+        console.error ("Invalid proposition: ", p)
+        return false;
+      }
       return {
         source: p.source.label,
         sid: p.source.cid,
@@ -55,6 +91,10 @@ class Analyzer {
 
     let propositions = conceptMap.propositions.map(p => {
       // console.warn(p)
+      if (!p.source || !p.link || !p.target) {
+        console.error ("Invalid proposition: ", p)
+        return false;
+      }
       return {
         source: p.source.label,
         sid: p.source.cid,
@@ -70,10 +110,12 @@ class Analyzer {
     let g = gPropositions.length
     while(g--) {
       let gProp = gPropositions[g]
+      if (!gProp) continue; // skip if invalid
       let found = false
       let p = propositions.length
       while(p--) {
         let prop = propositions[p]
+        if (!prop) continue; // skip if invalid
         // console.log(direction, gProp.source + ">" + gProp.link + ">" + gProp.target, prop.source + ">" + prop.link + ">" + prop.target)
         if (gProp.source == prop.source && gProp.link == prop.link && gProp.target == prop.target) {
           let matchPropositionOnGoalmap = gPropositions.splice(g, 1)[0]

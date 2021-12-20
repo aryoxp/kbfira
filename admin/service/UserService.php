@@ -28,6 +28,35 @@ class UserService extends CoreService {
     return $this->selectUser($nusername);
   }
 
+  function registerUser($name, $username, $password, $rid = null, $gid = null) {
+    $db = self::instance('kbv2');
+    try {
+      $db->begin();
+      $insert['username'] = trim(QB::esc($username));
+      $insert['password'] = md5(trim(QB::esc($password)));
+      $insert['name']     = trim(QB::esc($name));
+      $qb = QB::instance('user')->insert($insert);
+      $result = $db->query($qb->get());
+      if ($rid !== null) {
+        $insertUserRole['username'] = trim(QB::esc($username));
+        $insertUserRole['rid'] = trim(QB::esc($rid));
+        $qb = QB::instance('user_role')->insert($insertUserRole);
+        $result = $db->query($qb->get());
+      }
+      if ($gid !== null) {
+        $insertGrupUser['gid'] = trim(QB::esc($gid));
+        $insertGrupUser['username'] = trim(QB::esc($username));
+        $qb = QB::instance('grup_user')->insert($insertGrupUser);
+        $result = $db->query($qb->get());
+      }
+      $db->commit();
+      return $result;
+    } catch (Exception $ex) {
+      $db->rollback();
+      throw CoreError::instance($ex->getMessage());
+    }
+  }
+
   function selectUser($username) {
     $db = self::instance('kbv2');
     $qb = QB::instance('user')->select()

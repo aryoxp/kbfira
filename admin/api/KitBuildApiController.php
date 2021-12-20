@@ -230,10 +230,78 @@ class KitBuildApiController extends CoreApi {
     }
   }
 
+  function saveLearnerMapExtended() {
+    if (!$this->postv('data')) {
+      CoreError::instance('Invalid data.')->show();
+      return;
+    }
+    $data = json_decode(CoreApi::decompress($this->postv('data'))); // var_dump($data);
+    $lmService = new LearnerMapService();
+
+    try {
+      $learnerMap = new stdClass;
+      $learnerMapExtended = new stdClass;
+      if (!$data->lmid) {
+        $learnerMap = $lmService->insert(
+          $data->kid, 
+          $data->author, 
+          $data->type, 
+          $data->cmid, 
+          $data->concepts, 
+          $data->links, 
+          $data->linktargets, 
+          $data->create_time,
+          $data->data
+        );
+        // var_dump($learnerMap->map);
+        $learnerMapExtended = $lmService->insertExtensions(
+          $learnerMap->map->lmid, 
+          $data->concepts_ext, 
+          $data->links_ext, 
+          $data->linktargets_ext
+        );
+      } else {
+        $learnerMap = $lmService->update(
+          $data->lmid, 
+          $data->kid, 
+          $data->author, 
+          $data->type,
+          $data->cmid,
+          $data->concepts, 
+          $data->links, 
+          $data->linktargets, 
+          $data->create_time,
+          $data->data
+        );
+        // var_dump($data); 
+        $learnerMapExtended = $lmService->updateExtensions(
+          $data->lmid, 
+          $data->concepts_ext, 
+          $data->links_ext, 
+          $data->linktargets_ext
+        );
+      }
+      // var_dump($learnerMapExtended);
+      CoreResult::instance($learnerMapExtended)->show();
+    } catch(Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
   function openLearnerMap($lmid = null) {
     try {
       $lmService = new LearnerMapService();
       $learnerMap = $lmService->getLearnerMap($lmid);
+      CoreResult::instance($learnerMap)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function openExtendedLearnerMap($lmid = null) {
+    try {
+      $lmService = new LearnerMapService();
+      $learnerMap = $lmService->getExtendedLearnerMap($lmid);
       CoreResult::instance($learnerMap)->show();
     } catch (Exception $ex) {
       CoreError::instance($ex->getMessage())->show();
@@ -246,6 +314,18 @@ class KitBuildApiController extends CoreApi {
       $kid = $this->postv('kid');
       $lmService = new LearnerMapService();
       $learnerMap = $lmService->getLastDraftLearnerMapOfUser($username, $kid);
+      CoreResult::instance($learnerMap)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function getLastDraftExtendedLearnerMapOfUser() {
+    try {
+      $username = $this->postv('username');
+      $kid = $this->postv('kid');
+      $lmService = new LearnerMapService();
+      $learnerMap = $lmService->getLastDraftExtendedLearnerMapOfUser($username, $kid);
       CoreResult::instance($learnerMap)->show();
     } catch (Exception $ex) {
       CoreError::instance($ex->getMessage())->show();

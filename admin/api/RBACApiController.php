@@ -414,4 +414,20 @@ class RBACApiController extends CoreApi {
     }
   }
 
+  function register() {
+    try {
+      $userService = new UserService();
+      $name     = $this->postv('name');
+      $username = $this->postv('username');
+      $password = $this->postv('password');
+      $rid      = $this->postv('rid');
+      $gid      = $this->postv('gid');
+      $result = $userService->registerUser($name, $username, $password, $rid, $gid);
+      $user = $userService->getRBACUser($username, $password);
+      CoreResult::instance($user)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
 }
