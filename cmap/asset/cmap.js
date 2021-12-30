@@ -48,8 +48,7 @@ class CmapApp {
 
     // console.log(typeof Logger)
     if (typeof CmapLogger != 'undefined') {
-      this.logger = CmapLogger.instance(null, 0, null, canvas)
-        .enable();
+      this.logger = CmapLogger.instance(null, 0, null, canvas).enable();
       CmapApp.loggerListener = 
         this.logger.onCanvasEvent.bind(this.logger)
       canvas.on("event", CmapApp.loggerListener)
@@ -551,7 +550,7 @@ CmapApp.handleRefresh = (kbui) => {
       + `<small class="text-dark fw-bold">${sessions.user.name}</small>`
       + `</span>`
       StatusBar.instance().remove('.status-user').prepend(status);
-    } else $('.bt-sign-in').trigger('click')
+    } else $('.app-navbar .bt-sign-in').trigger('click')
 
     // listen to events for broadcast to collaboration room as commands
     CmapApp.inst.canvas.on('event', CmapApp.onCanvasEvent)

@@ -45,8 +45,8 @@ class RecomposeApp {
 
   setConceptMap(conceptMap) { console.warn("CONCEPT MAP SET:", conceptMap)
     this.conceptMap = conceptMap
-    this.canvas.direction = conceptMap.map.direction
     if (conceptMap) {
+      this.canvas.direction = conceptMap.map.direction
       this.session.set('cmid', conceptMap.map.cmid)
       let status = `<span class="mx-2 d-flex align-items-center status-cmap">`
         + `<span class="badge rounded-pill bg-secondary">ID: ${conceptMap.map.cmid}</span>`
@@ -348,16 +348,16 @@ RecomposeApp.handleEvent = (kbui) => {
           RecomposeApp.resetMapToKit(kitMap, this.canvas).then(() => {
             // let cyData = KitBuildUI.composeKitMap(kitMap)
             let cyData = this.canvas.cy.elements().jsons();
-            RecomposeApp.collab("command", "set-kit-map", kitMap, cyData)
+            RecomposeApp.collab("command", "set-kit-map", kitMap, cyData);
           })
+          openDialog.hide();
         }
         if (this.canvas.cy.elements().length) {
           let confirm = UI.confirm("Open the kit replacing the current kit on Canvas?").positive(() => {
-            proceed()
-            confirm.hide()
-            openDialog.hide()
-          }).show()
-          return
+            proceed();
+            confirm.hide();
+          }).show();
+          return;
         }
         proceed()
 

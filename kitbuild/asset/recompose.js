@@ -434,7 +434,7 @@ KitBuildApp.handleEvent = (kbui) => {
     }
     if (feedbackDialog.learnerMapEdgesData) 
       $('.app-navbar .bt-clear-feedback').trigger('click')
-    console.log(learnerMap)
+    // console.log(learnerMap)
     let data = Object.assign({
       lmid: learnerMap ? learnerMap.map.lmid : null,
       kid: kitMap.map.kid,
@@ -443,7 +443,7 @@ KitBuildApp.handleEvent = (kbui) => {
       cmid: kitMap.map.cmid,
       create_time: null,
       data: null,
-    }, KitBuildUI.buildConceptMapData(this.canvas)); console.log(data); // return
+    }, KitBuildUI.buildConceptMapData(this.canvas)); // console.log(data); // return
     this.ajax.post("kitBuildApi/saveLearnerMap", { data: Core.compress(data) })
       .then(learnerMap => { // console.log(kitMap);
         KitBuildApp.inst.setLearnerMap(learnerMap);
@@ -832,7 +832,7 @@ KitBuildApp.handleRefresh = (kbui) => {
       + `<small class="text-dark fw-bold">${sessions.user.name}</small>`
       + `</span>`
       StatusBar.instance().remove('.status-user').prepend(status);
-    } else $('.bt-sign-in').trigger('click')
+    } else $('.app-navbar .bt-sign-in').trigger('click')
 
     // listen to events for broadcast to collaboration room as commands
     KitBuildApp.inst.canvas.on('event', KitBuildApp.onCanvasEvent)

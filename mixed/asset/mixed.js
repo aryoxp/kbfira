@@ -1,18 +1,32 @@
 $(() => { // jQuery onReady callback
-  let app = KitBuildApp.instance()
+  let app = MixedApp.instance()
 })
 
-class KitBuildApp {
+class MixedApp {
   constructor() {
-    this.kbui = KitBuildUI.instance(KitBuildApp.canvasId)
-    let canvas = this.kbui.canvases.get(KitBuildApp.canvasId)
+    this.kbui = KitBuildUI.instance(MixedApp.canvasId)
+    let canvas = this.kbui.canvases.get(MixedApp.canvasId)
+    canvas.addToolbarTool(KitBuildToolbar.NODE_CREATE, { priority: 1, direction: false })
     canvas.addToolbarTool(KitBuildToolbar.UNDO_REDO, { priority: 3 })
     canvas.addToolbarTool(KitBuildToolbar.CAMERA, { priority: 4 })
     canvas.addToolbarTool(KitBuildToolbar.UTILITY, { priority: 5, trash: false })
     canvas.addToolbarTool(KitBuildToolbar.LAYOUT, { stack: 'right' })
     canvas.toolbar.render()
 
+    canvas.addCanvasTool(KitBuildCanvasTool.DELETE)
+    canvas.addCanvasTool(KitBuildCanvasTool.DUPLICATE)
+    canvas.addCanvasTool(KitBuildCanvasTool.EDIT)
+    canvas.addCanvasTool(KitBuildCanvasTool.SWITCH)
+    canvas.addCanvasTool(KitBuildCanvasTool.DISCONNECT)
     canvas.addCanvasTool(KitBuildCanvasTool.CENTROID)
+    canvas.addCanvasTool(KitBuildCanvasTool.CREATE_CONCEPT)
+    canvas.addCanvasTool(KitBuildCanvasTool.CREATE_LINK)
+    // canvas.addCanvasTool(KitBuildCanvasTool.LOCK) // also UNLOCK toggle
+
+    canvas.addCanvasMultiTool(KitBuildCanvasTool.DELETE)
+    canvas.addCanvasMultiTool(KitBuildCanvasTool.DUPLICATE)
+    // canvas.addCanvasMultiTool(KitBuildCanvasTool.LOCK)
+    // canvas.addCanvasMultiTool(KitBuildCanvasTool.UNLOCK)
     
     this.canvas = canvas
 
@@ -20,31 +34,31 @@ class KitBuildApp {
     // Hack for sidebar-panel show/hide
     // To auto-resize the canvas.
     // AA
-    // let observer = new MutationObserver((mutations) => $(`#${KitBuildApp.canvasId} > div`).css('width', 0))
+    // let observer = new MutationObserver((mutations) => $(`#${MixedApp.canvasId} > div`).css('width', 0))
     // observer.observe(document.querySelector('#admin-sidebar-panel'), {attributes: true})
     // Enable tooltip
     $('[data-bs-toggle="tooltip"]').tooltip({ html: true })
 
     if (typeof KitBuildCollab == 'function')
-      KitBuildApp.collabInst = KitBuildCollab.instance('kitbuild', null, canvas)
+      MixedApp.collabInst = KitBuildCollab.instance('kitbuild', null, canvas)
 
     // Browser lifecycle event
-    KitBuildUI.addLifeCycleListener(KitBuildApp.onBrowserStateChange)
+    KitBuildUI.addLifeCycleListener(MixedApp.onBrowserStateChange)
 
     // Logger
     if (typeof KitBuildLogger != 'undefined') {
       this.logger = KitBuildLogger.instance(null, 0, null, canvas)
         .enable();
-      KitBuildApp.loggerListener = 
+      MixedApp.loggerListener = 
         this.logger.onCanvasEvent.bind(this.logger)
-      canvas.on("event", KitBuildApp.loggerListener)
+      canvas.on("event", MixedApp.loggerListener)
     }
   }
 
   static instance() {
-    KitBuildApp.inst = new KitBuildApp()
-    KitBuildApp.handleEvent(KitBuildApp.inst.kbui)
-    KitBuildApp.handleRefresh(KitBuildApp.inst.kbui)
+    MixedApp.inst = new MixedApp()
+    MixedApp.handleEvent(MixedApp.inst.kbui)
+    MixedApp.handleRefresh(MixedApp.inst.kbui)
   }
 
   setConceptMap(conceptMap) { console.warn("CONCEPT MAP SET:", conceptMap)
@@ -107,11 +121,11 @@ class KitBuildApp {
   }
 }
 
-KitBuildApp.canvasId = "recompose-canvas"
+MixedApp.canvasId = "recompose-canvas"
 
-KitBuildApp.handleEvent = (kbui) => {
+MixedApp.handleEvent = (kbui) => {
 
-  let canvas = kbui.canvases.get(KitBuildApp.canvasId)
+  let canvas = kbui.canvases.get(MixedApp.canvasId)
   let ajax = Core.instance().ajax()
   let session = Core.instance().session()
 
@@ -129,7 +143,7 @@ KitBuildApp.handleEvent = (kbui) => {
         $(`#input-layout-${saveAsDialog.kitMap.map.layout}`).prop('checked', true)
         $('#input-enabled').prop('checked', saveAsDialog.kitMap.map.enabled == "1" ? true : false)
       } else {
-        $('#kit-save-as-dialog .input-title').val('Kit of ' + KitBuildApp.inst.conceptMap.map.title)
+        $('#kit-save-as-dialog .input-title').val('Kit of ' + MixedApp.inst.conceptMap.map.title)
         $('#kit-save-as-dialog .input-title').focus().select()
         $('#kit-save-as-dialog .bt-generate-fid').trigger('click')
         $('#input-layout-preset').prop('checked', true)
@@ -224,7 +238,7 @@ KitBuildApp.handleEvent = (kbui) => {
 
 
   /** 
-   * Open or Create New Kit
+   * Open Kit
    * */
 
   $('.app-navbar').on('click', '.bt-open-kit', () => {
@@ -322,10 +336,10 @@ KitBuildApp.handleEvent = (kbui) => {
   })
   
   $('#concept-map-open-dialog .bt-refresh-topic-list').on('click', () => {
-    console.log(KitBuildApp.inst.user, this);
-    if (!KitBuildApp.inst || !KitBuildApp.inst.user || !KitBuildApp.inst.user.groups) return;
+    console.log(MixedApp.inst.user, this);
+    if (!MixedApp.inst || !MixedApp.inst.user || !MixedApp.inst.user.groups) return;
     this.ajax.post(`kitBuildApi/getTopicListOfGroup`, {
-      gids: KitBuildApp.inst.user.groups.split(",")
+      gids: MixedApp.inst.user.groups.split(",")
     }).then(topics => { // console.log(topics)
       let topicsHtml = '';
       topics.forEach(t => { // console.log(t);
@@ -352,13 +366,14 @@ KitBuildApp.handleEvent = (kbui) => {
     }
     KitBuild.openKitMap(openDialog.kid).then(kitMap => {
       try {
-        KitBuildApp.parseKitMapOptions(kitMap)
+        MixedApp.parseKitMapOptions(kitMap)
         let proceed = () => {
-          KitBuildApp.inst.setKitMap(kitMap)
-          KitBuildApp.inst.setLearnerMap()
-          KitBuildApp.resetMapToKit(kitMap, this.canvas).then(() => {
+          MixedApp.inst.setKitMap(kitMap)
+          MixedApp.inst.setLearnerMap()
+          MixedApp.enableNavbarButton()
+          MixedApp.resetMapToKit(kitMap, this.canvas).then(() => {
             let cyData = this.canvas.cy.elements().jsons();
-            KitBuildApp.collab("command", "set-kit-map", kitMap, cyData)
+            MixedApp.collab("command", "set-kit-map", kitMap, cyData)
           })
           openDialog.hide()
         }
@@ -395,8 +410,8 @@ KitBuildApp.handleEvent = (kbui) => {
    * Content
    * */
 
-  $('.app-navbar').on('click', '.bt-content', () => { // console.log(KitBuildApp.inst)
-    if (!KitBuildApp.inst.kitMap) return
+  $('.app-navbar').on('click', '.bt-content', () => { // console.log(MixedApp.inst)
+    if (!MixedApp.inst.kitMap) return
     else contentDialog.setContent().show()
   })
 
@@ -425,35 +440,35 @@ KitBuildApp.handleEvent = (kbui) => {
    * Save Load Learner Map
    * */
 
-  $('.app-navbar').on('click', '.bt-save', () => { // console.log(KitBuildApp.inst)
-    let learnerMap = KitBuildApp.inst.learnerMap
-    let kitMap = KitBuildApp.inst.kitMap
+  $('.app-navbar').on('click', '.bt-save', () => { // console.log(MixedApp.inst)
+    let learnerMap = MixedApp.inst.learnerMap
+    let kitMap = MixedApp.inst.kitMap
     if (!kitMap) {
       UI.warning('Please open a kit.').show()
       return
     }
     if (feedbackDialog.learnerMapEdgesData) 
-      $('.app-navbar .bt-clear-feedback').trigger('click')
-    // console.log(learnerMap)
+      $('.app-navbar .bt-clear-feedback').trigger('click')      
+    let elements = KitBuildUI.buildConceptMapData(this.canvas, kitMap.conceptMap);
     let data = Object.assign({
-      lmid: learnerMap ? learnerMap.map.lmid : null,
+      lmid: learnerMap && learnerMap.map ? learnerMap.map.lmid : null,
       kid: kitMap.map.kid,
-      author: KitBuildApp.inst.user ? KitBuildApp.inst.user.username : null,
+      author: MixedApp.inst.user ? MixedApp.inst.user.username : null,
       type: 'draft',
       cmid: kitMap.map.cmid,
       create_time: null,
       data: null,
-    }, KitBuildUI.buildConceptMapData(this.canvas)); // console.log(data); // return
-    this.ajax.post("kitBuildApi/saveLearnerMap", { data: Core.compress(data) })
-      .then(learnerMap => { // console.log(kitMap);
-        KitBuildApp.inst.setLearnerMap(learnerMap);
+    }, elements); console.log(data); // return
+    this.ajax.post("kitBuildApi/saveLearnerMapExtended", { data: Core.compress(data) })
+      .then(learnerMap => { // console.log(learnerMap);
+        MixedApp.inst.setLearnerMap(learnerMap);
         UI.success("Concept map has been saved successfully.").show(); 
       })
       .catch(error => { UI.error(error).show(); })
   })
 
   $('.app-navbar').on('click', '.bt-load', () => {
-    let kitMap = KitBuildApp.inst.kitMap
+    let kitMap = MixedApp.inst.kitMap
     if (!kitMap) {
       UI.warning('Please open a kit.').show()
       return
@@ -463,11 +478,11 @@ KitBuildApp.handleEvent = (kbui) => {
     
     let data = {
       kid: kitMap.map.kid,
-      username: KitBuildApp.inst.user.username
+      username: MixedApp.inst.user.username
     }
     if (!data.username) delete data.username
     console.log(data);
-    this.ajax.post('kitBuildApi/getLastDraftLearnerMapOfUser', data).then(learnerMap => { console.log(learnerMap)
+    this.ajax.post('kitBuildApi/getLastDraftExtendedLearnerMapOfUser', data).then(learnerMap => { console.log(learnerMap)
       if (!learnerMap) {
         UI.warning("No user saved map data for this kit.").show()
         return
@@ -478,20 +493,25 @@ KitBuildApp.handleEvent = (kbui) => {
             learnerMap.kitMap = kitMap;
             learnerMap.conceptMap = kitMap.conceptMap;
             canvas.cy.elements().remove()
-            canvas.cy.add(KitBuildUI.composeLearnerMap(learnerMap))
+            console.log(learnerMap);
+            let cyData = KitBuildUI.composeLearnerMap(learnerMap);
+            cyData.forEach(el => { // console.error(el.data);
+              if (["nodes"].includes(el.group) && el.data?.extension !== true) el.data.lock = "locked";
+            }); // console.log(cyData);
+            canvas.cy.add(cyData)
             canvas.applyElementStyle()
             canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0}).then(() => {
-              KitBuildApp.collab("command", "set-kit-map", kitMap, 
+              MixedApp.collab("command", "set-kit-map", kitMap, 
                 canvas.cy.elements().jsons())
             })
-            KitBuildApp.inst.setLearnerMap(learnerMap);
+            MixedApp.inst.setLearnerMap(learnerMap);
             
             UI.info("Concept map loaded.").show()
             confirm.hide()
           }).show()
           return
       }
-      KitBuildApp.openLearnerMap(learnerMap.map.lmid, this.canvas);
+      MixedApp.openLearnerMap(learnerMap.map.lmid, this.canvas);
     }).catch(error => {
       console.error(error)
       UI.error("Unable to load saved concept map.").show()
@@ -510,7 +530,7 @@ KitBuildApp.handleEvent = (kbui) => {
    * */
 
   $('.app-navbar').on('click', '.bt-reset', e => {
-    if (!KitBuildApp.inst.kitMap) {
+    if (!MixedApp.inst.kitMap) {
       UI.info('Please open a kit.')
       return
     }
@@ -518,11 +538,11 @@ KitBuildApp.handleEvent = (kbui) => {
       $('.app-navbar .bt-clear-feedback').trigger('click')
 
     let confirm = UI.confirm('Do you want to reset this concept map as defined in the kit?').positive(() => {
-      KitBuild.openKitMap(KitBuildApp.inst.kitMap.map.kid)
+      KitBuild.openKitMap(MixedApp.inst.kitMap.map.kid)
         .then(kitMap => {
-          KitBuildApp.parseKitMapOptions(kitMap)
-          KitBuildApp.resetMapToKit(kitMap, this.canvas).then(() => {
-            KitBuildApp.collab("command", "set-kit-map", kitMap, 
+          MixedApp.parseKitMapOptions(kitMap)
+          MixedApp.resetMapToKit(kitMap, this.canvas).then(() => {
+            MixedApp.collab("command", "set-kit-map", kitMap, 
               this.canvas.cy.elements().jsons())
           })
           let undoRedo = this.canvas.toolbar.tools.get(KitBuildToolbar.UNDO_REDO)
@@ -550,36 +570,37 @@ KitBuildApp.handleEvent = (kbui) => {
    */
   $('.app-navbar').on('click', '.bt-feedback', () => {
 
-    if (!KitBuildApp.inst.kitMap) return
+    if (!MixedApp.inst.kitMap) return
     if (feedbackDialog.learnerMapEdgesData) 
       $('.app-navbar .bt-clear-feedback').trigger('click')
 
-    let learnerMapData = KitBuildUI.buildConceptMapData(this.canvas)
+    let kitMap = MixedApp.inst.kitMap
+    
     feedbackDialog.learnerMapEdgesData = this.canvas.cy.edges().jsons()
 
-    let feedbacksave = KitBuildApp.inst.kitMap.parsedOptions.feedbacksave
+    let elements = KitBuildUI.buildConceptMapData(this.canvas, kitMap.conceptMap);
+    let feedbacksave = MixedApp.inst.kitMap.parsedOptions.feedbacksave
     if (feedbacksave) {
-      let kitMap = KitBuildApp.inst.kitMap
       let data = Object.assign({
         lmid: null, // so it will insert new rather than update
         kid: kitMap.map.kid,
-        author: this.user ? this.user.username : null,
+        author: MixedApp.inst.user ? MixedApp.inst.user.username : null,
         type: 'feedback',
         cmid: kitMap.map.cmid,
         create_time: null,
         data: null,
-      }, learnerMapData); console.log(data); // return
-      this.ajax.post("kitBuildApi/saveLearnerMap", { data: Core.compress(data) })
-        .then(learnerMap => {
+      }, elements); // console.log(data); // return
+      this.ajax.post("kitBuildApi/saveLearnerMapExtended", { data: Core.compress(data) })
+        .then(learnerMap => { console.error(learnerMap);
           console.warn("Concept map save-on-feedback has been saved successfully.");
         }).catch(error => { console.error(error); })
     }
 
-    learnerMapData.conceptMap = KitBuildApp.inst.conceptMap
-    Analyzer.composePropositions(learnerMapData)
-    let direction = learnerMapData.conceptMap.map.direction
-    let feedbacklevel = KitBuildApp.inst.kitMap.parsedOptions.feedbacklevel
-    let compare = Analyzer.compare(learnerMapData, direction)
+    elements.conceptMap = MixedApp.inst.conceptMap
+    Analyzer.composePropositions(elements)
+    let direction = elements.conceptMap.map.direction
+    let feedbacklevel = MixedApp.inst.kitMap.parsedOptions.feedbacklevel
+    let compare = Analyzer.compare(elements, direction)
     let level = Analyzer.NONE
     let dialogLevel = Analyzer.NONE;
     switch(feedbacklevel) {
@@ -634,34 +655,33 @@ KitBuildApp.handleEvent = (kbui) => {
   $('.app-navbar').on('click', '.bt-submit', () => {
     if (feedbackDialog.learnerMapEdgesData) 
       $('.app-navbar .bt-clear-feedback').trigger('click')
-
-    let learnerMapData = KitBuildUI.buildConceptMapData(this.canvas)
+    
+    let kitMap = MixedApp.inst.kitMap;
+    let learnerMapData = KitBuildUI.buildConceptMapData(this.canvas, kitMap.conceptMap);
     let confirm = UI.confirm("Do you want to submit your concept map?<br/>This will end your concept map recomposition session.")
       .positive(() => {
-        let kitMap = KitBuildApp.inst.kitMap
         let data = Object.assign({
           lmid: null, // so it will insert new rather than update
           kid: kitMap.map.kid,
-          author: KitBuildApp.inst.user ? KitBuildApp.inst.user.username : null,
+          author: MixedApp.inst.user ? MixedApp.inst.user.username : null,
           type: 'fix',
           cmid: kitMap.map.cmid,
           create_time: null,
           data: null,
-        }, learnerMapData); console.log(data); // return
+        }, learnerMapData); // console.log(data); // return
         confirm.hide()
-        
-        this.ajax.post("kitBuildApi/saveLearnerMap", { data: Core.compress(data) })
+        this.ajax.post("kitBuildApi/saveLearnerMapExtended", { data: Core.compress(data) })
           .then(learnerMap => {
             
             // TODO: check if kit allow review to show full comparison?
             // TODO: set session of submitted learner map for review
             Core.instance().session().set('flmid', learnerMap.map.lmid).then((result) => {
-              UI.success("Concept map has been submitted.").show();
+              UI.success("Concept map has been submitted. Now redirecting to review page...").show();
               setTimeout(() => {
                 // TODO: and then change state to full feedback if set in kit options
                 let baseurl = Core.instance().config().get('baseurl')
                 window.location.href = baseurl + "review";
-              }, 3000)
+              }, 2000)
             }).catch(() => {
               UI.error('Unable to proceed to review.').show()
             });
@@ -696,13 +716,13 @@ KitBuildApp.handleEvent = (kbui) => {
   $('.app-navbar .bt-logout').on('click', (e) => {
     let confirm = UI.confirm('Do you want to logout?<br>This will <strong class="text-danger">END</strong> your concept mapping session.').positive(() => {
       Core.instance().session().unset('user').then(() => {
-        KitBuildApp.inst.setKitMap(null);
-        KitBuildApp.inst.setLearnerMap(null);
+        MixedApp.inst.setKitMap(null);
+        MixedApp.inst.setLearnerMap(null);
         KitBuildCollab.enableControl(false);
-        KitBuildApp.enableNavbarButton(false);
-        KitBuildApp.updateSignInOutButton();
+        MixedApp.enableNavbarButton(false);
+        MixedApp.updateSignInOutButton();
         StatusBar.instance().remove('.status-user');
-        if (KitBuildApp.collabInst) KitBuildApp.collabInst.disconnect();
+        if (MixedApp.collabInst) MixedApp.collabInst.disconnect();
         this.canvas.cy.elements().remove();
         this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
         this.canvas.toolbar.tools.get(KitBuildToolbar.UNDO_REDO).clearStacks().updateStacksStateButton();
@@ -736,46 +756,33 @@ KitBuildApp.handleEvent = (kbui) => {
    * Sign In
   */
   $('.app-navbar .bt-sign-in').on('click', (e) => {
-    KitBuildApp.inst.modalRegister = UI.modal('#register-dialog', {
+    MixedApp.inst.modalSignIn = UI.modal('#modal-sign-in', {
       width: 350,
       onShow: () => {}
     })
-    KitBuildApp.inst.modalRegister.show()
+    MixedApp.inst.modalSignIn.show()
   })
 
-  $('#register-dialog').on('click', '.bt-register', (e) => {
+  $('#modal-sign-in').on('click', '.bt-sign-in', (e) => {
     e.preventDefault()
-    let name = $('#input-name').val();
-    let username = 'demo-' + Math.random().toString(36).slice(2);
-    let password = null;
-    let rid = 'DEMO-STUDENT';
-    let gid = 'DEMO';
-
-    if (name.trim().length == 0) {
-      UI.dialog('Please provide a name.', {
-        icon: 'exclamation-triangle-fill',
-        iconStyle: 'warning'
-      }).show();
-    }
-
-    console.log(name, username, password, rid, gid);
-
-    KitBuildRBAC.register(name, username, password, rid, gid).then(user => { console.log(user)
+    let username = $('#input-username').val();
+    let password = $('#input-password').val();
+    KitBuildRBAC.signIn(username, password).then(user => { console.log(user)
       if (typeof user == 'object' && user) {
         Core.instance().session().set('user', user).then(() => {
-          KitBuildApp.updateSignInOutButton();
-          KitBuildApp.enableNavbarButton();
-          KitBuildApp.initCollab(user);
+          MixedApp.updateSignInOutButton();
+          MixedApp.enableNavbarButton();
+          MixedApp.initCollab(user);
         })
-        KitBuildApp.inst.modalRegister.hide()
-        KitBuildApp.inst.user = user;
+        MixedApp.inst.modalSignIn.hide()
+        MixedApp.inst.user = user;
 
         let status = `<span class="mx-2 d-flex align-items-center status-user">`
         + `<small class="text-dark fw-bold">${user.name}</small>`
         + `</span>`
         StatusBar.instance().remove('.status-user').prepend(status);
-      } else UI.error(`Error: ${user}`).show();
-    }).catch(error => UI.error(`Error: ${error}`).show());
+      }
+    }).catch(error => UI.error(error).show());
   })
 
 }
@@ -793,52 +800,56 @@ KitBuildApp.handleEvent = (kbui) => {
  * Handle refresh web browser
  */
 
-KitBuildApp.handleRefresh = (kbui) => {
+MixedApp.handleRefresh = (kbui) => {
   let session = Core.instance().session()
-  let canvas  = kbui.canvases.get(KitBuildApp.canvasId)
-  let stateData = JSON.parse(localStorage.getItem(KitBuildApp.name))
+  let canvas  = kbui.canvases.get(MixedApp.canvasId)
+  let stateData = JSON.parse(localStorage.getItem(MixedApp.name))
   // console.warn("RESTORE STATE:", stateData)
   session.getAll().then(sessions => { // console.log(sessions)
     let kid  = sessions.kid
     let lmid = sessions.lmid
     let promises = []
     if (kid) promises.push(KitBuild.openKitMap(kid))
-    if (lmid) promises.push(KitBuild.openLearnerMap(lmid))
+    if (lmid) promises.push(KitBuild.openExtendedLearnerMap(lmid))
     Promise.all(promises).then(maps => {
       let kitMap = maps[0]
       let learnerMap = maps[1]
-      KitBuildApp.parseKitMapOptions(kitMap)
-      if (kitMap && !learnerMap) KitBuildApp.resetMapToKit(kitMap, canvas)
+      MixedApp.parseKitMapOptions(kitMap)
+      if (kitMap && !learnerMap) MixedApp.resetMapToKit(kitMap, canvas)
       if (kitMap) {
         try {
           if (stateData && stateData.logger) {
             // reinstantiate and enable logger
-            KitBuildApp.inst.logger = 
+            MixedApp.inst.logger = 
             KitBuildLogger.instance(stateData.logger.username, stateData.logger.seq, stateData.logger.sessid, canvas, kitMap.conceptMap).enable();
             // reattach logger
-            if (KitBuildApp.loggerListener)
-              canvas.off("event", KitBuildApp.loggerListener)
-            KitBuildApp.loggerListener = KitBuildApp.inst.logger.onCanvasEvent.bind(KitBuildApp.inst.logger)
-            canvas.on("event", KitBuildApp.loggerListener)
+            if (MixedApp.loggerListener)
+              canvas.off("event", MixedApp.loggerListener)
+            MixedApp.loggerListener = MixedApp.inst.logger.onCanvasEvent.bind(MixedApp.inst.logger)
+            canvas.on("event", MixedApp.loggerListener)
           }
         } catch (error) { console.warn(error) }
       }
       if (learnerMap) {
-        KitBuildApp.inst.setKitMap(kitMap)
-        KitBuildApp.inst.setLearnerMap(learnerMap)
+        MixedApp.inst.setKitMap(kitMap)
+        MixedApp.inst.setLearnerMap(learnerMap)
         learnerMap.kitMap = kitMap
         learnerMap.conceptMap = kitMap.conceptMap
         canvas.cy.elements().remove()
-        canvas.cy.add(KitBuildUI.composeLearnerMap(learnerMap))
-        canvas.applyElementStyle()
+        let cyData = KitBuildUI.composeLearnerMap(learnerMap);
+        cyData.forEach(el => { // console.error(el.data);
+          if (["nodes"].includes(el.group) && el.data?.extension !== true) el.data.lock = "locked";
+        })
+        canvas.cy.add(cyData)
         canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
+        canvas.applyElementStyle()
       } // else UI.warning('Unable to display kit.').show()
     })
 
-    KitBuildApp.enableNavbarButton(false)
+    MixedApp.enableNavbarButton(false)
     if (sessions.user) {
-      KitBuildApp.initCollab(sessions.user)
-      KitBuildApp.enableNavbarButton()
+      MixedApp.initCollab(sessions.user)
+      MixedApp.enableNavbarButton()
       KitBuildCollab.enableControl()
 
       let status = `<span class="mx-2 d-flex align-items-center status-user">`
@@ -848,29 +859,29 @@ KitBuildApp.handleRefresh = (kbui) => {
     } else $('.app-navbar .bt-sign-in').trigger('click')
 
     // listen to events for broadcast to collaboration room as commands
-    KitBuildApp.inst.canvas.on('event', KitBuildApp.onCanvasEvent)
+    MixedApp.inst.canvas.on('event', MixedApp.onCanvasEvent)
 
 
   })
 }
 
-KitBuildApp.onBrowserStateChange = event => { console.warn(event)
+MixedApp.onBrowserStateChange = event => { console.warn(event)
   if (event.newState == "terminated") {
     let stateData = {}
-    console.log(KitBuildApp.inst.logger)
-    if (KitBuildApp.inst && KitBuildApp.inst.logger) 
+    console.log(MixedApp.inst.logger)
+    if (MixedApp.inst && MixedApp.inst.logger) 
       stateData.logger = {
-        username: KitBuildApp.inst.logger.username,
-        seq: KitBuildApp.inst.logger.seq,
-        sessid: KitBuildApp.inst.logger.sessid,
-        enabled: KitBuildApp.inst.logger.enabled,
+        username: MixedApp.inst.logger.username,
+        seq: MixedApp.inst.logger.seq,
+        sessid: MixedApp.inst.logger.sessid,
+        enabled: MixedApp.inst.logger.enabled,
       }
-    stateData.map = Core.compress(KitBuildApp.inst.canvas.cy.elements().jsons())
-    // console.warn(JSON.stringify(KitBuildApp.inst.canvas.cy.elements().jsons()), 
-      // JSON.stringify(KitBuildApp.inst.canvas.cy.nodes().jsons()))
+    stateData.map = Core.compress(MixedApp.inst.canvas.cy.elements().jsons())
+    // console.warn(JSON.stringify(MixedApp.inst.canvas.cy.elements().jsons()), 
+      // JSON.stringify(MixedApp.inst.canvas.cy.nodes().jsons()))
     let cmapAppStateData = JSON.stringify(Object.assign({}, stateData)) 
     console.warn("STATE STORE:", cmapAppStateData)
-    localStorage.setItem(KitBuildApp.name, cmapAppStateData)
+    localStorage.setItem(MixedApp.name, cmapAppStateData)
   }
 }
 
@@ -883,29 +894,29 @@ KitBuildApp.onBrowserStateChange = event => { console.warn(event)
 
 // convert concept mapping event to collaboration command
 // App --> Server
-KitBuildApp.collab = (action, ...data) => {
+MixedApp.collab = (action, ...data) => {
   // not connected? skip.
-  if (!KitBuildApp.collabInst || !KitBuildApp.collabInst.connected()) return
+  if (!MixedApp.collabInst || !MixedApp.collabInst.connected()) return
   if (!KitBuildCollab.room()) return
   
   switch(action) {
     case "command": {
       let command = data.shift()
       // console.warn(command, data);
-      KitBuildApp.collabInst.command(command, ...data).then(result => {
+      MixedApp.collabInst.command(command, ...data).then(result => {
         console.error(command, result);
       }).catch(error => console.error(command, error))
     } break;
     case "get-map-state": {
-      KitBuildApp.collabInst.getMapState().then(result => {})
+      MixedApp.collabInst.getMapState().then(result => {})
         .catch(error => UI.error("Unable to get map state: " + error).show())
     } break;
     case "send-map-state": {
-      KitBuildApp.collabInst.sendMapState(...data).then(result => {})
+      MixedApp.collabInst.sendMapState(...data).then(result => {})
         .catch(error => UI.error("Unable to send map state: " + error).show())
     } break;
     case "get-channels": { 
-      KitBuildApp.collabInst.tools.get('channel').getChannels()
+      MixedApp.collabInst.tools.get('channel').getChannels()
         .then(channels => {})
         .catch(error => UI.error("Unable to get channels: " + error)
         .show())
@@ -913,66 +924,66 @@ KitBuildApp.collab = (action, ...data) => {
   }
 }
 
-KitBuildApp.onCanvasEvent = (canvasId, event, data) => {
-  KitBuildApp.collab("command", event, canvasId, data);
+MixedApp.onCanvasEvent = (canvasId, event, data) => {
+  MixedApp.collab("command", event, canvasId, data);
 }
 
 // handles incoming collaboration event
 // Server --> App
-KitBuildApp.onCollabEvent = (event, ...data) => {
+MixedApp.onCollabEvent = (event, ...data) => {
   // console.warn(event, data)
   switch(event) {
     case 'connect':
     case 'reconnect':
       break;
     case 'join-room': {
-      KitBuildApp.collab("get-map-state")
+      MixedApp.collab("get-map-state")
     } break;
     case 'socket-command': {
       let command = data.shift()
-      KitBuildApp.processCollabCommand(command, data)
+      MixedApp.processCollabCommand(command, data)
     } break;
     case 'socket-get-map-state': {
       let requesterSocketId = data.shift()
-      KitBuildApp.generateMapState()
+      MixedApp.generateMapState()
         .then(mapState => {
-          KitBuildApp.collab("send-map-state", requesterSocketId, mapState)
+          MixedApp.collab("send-map-state", requesterSocketId, mapState)
         })
     }  break;
     case 'socket-set-map-state': {
       let mapState = data.shift()
-      KitBuildApp.applyMapState(mapState).then(() => {
-        KitBuildApp.collab("get-channels")
+      MixedApp.applyMapState(mapState).then(() => {
+        MixedApp.collab("get-channels")
       });
     }  break;
   }
 }
-KitBuildApp.processCollabCommand = (command, data) => {
+MixedApp.processCollabCommand = (command, data) => {
   console.log(command, data)
   switch(command) {
     case "set-kit-map": {
       let kitMap = data.shift()
       let cyData = data.shift()
-      console.log(kitMap, cyData, KitBuildApp.inst.learnerMap)
-      KitBuildApp.inst.setKitMap(kitMap)
-
+      console.log(kitMap, cyData, MixedApp.inst.learnerMap)
+      MixedApp.inst.setKitMap(kitMap)
+      MixedApp.enableNavbarButton()
       // if current user has no saved learnerMap
       // or it is different kit, then reset the learnermap
-      if (KitBuildApp.inst.learnerMap
-        && KitBuildApp.inst.learnerMap.map.kid == kitMap.map.kid) {} 
-      else KitBuildApp.inst.setLearnerMap() // remove save data
+      if (MixedApp.inst.learnerMap
+        && MixedApp.inst.learnerMap.map.kid == kitMap.map.kid) {} 
+      else MixedApp.inst.setLearnerMap() // remove save data
       
-      // KitBuildApp.inst.setLearnerMap()
-      KitBuildApp.resetMapToKit(kitMap, KitBuildApp.inst.canvas)
+      // MixedApp.inst.setLearnerMap()
+      MixedApp.resetMapToKit(kitMap, MixedApp.inst.canvas)
         .then(() => {
           console.log(cyData)
-          KitBuildApp.inst.canvas.cy.elements().remove()
-          KitBuildApp.inst.canvas.cy.add(cyData)
-          KitBuildApp.inst.canvas.applyElementStyle()
-          KitBuildApp.inst.canvas.canvasTool.clearCanvas().clearIndicatorCanvas()
-          KitBuildApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
-          // KitBuildApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(kitMap.conceptMap.map.direction)
-          KitBuildApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.UNDO_REDO).clearStacks().updateStacksStateButton();
+          MixedApp.inst.canvas.cy.elements().remove()
+          MixedApp.inst.canvas.cy.add(cyData)
+          MixedApp.inst.canvas.applyElementStyle()
+          MixedApp.inst.canvas.canvasTool.clearCanvas().clearIndicatorCanvas()
+          MixedApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
+          // MixedApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(kitMap.conceptMap.map.direction)
+          MixedApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.UNDO_REDO).clearStacks().updateStacksStateButton();
           UI.info('Concept map has been set by peer.').show()
         })
     } break;
@@ -981,7 +992,7 @@ KitBuildApp.processCollabCommand = (command, data) => {
       let moves = data.shift()
       let nodes = moves.later;
       if (Array.isArray(nodes)) nodes.forEach(node => 
-      KitBuildApp.inst.canvas.moveNode(node.id, node.x, node.y, 200))
+      MixedApp.inst.canvas.moveNode(node.id, node.x, node.y, 200))
     } break;
     case "redo-move-nodes":
     case "undo-move-nodes": {
@@ -989,14 +1000,14 @@ KitBuildApp.processCollabCommand = (command, data) => {
       let moves = data.shift()
       let nodes = moves;
       if (Array.isArray(nodes)) nodes.forEach(node => 
-      KitBuildApp.inst.canvas.moveNode(node.id, node.x, node.y, 200))
+      MixedApp.inst.canvas.moveNode(node.id, node.x, node.y, 200))
     } break;
     case "undo-centroid":
     case "undo-move-link":
     case "undo-move-concept": {
       let canvasId = data.shift()
       let move = data.shift()
-      KitBuildApp.inst.canvas.moveNode(move.from.id, move.from.x, move.from.y, 200)
+      MixedApp.inst.canvas.moveNode(move.from.id, move.from.x, move.from.y, 200)
     } break;
     case "centroid":
     case "redo-centroid":
@@ -1006,14 +1017,14 @@ KitBuildApp.processCollabCommand = (command, data) => {
     case "move-concept": {
       let canvasId = data.shift()
       let move = data.shift()
-      KitBuildApp.inst.canvas.moveNode(move.to.id, move.to.x, move.to.y, 200)
+      MixedApp.inst.canvas.moveNode(move.to.id, move.to.x, move.to.y, 200)
     } break;
     case "layout-elements": {
       let canvasId = data.shift()
       let layoutMoves = data.shift()
       let nodes = layoutMoves.later;
       if (Array.isArray(nodes)) nodes.forEach(node => 
-      KitBuildApp.inst.canvas.moveNode(node.id, node.position.x, node.position.y, 200))
+      MixedApp.inst.canvas.moveNode(node.id, node.position.x, node.position.y, 200))
     } break;
     case "redo-layout-elements":
     case "undo-layout-elements":
@@ -1021,7 +1032,7 @@ KitBuildApp.processCollabCommand = (command, data) => {
       let canvasId = data.shift()
       let nodes = data.shift()
       if (Array.isArray(nodes)) nodes.forEach(node => 
-      KitBuildApp.inst.canvas.moveNode(node.id, node.position.x, node.position.y, 200))
+      MixedApp.inst.canvas.moveNode(node.id, node.position.x, node.position.y, 200))
     } break;
     case "undo-disconnect-right":
     case "undo-disconnect-left":
@@ -1031,7 +1042,7 @@ KitBuildApp.processCollabCommand = (command, data) => {
     case "connect-left": {
       let canvasId = data.shift()
       let edge = data.shift()
-      KitBuildApp.inst.canvas.createEdge(edge.data)
+      MixedApp.inst.canvas.createEdge(edge.data)
     } break;
     case "undo-connect-right":
     case "undo-connect-left":
@@ -1041,13 +1052,13 @@ KitBuildApp.processCollabCommand = (command, data) => {
     case "disconnect-right": { 
       let canvasId = data.shift()
       let edge = data.shift()
-      KitBuildApp.inst.canvas.removeEdge(edge.data.source, edge.data.target)
+      MixedApp.inst.canvas.removeEdge(edge.data.source, edge.data.target)
     } break;
     case "undo-move-connect-left":
     case "undo-move-connect-right": { 
       let canvasId = data.shift()
       let moveData = data.shift()
-      KitBuildApp.inst.canvas.moveEdge(moveData.later, moveData.prior)
+      MixedApp.inst.canvas.moveEdge(moveData.later, moveData.prior)
     } break;
     case "redo-move-connect-left":
     case "redo-move-connect-right":
@@ -1055,19 +1066,19 @@ KitBuildApp.processCollabCommand = (command, data) => {
     case "move-connect-right": { 
       let canvasId = data.shift()
       let moveData = data.shift()
-      KitBuildApp.inst.canvas.moveEdge(moveData.prior, moveData.later)
+      MixedApp.inst.canvas.moveEdge(moveData.prior, moveData.later)
     } break;
     case "switch-direction": { 
       let canvasId = data.shift()
       let switchData = data.shift()
-      KitBuildApp.inst.canvas.switchDirection(switchData.prior, switchData.later)
+      MixedApp.inst.canvas.switchDirection(switchData.prior, switchData.later)
     } break;
     case "undo-disconnect-links": { 
       let canvasId = data.shift()
       let edges = data.shift()
       if (!Array.isArray(edges)) break;
       edges.forEach(edge => {
-        KitBuildApp.inst.canvas.createEdge(edge.data)
+        MixedApp.inst.canvas.createEdge(edge.data)
       })
     } break;
     case "redo-disconnect-links":
@@ -1077,164 +1088,165 @@ KitBuildApp.processCollabCommand = (command, data) => {
       if (!Array.isArray(edges)) break;
       console.log(edges)
       edges.forEach(edge => {
-        KitBuildApp.inst.canvas.removeEdge(edge.data.source, edge.data.target)
+        MixedApp.inst.canvas.removeEdge(edge.data.source, edge.data.target)
       })
     } break;
-    // case "create-link":
-    // case "create-concept":
-    // case "redo-duplicate-link":
-    // case "redo-duplicate-concept":
-    // case "duplicate-link":
-    // case "duplicate-concept": { 
-    //   let canvasId = data.shift()
-    //   let node = data.shift()
-    //   console.log(node)
-    //   KitBuildApp.inst.canvas.addNode(node.data, node.position)
-    // } break;
-    // case "undo-duplicate-link":
-    // case "undo-duplicate-concept": { 
-    //   let canvasId = data.shift()
-    //   let node = data.shift()
-    //   console.log(node)
-    //   KitBuildApp.inst.canvas.removeElements([node.data])
-    // } break;
-    // case "duplicate-nodes": { 
-    //   let canvasId = data.shift()
-    //   let nodes = data.shift()
-    //   if (!Array.isArray(nodes)) break;
-    //   nodes.forEach(node =>
-    //     KitBuildApp.inst.canvas.addNode(node.data, node.position))
-    // } break;
-    // case "undo-delete-node":
-    // case "undo-clear-canvas":
-    // case "undo-delete-multi-nodes": { 
-    //   let canvasId = data.shift()
-    //   let elements = data.shift()
-    //   KitBuildApp.inst.canvas.addElements(elements)
-    // } break;
-    // case "delete-link":
-    // case "delete-concept": 
-    // case "redo-delete-multi-nodes":
-    // case "delete-multi-nodes": {
-    //   let canvasId = data.shift()
-    //   let elements = data.shift()
-    //   KitBuildApp.inst.canvas.removeElements(elements.map(element => element.data))
-    // } break;
-    // case "undo-update-link":
-    // case "undo-update-concept": {
-    //   let canvasId = data.shift()
-    //   let node = data.shift()
-    //   KitBuildApp.inst.canvas.updateNodeData(node.id, node.prior.data)
-    // } break;
-    // case "redo-update-link":
-    // case "redo-update-concept":
-    // case "update-link":
-    // case "update-concept": {
-    //   let canvasId = data.shift()
-    //   let node = data.shift()
-    //   KitBuildApp.inst.canvas.updateNodeData(node.id, node.later.data)
-    // } break;
-    // case "redo-concept-color-change":
-    // case "undo-concept-color-change": {
-    //   let canvasId = data.shift()
-    //   let changes = data.shift()
-    //   KitBuildApp.inst.canvas.changeNodesColor(changes)
-    // } break;
-    // case "concept-color-change": {
-    //   let canvasId = data.shift()
-    //   let changes = data.shift()
-    //   let nodesData = changes.later
-    //   KitBuildApp.inst.canvas.changeNodesColor(nodesData)
-    // } break;
-    // case "undo-lock":
-    // case "undo-unlock":
-    // case "redo-lock":
-    // case "redo-unlock":
-    // case "lock-edge":
-    // case "unlock-edge": {
-    //   let canvasId = data.shift()
-    //   let edge = data.shift()
-    //   KitBuildApp.inst.canvas.updateEdgeData(edge.id, edge)
-    // } break;
-    // case "undo-lock-edges":
-    // case "undo-unlock-edges":
-    // case "redo-lock-edges":
-    // case "redo-unlock-edges": {
-    //   let canvasId = data.shift()
-    //   let lock = data.shift()
-    //   if (!lock) break;
-    //   if (!Array.isArray(lock.edges)) break;
-    //   lock.edges.forEach(edge =>
-    //     KitBuildApp.inst.canvas.updateEdgeData(edge.substring(1), { lock: lock.lock }))
-    // } break;
-    // case "lock-edges":
-    // case "unlock-edges": {
-    //   let canvasId = data.shift()
-    //   let edges = data.shift()
-    //   if (!Array.isArray(edges)) return;
-    //   edges.forEach(edge =>
-    //     KitBuildApp.inst.canvas.updateEdgeData(edge.data.id, edge.data))
-    // } break;
-    // case "redo-clear-canvas":
-    // case "clear-canvas": {
-    //   KitBuildApp.inst.canvas.reset()
-    // } break;
-    // case "convert-type": {
-    //   let canvasId = data.shift()
-    //   let map = data.shift()
-    //   let elements = map.later
-    //   let direction = map.to
-    //   KitBuildApp.inst.canvas.convertType(direction, elements)
-    // } break;
+    case "create-link":
+    case "create-concept":
+    case "redo-duplicate-link":
+    case "redo-duplicate-concept":
+    case "duplicate-link":
+    case "duplicate-concept": { 
+      let canvasId = data.shift()
+      let node = data.shift()
+      console.log(node)
+      MixedApp.inst.canvas.addNode(node.data, node.position)
+    } break;
+    case "undo-duplicate-link":
+    case "undo-duplicate-concept": { 
+      let canvasId = data.shift()
+      let node = data.shift()
+      console.log(node)
+      MixedApp.inst.canvas.removeElements([node.data])
+    } break;
+    case "duplicate-nodes": { 
+      let canvasId = data.shift()
+      let nodes = data.shift()
+      if (!Array.isArray(nodes)) break;
+      nodes.forEach(node =>
+        MixedApp.inst.canvas.addNode(node.data, node.position))
+    } break;
+    case "undo-delete-node":
+    case "undo-clear-canvas":
+    case "undo-delete-multi-nodes": { 
+      let canvasId = data.shift()
+      let elements = data.shift()
+      MixedApp.inst.canvas.addElements(elements)
+    } break;
+    case "delete-link":
+    case "delete-concept": 
+    case "redo-delete-multi-nodes":
+    case "delete-multi-nodes": {
+      let canvasId = data.shift()
+      let elements = data.shift()
+      MixedApp.inst.canvas.removeElements(elements.map(element => element.data))
+    } break;
+    case "undo-update-link":
+    case "undo-update-concept": {
+      let canvasId = data.shift()
+      let node = data.shift()
+      MixedApp.inst.canvas.updateNodeData(node.id, node.prior.data)
+    } break;
+    case "redo-update-link":
+    case "redo-update-concept":
+    case "update-link":
+    case "update-concept": {
+      let canvasId = data.shift()
+      let node = data.shift()
+      MixedApp.inst.canvas.updateNodeData(node.id, node.later.data)
+    } break;
+    case "redo-concept-color-change":
+    case "undo-concept-color-change": {
+      let canvasId = data.shift()
+      let changes = data.shift()
+      MixedApp.inst.canvas.changeNodesColor(changes)
+    } break;
+    case "concept-color-change": {
+      let canvasId = data.shift()
+      let changes = data.shift()
+      let nodesData = changes.later
+      MixedApp.inst.canvas.changeNodesColor(nodesData)
+    } break;
+    case "undo-lock":
+    case "undo-unlock":
+    case "redo-lock":
+    case "redo-unlock":
+    case "lock-edge":
+    case "unlock-edge": {
+      let canvasId = data.shift()
+      let edge = data.shift()
+      MixedApp.inst.canvas.updateEdgeData(edge.id, edge)
+    } break;
+    case "undo-lock-edges":
+    case "undo-unlock-edges":
+    case "redo-lock-edges":
+    case "redo-unlock-edges": {
+      let canvasId = data.shift()
+      let lock = data.shift()
+      if (!lock) break;
+      if (!Array.isArray(lock.edges)) break;
+      lock.edges.forEach(edge =>
+        MixedApp.inst.canvas.updateEdgeData(edge.substring(1), { lock: lock.lock }))
+    } break;
+    case "lock-edges":
+    case "unlock-edges": {
+      let canvasId = data.shift()
+      let edges = data.shift()
+      if (!Array.isArray(edges)) return;
+      edges.forEach(edge =>
+        MixedApp.inst.canvas.updateEdgeData(edge.data.id, edge.data))
+    } break;
+    case "redo-clear-canvas":
+    case "clear-canvas": {
+      MixedApp.inst.canvas.reset()
+    } break;
+    case "convert-type": {
+      let canvasId = data.shift()
+      let map = data.shift()
+      let elements = map.later
+      let direction = map.to
+      MixedApp.inst.canvas.convertType(direction, elements)
+    } break;
     case "select-nodes": {
       let canvasId = data.shift()
       let ids = data.shift()
       ids = ids.map(id => `#${id}`)
-      KitBuildApp.inst.canvas.cy.nodes(ids.join(", ")).addClass('peer-select')
+      MixedApp.inst.canvas.cy.nodes(ids.join(", ")).addClass('peer-select')
     } break;
     case "unselect-nodes": {
       let canvasId = data.shift()
       let ids = data.shift()
       ids = ids.map(id => `#${id}`)
-      KitBuildApp.inst.canvas.cy.nodes(ids.join(", ")).removeClass('peer-select')
+      MixedApp.inst.canvas.cy.nodes(ids.join(", ")).removeClass('peer-select')
     } break;
 
   }
 }
 
 // generate/apply map state
-KitBuildApp.generateMapState = () => {
+MixedApp.generateMapState = () => {
   return new Promise((resolve, reject) => {
     let mapState = {
       kitMap: null,
       cyData: []
     }  
-    if (KitBuildApp.inst.kitMap) {
-      KitBuildApp.inst.kitMap.conceptMap.map.direction = KitBuildApp.inst.canvas.direction
+    if (MixedApp.inst.kitMap) {
+      MixedApp.inst.kitMap.conceptMap.map.direction = MixedApp.inst.canvas.direction
       mapState = {
-        kitMap: KitBuildApp.inst.kitMap,
-        cyData: KitBuildApp.inst.canvas.cy.elements().jsons()
+        kitMap: MixedApp.inst.kitMap,
+        cyData: MixedApp.inst.canvas.cy.elements().jsons()
       }
     }
     resolve(mapState)
   })
 }
-KitBuildApp.applyMapState = (mapState) => {
+MixedApp.applyMapState = (mapState) => {
   return new Promise((resolve, reject) => {
     let kitMap = mapState.kitMap
     let cyData = mapState.cyData
-    KitBuildApp.inst.setKitMap(kitMap)
-    KitBuildApp.inst.canvas.cy.elements().remove()
+    MixedApp.inst.setKitMap(kitMap)
+    MixedApp.inst.canvas.cy.elements().remove()
+    MixedApp.enableNavbarButton()
     if (!kitMap || !cyData) {
       // console.log(mapState)
     } else {
-      KitBuildApp.inst.canvas.cy.add(cyData ? cyData : {}).unselect()
-      KitBuildApp.inst.canvas.applyElementStyle()
-      KitBuildApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
-      // KitBuildApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(conceptMap.map.direction)
-      KitBuildApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.UNDO_REDO).clearStacks().updateStacksStateButton()
+      MixedApp.inst.canvas.cy.add(cyData ? cyData : {}).unselect()
+      MixedApp.inst.canvas.applyElementStyle()
+      MixedApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
+      // MixedApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(conceptMap.map.direction)
+      MixedApp.inst.canvas.toolbar.tools.get(KitBuildToolbar.UNDO_REDO).clearStacks().updateStacksStateButton()
     }
-    KitBuildApp.inst.canvas.canvasTool.clearCanvas().clearIndicatorCanvas()
+    MixedApp.inst.canvas.canvasTool.clearCanvas().clearIndicatorCanvas()
     resolve(mapState)
   })
 }
@@ -1245,9 +1257,9 @@ KitBuildApp.applyMapState = (mapState) => {
  * Helpers
 */
 
-KitBuildApp.parseKitMapOptions = (kitMap) => {
+MixedApp.parseKitMapOptions = (kitMap) => {
   if (!kitMap) return
-  kitMap.parsedOptions = KitBuildApp.parseOptions(kitMap.map.options, {
+  kitMap.parsedOptions = MixedApp.parseOptions(kitMap.map.options, {
     feedbacklevel: 2,
     fullfeedback: 1,
     modification: 1,
@@ -1259,12 +1271,14 @@ KitBuildApp.parseKitMapOptions = (kitMap) => {
   })
 }
 
-KitBuildApp.resetMapToKit = (kitMap, canvas) => {
+MixedApp.resetMapToKit = (kitMap, canvas) => {
   return new Promise((resolve, reject) => {
     // will also set and cache the concept map
-    KitBuildApp.inst.setKitMap(kitMap)
+    MixedApp.inst.setKitMap(kitMap)
+    MixedApp.enableNavbarButton()
     canvas.cy.elements().remove()
     canvas.cy.add(KitBuildUI.composeKitMap(kitMap))
+    canvas.cy.nodes().data('lock', 'locked');
     canvas.applyElementStyle()
     if (kitMap.map.layout == "random") {
       canvas.cy.elements().layout({name: 'fcose', animationDuration: 0, fit: false, stop: () => {
@@ -1298,7 +1312,7 @@ KitBuildApp.resetMapToKit = (kitMap, canvas) => {
   })
 }
 
-KitBuildApp.parseOptions = (optionJsonString, defaultValueIfNull) => {
+MixedApp.parseOptions = (optionJsonString, defaultValueIfNull) => {
   if (optionJsonString === null) return defaultValueIfNull
   let option, defopt = defaultValueIfNull
   try {
@@ -1308,15 +1322,15 @@ KitBuildApp.parseOptions = (optionJsonString, defaultValueIfNull) => {
   return option
 }
 
-KitBuildApp.initCollab = (user) => {
-  KitBuildApp.inst.user = user;
-  KitBuildApp.collabInst = KitBuildCollab.instance('kitbuild', user, canvas)
-  KitBuildApp.collabInst.off('event', KitBuildApp.onCollabEvent)
-  KitBuildApp.collabInst.on('event', KitBuildApp.onCollabEvent)
+MixedApp.initCollab = (user) => {
+  MixedApp.inst.user = user;
+  MixedApp.collabInst = KitBuildCollab.instance('kitbuild', user, canvas)
+  MixedApp.collabInst.off('event', MixedApp.onCollabEvent)
+  MixedApp.collabInst.on('event', MixedApp.onCollabEvent)
   KitBuildCollab.enableControl()
 }
 
-KitBuildApp.updateSignInOutButton = () => {
+MixedApp.updateSignInOutButton = () => {
   Core.instance().session().getAll().then(sessions => { // console.log(sessions)
     if (sessions.user) {
       $('.bt-sign-in').addClass('d-none')
@@ -1329,14 +1343,17 @@ KitBuildApp.updateSignInOutButton = () => {
 }
 
 
-KitBuildApp.enableNavbarButton = (enabled = true) => {
+MixedApp.enableNavbarButton = (enabled = true) => {
   $('#recompose-readcontent button').prop('disabled', !enabled);
   $('#recompose-saveload button').prop('disabled', !enabled);
   $('#recompose-reset button').prop('disabled', !enabled);
   $('#recompose-feedbacklevel button').prop('disabled', !enabled);
   $('.bt-submit').prop('disabled', !enabled);
   $('.bt-open-kit').prop('disabled', !enabled);
-  KitBuildApp.inst.canvas.toolbar.tools.forEach(tool => {
-    tool.enable(enabled);
+  MixedApp.inst.canvas.toolbar.tools.forEach((tool, key) => {
+    if (key == KitBuildToolbar.NODE_CREATE) {
+      if (MixedApp.inst.kitMap) tool.enable(enabled)
+      else tool.enable(false)
+    } else tool.enable(enabled);
   });
 }

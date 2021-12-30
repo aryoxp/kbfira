@@ -35,8 +35,8 @@ class MakeKitApp {
 
   setConceptMap(conceptMap) { console.warn("CONCEPT MAP SET:", conceptMap, this)
     this.conceptMap = conceptMap
-    this.canvas.direction = conceptMap.map.direction;
     if (conceptMap) {
+      this.canvas.direction = conceptMap.map.direction;
       this.session.set('cmid', conceptMap.map.cmid)
       let status = `<span class="mx-2 d-flex align-items-center status-cmap">`
         + `<span class="badge rounded-pill bg-secondary">ID: ${conceptMap.map.cmid}</span>`

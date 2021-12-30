@@ -277,28 +277,9 @@ ReviewApp.handleEvent = (kbui) => {
     if (!ReviewApp.inst.kitMap) return
     if (feedbackDialog.learnerMapEdgesData) 
       $('.app-navbar .bt-mymap').trigger('click')
-
-    let learnerMapData = KitBuildUI.buildConceptMapData(this.canvas)
+    
+    let learnerMapData = KitBuildUI.buildConceptMapData(this.canvas, ReviewApp.inst.conceptMap)
     feedbackDialog.learnerMapEdgesData = this.canvas.cy.edges().jsons()
-
-    let feedbacksave = ReviewApp.inst.kitMap.parsedOptions.feedbacksave
-    if (feedbacksave) {
-      let kitMap = ReviewApp.inst.kitMap
-      let data = Object.assign({
-        lmid: null, // so it will insert new rather than update
-        kid: kitMap.map.kid,
-        author: this.user ? this.user.username : null,
-        type: 'feedback',
-        cmid: kitMap.map.cmid,
-        create_time: null,
-        data: null,
-      }, learnerMapData); console.log(data); // return
-      this.ajax.post("kitBuildApi/saveLearnerMap", { data: Core.compress(data) })
-        .then(learnerMap => {
-          console.warn("Concept map save-on-feedback has been saved successfully.");
-        }).catch(error => { console.error(error); })
-    }
-
     learnerMapData.conceptMap = ReviewApp.inst.conceptMap
     Analyzer.composePropositions(learnerMapData)
     let direction = learnerMapData.conceptMap.map.direction
@@ -345,7 +326,11 @@ ReviewApp.handleEvent = (kbui) => {
         iconStyle: 'danger', icon: 'exclamation-triangle-fill'
       }).positive(() => {
         // TODO: Destroy concept map session data, go back to blank Kit-Building activity
-        confirm.hide()
+        Core.instance().session().destroy().then(() => {
+          confirm.hide();
+          let baseurl = Core.instance().config().get('baseurl')
+          window.location.href = baseurl;
+        })
       }).show()
   })
 
@@ -378,7 +363,7 @@ ReviewApp.handleRefresh = (kbui) => {
     if (kid) promises.push(KitBuild.openKitMap(kid))
 
     // should open only learnermap which has fixed state
-    if (lmid) promises.push(KitBuild.openLearnerMap(lmid))
+    if (lmid) promises.push(KitBuild.openExtendedLearnerMap(lmid))
     Promise.all(promises).then(maps => { // console.log(maps)
       let kitMap = maps[0]
       let learnerMap = maps[1]

@@ -31,9 +31,9 @@ class StaticAnalyzerApp {
 
   setConceptMap(conceptMap) { console.warn("CONCEPT MAP SET:", conceptMap)
     this.conceptMap = conceptMap
-    console.log(this)
-    this.canvas.direction = conceptMap.map.direction
+    // console.log(this)
     if (conceptMap) {
+      this.canvas.direction = conceptMap.map.direction
       this.session.set('cmid', conceptMap.map.cmid)
       let status = `<span class="mx-2 d-flex align-items-center">`
         + `<span class="badge rounded-pill bg-secondary">ID: ${conceptMap.map.cmid}</span>`

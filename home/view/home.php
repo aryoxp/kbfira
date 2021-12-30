@@ -90,7 +90,7 @@
       <div class="col d-flex flex-column">
         <div class="card mb-4 rounded-3 shadow-sm flex-fill border-secondary">
           <div class="card-header py-3 bg-secondary text-white">
-            <h4 class="my-0 fw-normal text-nowrap text-truncate">Extended</h4>
+            <h4 class="my-0 fw-normal text-nowrap text-truncate">Mixed</h4>
           </div>
           <div class="card-body flex-fill">
             <div class="my-3">
@@ -99,7 +99,7 @@
           </div>
           <div class="px-3 pb-3">
             <div class="btn-group">
-              <a type="button" href="<?php echo $this->location('../extend'); ?>" class="btn btn-lg btn-warning">Get started</a>
+              <a type="button" href="<?php echo $this->location('../mixed'); ?>" class="btn btn-lg btn-warning">Get started</a>
               <a type="button" class="btn btn-lg btn-outline-warning text-dark"><i class="bi bi-book"></i></a>
             </div>
           </div>
@@ -108,16 +108,16 @@
       <div class="col d-flex flex-column">
         <div class="card mb-4 rounded-3 shadow-sm flex-fill border-secondary">
           <div class="card-header py-3 bg-secondary text-white">
-            <h4 class="my-0 fw-normal text-nowrap text-truncate">Reciprocal</h4>
+            <h4 class="my-0 fw-normal text-nowrap text-truncate">Extended</h4>
           </div>
           <div class="card-body flex-fill">
             <div class="my-3">
-              <p>Try to guess how others are thinking with this reciprocal Kit-Build.</p>
+              <p>Guide the students on how to recompose large concept maps with this extended Kit-Build.</p>
             </div>
           </div>
           <div class="px-3 pb-3">
             <div class="btn-group">
-              <a type="button" href="<?php echo $this->location('../reciprocal'); ?>" class="btn btn-lg btn-success">Get started</a>
+              <a type="button" href="<?php echo $this->location('../extend'); ?>" class="btn btn-lg btn-success">Get started</a>
               <a type="button" class="btn btn-lg btn-outline-success text-success"><i class="bi bi-book"></i></a>
             </div>
           </div>
