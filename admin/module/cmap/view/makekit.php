@@ -14,7 +14,7 @@
     <button class="bt-toggle-right btn btn-sm btn-warning" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle incoming edges"><i class="bi bi-box-arrow-in-up-right"></i></button>
     <button class="bt-remove btn btn-sm btn-warning" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Remove all edges<br>(full decompose)"><i class="bi bi-x-square"></i></button>
     <button class="bt-restore btn btn-sm btn-warning" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Restore all edges"><i class="bi bi-check2-square"></i></button>
-    <button class="bt-reset btn btn-sm btn-warning" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Reset to goalmap settings"><i class="bi bi-arrow-repeat"></i></button>
+    <button class="bt-reset btn btn-sm btn-warning" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Reset to goalmap settings"><i class="bi bi-arrow-repeat"></i> Reset</button>
   </div>
 
 </div>

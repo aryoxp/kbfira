@@ -16,7 +16,7 @@ class CmapComposeController extends ModuleController {
 
   function kit() {
     Core::lib(Core::CONFIG)->set('menu', 'compose-kit', CoreConfig::CONFIG_TYPE_CLIENT);
-    $this->ui->usePlugin('kitbuild-ui', 'kitbuild');
+    $this->ui->usePlugin('kitbuild-ui', 'kitbuild', 'sortable');
     $this->useScript("makekit.js");
     $this->useStyle("cmap.css");
     $this->render($this->view("makekit.php"));

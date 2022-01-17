@@ -2,23 +2,326 @@ $(() => { // jQuery onReady callback
   let app = MakeKitApp.instance()
 })
 
+class PartitionTool extends KitBuildToolbarTool {
+  constructor(canvas, kitMap, conceptMap, options) {
+    super(canvas, options);
+    this.kitMap = kitMap;
+    this.conceptMap = conceptMap;
+    this.settings = Object.assign(this.settings, {}, options);
+    this.shareDialogHtml = ``;
+    this.partIndex = 0;
+    this.partsMap = new Map();
+    this.parts = []; // volatile, put parts in order
+  }
+
+  control() {
+    let copyText = "Copy"
+    let pasteText = "Paste"
+    let controlHtml = 
+      `<div class="btn-group partition-tool">
+        <button class="btn btn-outline-primary btn-sm dropdown-toggle dd-partition" type="button" data-bs-toggle="dropdown" data-bs-auto-close="false" aria-expanded="false">
+          <i class="bi bi-123"></i> Kit Set
+        </button>
+        <div class="dropdown-menu fs-small px-2" style="min-width: 250px">
+          <div class="d-flex flex-column">
+            <!-- <small>Kit Order for Extended Kit-Build</small>
+            <hr> -->
+            <div class="part-list scroll-y" style="max-height: 250px;"></div>
+            <hr>
+            <button class="btn btn-sm btn-primary mb-2 bt-select-ungrouped"><i class="bi bi-ui-radios-grid"></i> Select Ungrouped</button>
+            <button class="btn btn-sm btn-success bt-validate"><i class="bi bi-ui-checks-grid"></i> Validate and Save Sets</button>
+            <hr>
+            <button class="btn btn-sm btn-danger mb-3 bt-remove"><i class="bi bi-trash"></i> Remove and Save Sets</button>
+            <!-- <span class="text-secondary fst-italic">
+            <small>Select severzal nodes on the canvas and click the <span class="text-danger fst-bold">[Make Set]</span> button on the appearing bounding box buttons to create a set of kit from the currently selected nodes. </small>
+            <br> -->
+            <small class="text-secondary">Drag and drop a set to change its order of appearance in the extended version of Kit-Build.</small>
+            <!-- </span> -->
+          </div>
+        </div>
+      </div>`
+    return controlHtml
+  }
+
+  handle() {
+    $('.partition-tool .part-list').on('click', '.item-set', (e) => {
+      let setid = $(e.currentTarget).data('setid');
+      let set = this.partsMap.get(setid);
+      this.canvas.cy.elements().removeClass('select');
+      this.canvas.cy.elements().unselect();
+      if (set.elements) {
+        let ids = [];
+        Array.from(set.elements.keys()).forEach(id => ids.push(`#${id}`))
+        this.canvas.cy.elements(ids.join(",")).addClass('select').select().trigger('select');
+      }
+    })
+    $('.partition-tool .part-list').on('click', '.bt-delete-set', (e) => {
+      e.stopPropagation();
+      let setid = $(e.currentTarget).parents('.item-set').data('setid');
+      $(e.currentTarget).parents('.item-set').slideUp('fast').promise().done(() => {
+        $(e.currentTarget).parents('.item-set').remove();
+        this.renumberParts();
+      });
+      this.partsMap.delete(setid);
+      // this.refreshPartList();
+    })
+    $('.partition-tool').on('click', '.bt-select-ungrouped', (e) => {
+      let ids = [];
+      Array.from(this.partsMap.values()).forEach(p => {
+        Array.from(p.elements.values()).forEach(e => {
+          ids.push(`#${e.id()}`);
+        });
+      });
+      // console.log(this.canvas.cy.elements().not(ids.join(',')));
+      if (this.canvas.cy.elements().not(ids.join(',')).length) {
+        this.canvas.cy.elements().unselect().not(ids.join(',')).select().trigger('select');
+      } else UI.info('All elements have been assigned to a kit set.').show();
+      // ids.push(`${e.id()}`);
+    });
+    $('.partition-tool').on('click', '.bt-validate', (e) => {
+      let ids = [];
+      Array.from(this.partsMap.values()).forEach(p => {
+        Array.from(p.elements.values()).forEach(e => {
+          ids.push(`#${e.id()}`);
+        });
+      });
+      // console.log(this.canvas.cy.elements().not(ids.join(',')));
+      if (this.canvas.cy.elements().not(ids.join(',')).length) {
+        let ungrouped = this.canvas.cy.elements().unselect().not(ids.join(','));
+        ungrouped.select().trigger('select');
+        let num = this.canvas.cy.elements().not(ids.join(',')).length;
+        let nc = 0, nl = 0, nse = 0, nte = 0;
+        ungrouped.forEach(e => {
+          if (e.data('type') == 'concept') nc++;
+          if (e.data('type') == 'link') nl++;
+          if (e.data('type') == 'left') nse++;
+          if (e.data('type') == 'right') nte++;
+        });
+        let dialogText = `Cannot save the kit sets. ${num} element(s) are not assigned to a set.`;
+        if (nc) dialogText += `<br>${nc} concept(s)`;
+        if (nl) dialogText += `<br>${nl} link(s)`;
+        if (nse) dialogText += `<br>${nse} source-edge(s)`;
+        if (nte) dialogText += `<br>${nte} target-edge(s)`;
+        dialogText += `<br>Save the kit, remove all sets, and redefine the sets.`;
+        let dialog = KitBuildUI.dialog(dialogText, this.canvas.canvasId, {icon: 'exclamation-triangle', iconStyle: 'danger', iconColor: 'warning'});
+        // dialog.show();
+        // console.warn(dialog, this.canvas);
+      } else {
+        let order = [];
+        $('.partition-tool .part-list .item-set').each((i, e) => {
+          // console.log($(e).data());
+          order.push($(e).data('setid'));
+        })
+        this.broadcastEvent('save-sets', {
+          order: order,
+          parts: this.partsMap
+        })
+      }
+    });
+    $('.partition-tool').on('click', '.bt-remove', (e) => {
+      if (this.partsMap.size == 0) {
+        UI.warning("Nothing to remove, the kit has no partial set.").show();
+        return;
+      }
+      let confirm = UI.confirm("Remove all sets from this kit?").positive(() => {
+        this.partsMap.clear();
+        confirm.hide();
+        $('.partition-tool .part-list .item-set').slideUp('fast').promise().done(() => {
+          $('.partition-tool .item-set').remove();
+        });
+        this.broadcastEvent('remove-sets');
+        UI.info('All sets have been removed from this kit.').show();
+      }).show();
+
+    });
+  }
+
+  addPart(elements) { 
+    // console.log(elements)
+    if (!elements || elements.length == 0) return;
+
+    let part = {
+      id: ++this.partIndex,
+      elements: new Map(),
+      concepts: new Map(),
+      links: new Map(),
+      edges: new Map()
+    };
+
+    elements.forEach(e => {
+      if (e.data('type') == 'concept') {
+        part.concepts.set(e.id(), e);
+        part.elements.set(e.id(), e);
+      } else if (e.data('type') == 'link') {
+        part.links.set(e.id(), e);
+        part.elements.set(e.id(), e);
+      }
+      // skip edges for now...
+    })
+    elements.connectedEdges().forEach(e => {
+      if (e.data('type') == 'left' || e.data('type') == 'right') {
+        let concepts = e.connectedNodes();
+        let allIncluded = concepts.every(concept => {
+          return part.elements.has(concept.id());
+        })
+        if (allIncluded) part.edges.set(e.id(), e);
+        // console.log(part.elements, allIncluded);
+      }
+    })
+    part.edges.forEach((e, k) => part.elements.set(k, e))
+
+    // console.log(part);
+
+    let overlappedParts = {
+      concepts: new Set(),
+      links: new Set(),
+      edges: new Set()
+    };
+    Array.from(this.partsMap.values()).forEach(p => {
+      Array.from(part.elements.keys()).forEach(ek => {
+        if (p.concepts.has(ek)) overlappedParts.concepts.add(part.elements.get(ek))
+        else if (p.links.has(ek)) overlappedParts.links.add(part.elements.get(ek))
+        else if (p.edges.has(ek)) overlappedParts.edges.add(part.elements.get(ek))
+      })
+    })
+    
+    // console.log(overlappedParts);
+
+    let doAddPart = () => {
+      this.partsMap.set(part.id, part);
+      this.refreshPartList();
+    }
+
+    if (overlappedParts.concepts.size || 
+        overlappedParts.links.size || 
+        overlappedParts.edges.size) {
+          let confirmText = "The following elements have been included in previous set:<br>";
+          if (overlappedParts.concepts.size) confirmText += `Concept(s): `; 
+          overlappedParts.concepts.forEach(c => {
+            confirmText += `<span class="mx-1">${c.data('label')}</span>`
+          })
+          if (overlappedParts.concepts.size && overlappedParts.links.size) confirmText += '<br>';
+          if (overlappedParts.links.size) confirmText += `Link(s): `; 
+          overlappedParts.links.forEach(l => {
+            confirmText += `<span class="mx-1">${l.data('label')}</span>`
+          })
+          confirmText += `<br>The elements and all associated edges of selections will <span class="text-danger">be moved</span> to new set.<br>Empty set will also <span class="text-danger">be removed</span> from list. Continue?`;
+          let confirm = UI.confirm(confirmText).positive(() => {
+            Array.from(this.partsMap.values()).forEach(p => {
+              overlappedParts.concepts.forEach(c => {
+                p.concepts.delete(c.id());
+                p.elements.delete(c.id());
+              })
+              overlappedParts.links.forEach(l => {
+                p.links.delete(l.id());
+                p.elements.delete(l.id());
+              })
+              overlappedParts.edges.forEach(e => {
+                p.edges.delete(e.id());
+                p.elements.delete(e.id());
+              })
+            })
+            doAddPart();
+            confirm.hide();
+          }).negative(() => {
+            elements.select().trigger('select');
+            confirm.hide()
+          }).show()
+        } else doAddPart()
+  }
+
+
+  refreshPartList() {
+    $('.partition-tool .part-list').html('');
+    let order = 0;
+    Array.from(this.partsMap.values()).forEach(p => {
+      let nc = p.concepts.size;
+      let nl = p.links.size;
+      if (nc == 0 && nl == 0) {
+        this.partsMap.delete(p.id);
+        return;
+      }
+      let partCtt = `<div class="d-flex justify-content-between align-items-center my-1 mx-2 bg-light border rounded item-set" data-setid="${p.id}" role="button">`;
+      partCtt += `<small class="ms-2"><span class="set-order fw-bold text-primary">#${++order}</span>: Set ${p.id}</small>`;
+      partCtt += `<span>`;
+      if (nc) partCtt += `  <span class="badge rounded-pill bg-warning text-dark">C: ${nc}</span>`;
+      if (nl) partCtt += `  <span class="badge rounded-pill bg-secondary">L: ${nl}</span>`;
+      partCtt += `  <span class="btn btn-sm btn-danger m-1 bt-delete-set"><i class="bi bi-trash"></i></span>
+      </span>`;
+      partCtt += `</div>`;
+      $('.partition-tool .part-list').append(partCtt);
+      if (!$('.dd-partition').hasClass('show'))
+        $('.dd-partition').trigger('click');
+    });
+    $('.partition-tool .part-list').sortable({
+      group: 'list',
+      animation: 200,
+      ghostClass: 'ghost',
+      onSort: () => {
+        // console.warn('sort!')
+        this.renumberParts();
+      },
+    });
+    if (order == 0) {
+      $('.partition-tool .part-list').html('<div class="text-secondary pt-2 ms-2"><small><em>This kit has no set data.</em></small></div>');
+    }
+  }
+
+  renumberParts() {
+    let order = 0;
+    $('.partition-tool .part-list .item-set').each((i, e) => {
+      let setid = $(e).data('setid'); // console.log(setid);
+      $(e).find('.set-order').html(`#${++order}`);
+    });
+  }
+}
+
+class KitSetTool extends KitBuildCanvasTool {
+  constructor(canvas, options) {
+    super(canvas, Object.assign({
+      showOn: KitBuildCanvasTool.SH_MULTI,
+      color: "#000000",
+      icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-textarea-t" viewBox="-5 -5 26 26">  <path d="M2.5 0c-.166 0-.33.016-.487.048l.194.98A1.51 1.51 0 0 1 2.5 1h.458V0H2.5zm2.292 0h-.917v1h.917V0zm1.833 0h-.917v1h.917V0zm1.833 0h-.916v1h.916V0zm1.834 0h-.917v1h.917V0zm1.833 0h-.917v1h.917V0zM13.5 0h-.458v1h.458c.1 0 .199.01.293.029l.194-.981A2.51 2.51 0 0 0 13.5 0zm2.079 1.11a2.511 2.511 0 0 0-.69-.689l-.556.831c.164.11.305.251.415.415l.83-.556zM1.11.421a2.511 2.511 0 0 0-.689.69l.831.556c.11-.164.251-.305.415-.415L1.11.422zM16 2.5c0-.166-.016-.33-.048-.487l-.98.194c.018.094.028.192.028.293v.458h1V2.5zM.048 2.013A2.51 2.51 0 0 0 0 2.5v.458h1V2.5c0-.1.01-.199.029-.293l-.981-.194zM0 3.875v.917h1v-.917H0zm16 .917v-.917h-1v.917h1zM0 5.708v.917h1v-.917H0zm16 .917v-.917h-1v.917h1zM0 7.542v.916h1v-.916H0zm15 .916h1v-.916h-1v.916zM0 9.375v.917h1v-.917H0zm16 .917v-.917h-1v.917h1zm-16 .916v.917h1v-.917H0zm16 .917v-.917h-1v.917h1zm-16 .917v.458c0 .166.016.33.048.487l.98-.194A1.51 1.51 0 0 1 1 13.5v-.458H0zm16 .458v-.458h-1v.458c0 .1-.01.199-.029.293l.981.194c.032-.158.048-.32.048-.487zM.421 14.89c.183.272.417.506.69.689l.556-.831a1.51 1.51 0 0 1-.415-.415l-.83.556zm14.469.689c.272-.183.506-.417.689-.69l-.831-.556c-.11.164-.251.305-.415.415l.556.83zm-12.877.373c.158.032.32.048.487.048h.458v-1H2.5c-.1 0-.199-.01-.293-.029l-.194.981zM13.5 16c.166 0 .33-.016.487-.048l-.194-.98A1.51 1.51 0 0 1 13.5 15h-.458v1h.458zm-9.625 0h.917v-1h-.917v1zm1.833 0h.917v-1h-.917v1zm1.834-1v1h.916v-1h-.916zm1.833 1h.917v-1h-.917v1zm1.833 0h.917v-1h-.917v1zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3v-3z"/></svg>',
+      gridPos: { x: 1, y: 0 }
+    }, options))
+  }
+
+  actionMulti(event, e, elements) {
+    if (this.settings.partitionTool && this.settings.partitionTool.addPart) 
+      this.settings.partitionTool.addPart(elements);
+  }
+  
+}
+
 class MakeKitApp {
   constructor() {
     this.kbui = KitBuildUI.instance(MakeKitApp.canvasId)
+    this.kitMap = null;
+    this.conceptMap = null;
+
     let canvas = this.kbui.canvases.get(MakeKitApp.canvasId)
     canvas.addToolbarTool(KitBuildToolbar.UNDO_REDO, { priority: 3 })
     canvas.addToolbarTool(KitBuildToolbar.CAMERA, { priority: 4 })
     canvas.addToolbarTool(KitBuildToolbar.UTILITY, { priority: 5, trash: false })
     canvas.addToolbarTool(KitBuildToolbar.LAYOUT, { stack: 'right' })
+
+    let partitionTool = new PartitionTool(canvas, this.kitMap, this.conceptMap, { stack: 'left'});
+    partitionTool.on('event', this.onToolbarEvent.bind(this));
+
+    canvas.toolbar.addTool("partition", partitionTool);
     canvas.toolbar.render()
     canvas.addCanvasTool(KitBuildCanvasTool.CENTROID)
     canvas.addCanvasTool(KitBuildCanvasTool.DISCONNECT)
     canvas.addCanvasTool(KitBuildCanvasTool.LOCK)
     canvas.addCanvasMultiTool(KitBuildCanvasTool.LOCK)
     canvas.addCanvasMultiTool(KitBuildCanvasTool.UNLOCK)
+    canvas.canvasTool.addMultiTool("kitset", new KitSetTool(canvas, {
+      partitionTool: partitionTool
+    }));
 
     this.canvas = canvas;
-    this.session = Core.instance().session()
+    this.session = Core.instance().session();
+    this.ajax = Core.instance().ajax();
     // Hack for sidebar-panel show/hide
     // To auto-resize the canvas.
     let observer = new MutationObserver((mutations) => $(`#${canvasId} > div`).css('width', 0))
@@ -62,6 +365,121 @@ class MakeKitApp {
     } else {
       StatusBar.instance().remove('.status-kit');
       this.session.unset('kid')
+    }
+  }
+
+  onToolbarEvent(canvas, evt, data) {
+    // console.log(canvas, evt, data);
+    switch(evt) {
+      case 'save-sets': {
+        if (!this.kitMap) {
+          UI.error('Invalid Kit.').show();
+          return;
+        }
+        if (!this.conceptMap) {
+          UI.error('Invalid Concept Map.').show();
+          return;
+        }
+        let order = data.order;
+        let partsMap = data.parts;
+        let kid = this.kitMap.map.kid;
+        let cmid = this.conceptMap.map.cmid;
+        let index = 0;
+        let sets = [];
+        let concepts = [], links = [], sourceEdges = [], targetEdges = [];
+        order.forEach(setid => {
+          let part = partsMap.get(setid);
+          let conceptNodes = Array.from(part.concepts.values());
+          let linkNodes = Array.from(part.links.values());
+          let edges = Array.from(part.edges.values())
+          index++;
+          sets.push({
+            kid: kid,
+            setid: setid,
+            order: index
+          })
+          conceptNodes.forEach(c => {
+            concepts.push({
+              kid: kid,
+              cmid: cmid,
+              cid: c.id(),
+              set_kid: kid,
+              setid: setid
+            });
+          });
+          linkNodes.forEach(l => {
+            links.push({
+              kid: kid,
+              cmid: cmid,
+              lid: l.id(),
+              set_kid: kid,
+              setid: setid
+            });
+          });
+          edges.forEach(e => {
+            // console.log(e.data())
+            switch(e.data('type')) {
+              case 'left':{
+                sourceEdges.push({
+                  kid: kid,
+                  cmid: cmid,
+                  lid: e.data('source'),
+                  source_cid: e.data('target'),
+                  set_kid: kid,
+                  setid: setid
+                })
+              } break;
+              case 'right':{
+                targetEdges.push({
+                  kid: kid,
+                  cmid: cmid,
+                  lid: e.data('source'),
+                  target_cid: e.data('target'),
+                  set_kid: kid,
+                  setid: setid
+                })
+              } break;
+            }
+          });
+          // console.warn(concepts, links, sourceEdges, targetEdges);
+        });
+        // console.log({
+        //   kid: kid,
+        //   sets: sets,
+        //   concepts: concepts,
+        //   links: links,
+        //   sourceEdges: sourceEdges,
+        //   targetEdges: targetEdges
+        // });
+        this.ajax.post(`kitBuildApi/saveSets`, {
+          kid: kid,
+          sets: sets,
+          concepts: concepts,
+          links: links,
+          sourceEdges: sourceEdges,
+          targetEdges: targetEdges
+        }).then(result => {
+          UI.success('Kit sets saved successfully.').show();
+        }).catch(error => {
+          console.error(error);
+          UI.dialog('Inconsistent kit data detected. Please save the kit before defining the kit sets.').show();
+        });
+      } break;
+      case 'remove-sets': {
+        if (!this.kitMap) {
+          UI.error('Invalid Kit.').show();
+          return;
+        }
+        let kid = this.kitMap.map.kid;
+        this.ajax.post(`kitBuildApi/removeSets`, {
+          kid: kid
+        }).then(result => {
+          UI.success('Kit sets removed successfully.').show();
+        }).catch(error => {
+          console.error(error);
+          UI.dialog('Error: Unable to remove sets.').show();
+        });
+      } break;
     }
   }
 }
@@ -319,7 +737,8 @@ MakeKitApp.handleEvent = (kbui) => {
     $(e.currentTarget).find('.bi-check-lg').removeClass('d-none');
     $(e.currentTarget).addClass('active');
 
-    this.ajax.get(`kitBuildApi/getKitListByConceptMap/${openDialog.cmid}`).then(kits => { console.log(kits)
+    this.ajax.get(`kitBuildApi/getKitListByConceptMap/${openDialog.cmid}`).then(kits => { 
+      // console.log(kits)
       let kitsHtml = '';
       kits.forEach(k => {
         kitsHtml += `<span class="kit list-item" data-kid="${k.kid}" data-kfid="${k.kfid}">`
@@ -385,17 +804,29 @@ MakeKitApp.handleEvent = (kbui) => {
       try {
         MakeKitApp.inst.setKitMap(kitMap)
         let cyData = KitBuildUI.composeKitMap(kitMap)
-        console.log(cyData)
+        // console.log(cyData)
+        let doOpenKit = () => {
+          this.canvas.cy.elements().remove()
+          this.canvas.cy.add(cyData)
+          this.canvas.applyElementStyle()
+          this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit();
+          
+          let partitionTool = this.canvas.toolbar.tools.get('partition');
+          if (partitionTool) partitionTool.partsMap.clear();
+          KitBuild.openKitSet(openDialog.kid).then(kitSets => {
+            MakeKitApp.buildKitSets(kitSets, this.canvas);
+            partitionTool.refreshPartList();
+          })
+
+
+          openDialog.hide()
+        }
         if (this.canvas.cy.elements().length) {
           let confirm = UI.confirm("Open the kit replacing the current kit on Canvas?").positive(() => {
-            this.canvas.cy.elements().remove()
-            this.canvas.cy.add(cyData)
-            this.canvas.applyElementStyle()
-            this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit();
+            doOpenKit()
             confirm.hide()
-            openDialog.hide()
           }).show()
-        }
+        } else doOpenKit()
       } catch (error) { console.error(error)
         UI.error("Unable to open selected kit.").show(); 
       }
@@ -548,7 +979,7 @@ MakeKitApp.handleEvent = (kbui) => {
     this.ajax.post(`contentApi/assignTextToKitMap`, {
       tid: tid,
       kid: textDialog.kitMap.map.kid
-    }).then(kitMap => { console.log(kitMap)
+    }).then(kitMap => { // console.log(kitMap)
       this.ajax.get(`contentApi/getText/${kitMap.map.text}`).then(text => {
         let assignedTextHtml = `<span class="text-danger">Text:</span> ${text.title} <span class="badge rounded-pill bg-danger bt-unassign px-3 ms-3" role="button" data-text="${text.tid}" data-kid="${textDialog.kitMap.map.kid}">Unassign</span>`
         $("#assigned-text").html(assignedTextHtml)
@@ -562,7 +993,7 @@ MakeKitApp.handleEvent = (kbui) => {
     let kid = $(e.currentTarget).attr('data-kid')
     this.ajax.post(`contentApi/unassignTextFromKitMap`, {
       kid: kid,
-    }).then(kitMap => { console.log(kitMap)
+    }).then(kitMap => { // console.log(kitMap)
       $("#assigned-text").html('<em class="text-danger px-3">This kit has no text assigned.</em>')
       MakeKitApp.inst.setKitMap(kitMap)
     }).catch(error => console.error(error))
@@ -620,6 +1051,8 @@ MakeKitApp.handleEvent = (kbui) => {
       UI.info('Please provide a name for the kit.').show()
       return;
     }
+    // remove visual styles and unselect before saving...
+    this.canvas.cy.elements().removeClass('select').unselect();
     // console.log(saveAsDialog.kitMap, MakeKitApp.inst)
     let data = Object.assign({
       kid: saveAsDialog.kitMap ? saveAsDialog.kitMap.map.kid : null,
@@ -745,15 +1178,18 @@ MakeKitApp.handleRefresh = (kbui) => {
     let cmid = sessions.cmid
     let kid  = sessions.kid
     let promises = []
-    if (cmid) promises.push(KitBuild.openConceptMap(cmid))
-    if (kid) promises.push(KitBuild.openKitMap(kid))
+    if (cmid) promises.push(KitBuild.openConceptMap(cmid));
+    if (kid) promises.push(KitBuild.openKitMap(kid));
+    if (kid) promises.push(KitBuild.openKitSet(kid));
     Promise.all(promises).then(maps => {
+
       let kitMap = maps[1]
       if (kitMap) {
         MakeKitApp.inst.setKitMap(kitMap) // will also set the concept map
         canvas.cy.add(KitBuildUI.composeKitMap(kitMap))
         canvas.applyElementStyle()
         canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
+        if (maps[2]) MakeKitApp.buildKitSets(maps[2], canvas);
         return
       }
       let conceptMap = maps[0]
@@ -766,4 +1202,55 @@ MakeKitApp.handleRefresh = (kbui) => {
       }
     })
   })
+}
+
+MakeKitApp.buildKitSets = (kitSet, canvas) => {
+  if (kitSet) {
+    // console.warn(kitSet);
+    let partsMap = new Map();
+    kitSet.sets.forEach(set => {
+      let setid = parseInt(set.setid);
+      let part = {
+        id: setid,
+        elements: new Map(),
+        concepts: new Map(),
+        links: new Map(),
+        edges: new Map()
+      };
+      kitSet.concepts.forEach(c => {
+        if (parseInt(c.setid) == setid) {
+          let el = canvas.cy.elements(`#${c.cid}`);
+          part.elements.set(el.id(), el);
+          part.concepts.set(el.id(), el);
+        }
+      });
+      kitSet.links.forEach(l => {
+        if (parseInt(l.setid) == setid) {
+          let el = canvas.cy.elements(`#${l.lid}`);
+          part.elements.set(el.id(), el);
+          part.links.set(el.id(), el);
+        }
+      });
+      kitSet.sourceEdges.forEach(e => {
+        if (parseInt(e.setid) == setid) {
+          let el = canvas.cy.elements(`[source="${e.lid}"][target="${e.source_cid}"]`);
+          part.elements.set(el.id(), el);
+          part.edges.set(el.id(), el);
+        }
+      });
+      kitSet.targetEdges.forEach(e => {
+        if (parseInt(e.setid) == setid) {
+          let el = canvas.cy.elements(`[source="${e.lid}"][target="${e.target_cid}"]`);
+          part.elements.set(el.id(), el);
+          part.edges.set(el.id(), el);
+        }
+      });
+      partsMap.set(setid, part);
+    });
+    // console.warn(partsMap);
+    let partitionTool = MakeKitApp.inst.canvas.toolbar.tools.get('partition');
+    partitionTool.partsMap = partsMap;
+    partitionTool.refreshPartList();
+
+  }
 }

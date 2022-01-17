@@ -7,6 +7,21 @@ class KitBuild {
     this.ajax = Core.instance().ajax()
     return this.ajax.get(`kitBuildApi/openKitMap/${kid}`)
   }
+  static openKitSet(kid) {
+    this.ajax = Core.instance().ajax()
+    let promise = new Promise((resolve, reject) => {
+      this.ajax.post(`kitBuildApi/getKitSets`, {
+        kid: kid
+      }).then(sets => {
+        // console.warn(sets);
+        resolve(sets);
+        return sets;
+      }).catch(error => {
+        reject(null)
+      })
+    })
+    return promise;
+  }
   static updateKitOption(kid, option) {
     this.ajax = Core.instance().ajax()
     return this.ajax.post(`kitBuildApi/updateKitOption`, {

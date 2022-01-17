@@ -179,6 +179,44 @@ class KitBuildApiController extends CoreApi {
     }
   }
 
+  function getKitSets() {
+    try {
+      $kitMapService = new KitMapService();
+      $kid         = $this->postv('kid');
+      $result = $kitMapService->getSets($kid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function saveSets() {
+    try {
+      $kitMapService = new KitMapService();
+      $kid         = $this->postv('kid');
+      $sets        = $this->postv('sets');
+      $concepts    = $this->postv('concepts', []);
+      $links       = $this->postv('links', []);
+      $sourceEdges = $this->postv('sourceEdges', []);
+      $targetEdges = $this->postv('targetEdges', []);
+      $result = $kitMapService->saveSets($kid, $sets, $concepts, $links, $sourceEdges, $targetEdges);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function removeSets() {
+    try {
+      $kitMapService = new KitMapService();
+      $kid           = $this->postv('kid');
+      $result        = $kitMapService->removeSets($kid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
 
 
 

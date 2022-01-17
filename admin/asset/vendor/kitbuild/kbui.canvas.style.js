@@ -52,6 +52,14 @@ KitBuildCanvas.style = [{
     'border-style': 'solid'
   }
 }, {
+  selector: 'node.select',
+  style: {
+    'underlay-color': '#D04E42',
+    'underlay-padding': 6,
+    'underlay-opacity': .4,
+    'underlay-shape': 'round-rectangle'
+  } //: 
+}, {
   selector: 'node.peer-select',
   style: {
     'underlay-color': '#668CFF',
@@ -115,6 +123,12 @@ KitBuildCanvas.style = [{
   style: {
     'line-style': 'dashed',
     'opacity': 1,
+  }
+}, {
+  selector: 'edge.select',
+  style: {
+    'line-color': '#EB4034',
+    'target-arrow-color': '#EB4034',
   }
 }, {
   selector: 'edge.match',

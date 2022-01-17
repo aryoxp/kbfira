@@ -330,4 +330,101 @@ class KitMapService extends CoreService {
     }
   }
 
+  function getSets($kid) {
+    $db = self::instance('kbv2');
+    try {
+      $kitSets = new stdClass;
+
+      $qb = QB::instance('kit_set');
+      $qb->select('kid', 'setid', 'order')
+        ->where('kid', QB::esc($kid))
+        ->orderBy('order');
+      $kitSets->sets = $db->query($qb->get());
+      
+      $qb = QB::instance('kit_concept_ext');
+      $qb->select('kid', 'cmid', 'cid', 'set_kid', 'setid')
+        ->where('set_kid', QB::esc($kid));
+      $kitSets->concepts = $db->query($qb->get());
+
+      $qb = QB::instance('kit_link_ext');
+      $qb->select('kid', 'cmid', 'lid', 'set_kid', 'setid')
+        ->where('set_kid', QB::esc($kid));
+      $kitSets->links = $db->query($qb->get());
+
+      $qb = QB::instance('kit_source_edge_ext');
+      $qb->select('kid', 'cmid', 'lid', 'source_cid', 'set_kid', 'setid')
+        ->where('set_kid', QB::esc($kid));
+      $kitSets->sourceEdges = $db->query($qb->get());
+
+      $qb = QB::instance('kit_target_edge_ext');
+      $qb->select('kid', 'cmid', 'lid', 'target_cid', 'set_kid', 'setid')
+        ->where('set_kid', QB::esc($kid));
+      $kitSets->targetEdges = $db->query($qb->get());
+
+      return $kitSets;
+    } catch (Exception $ex) {
+      $db->rollback();
+      throw CoreError::instance($ex->getMessage());
+    }
+  }
+
+  function saveSets($kid, $sets, $concepts, $links, $sourceEdges, $targetEdges) {
+    $db = self::instance('kbv2');
+    try {
+      $db->begin();
+
+      $qb = QB::instance('kit_set');
+      $qb->delete()->where('kid', QB::esc($kid));
+      $db->query($qb->get());
+
+      foreach($sets as &$s) $s = (array)$s;
+      if (count($sets)) {
+        $qb = QB::instance('kit_set');
+        $db->query($qb->insert($sets)->get());
+      }
+
+      foreach($concepts as &$c) $c = (array)$c;
+      if (count($concepts)) {
+        $qb = QB::instance('kit_concept_ext');
+        $db->query($qb->insert($concepts)->get());
+      }
+
+      foreach($links as &$l) $l = (array)$l;
+      if (count($links)) {
+        $qb = QB::instance('kit_link_ext');
+        $db->query($qb->insert($links)->get());
+      }
+
+      foreach($sourceEdges as &$e) $e = (array)$e;
+      if (count($sourceEdges)) {
+        $qb = QB::instance('kit_source_edge_ext');
+        $db->query($qb->insert($sourceEdges)->get());
+      }
+
+      foreach($targetEdges as &$e) $e = (array)$e;
+      if (count($targetEdges)) {
+        $qb = QB::instance('kit_target_edge_ext');
+        $db->query($qb->insert($targetEdges)->get());
+      }
+      
+      $db->commit();
+      return true;
+    } catch (Exception $ex) {
+      $db->rollback();
+      throw CoreError::instance($ex->getMessage());
+    }
+  }
+
+  function removeSets($kid) {
+    try {
+      $db = self::instance('kbv2');
+      $qb = QB::instance('kit_set');
+      $qb->delete()->where('kid', QB::esc($kid));
+      $result = $db->query($qb->get());
+      return $result;
+    } catch (Exception $ex) {
+      throw CoreError::instance($ex->getMessage());
+    }
+  }
+
 }
