@@ -117,7 +117,7 @@
           </div>
           <div class="px-3 pb-3">
             <div class="btn-group">
-              <a type="button" href="<?php echo $this->location('../extend'); ?>" class="btn btn-lg btn-success">Get started</a>
+              <a type="button" href="<?php echo $this->location('../extended'); ?>" class="btn btn-lg btn-success">Get started</a>
               <a type="button" class="btn btn-lg btn-outline-success text-success"><i class="bi bi-book"></i></a>
             </div>
           </div>

@@ -49,6 +49,36 @@ class RBACApiController extends CoreApi {
     }
   }
 
+  function getRoleAuthApp($rid = '') {
+    try {
+      $rbacService = new RBACService();
+      $result = $rbacService->getRoleAuthApp($rid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function getRoleAuthAppMenu($rid = '', $app = '') {
+    try {
+      $rbacService = new RBACService();
+      $result = $rbacService->getRoleAuthAppMenu($rid, $app);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function getRoleAuthAppFunction($rid = '', $app = '') {
+    try {
+      $rbacService = new RBACService();
+      $result = $rbacService->getRoleAuthAppFunction($rid, $app);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
   function getRoles($page = 1, $perpage = 10) {
     try {
       $keyword = $this->postv('keyword', '');
@@ -82,6 +112,81 @@ class RBACApiController extends CoreApi {
     }
   }
 
+  function grantRoleApp() {
+    try {
+      $rid = $this->postv('rid');
+      $app = $this->postv('app');
+      $rbacService = new RBACService();
+      $result = $rbacService->grantRoleApp($rid, $app);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function revokeRoleApp() {
+    try {
+      $rid = $this->postv('rid');
+      $app = $this->postv('app');
+      $rbacService = new RBACService();
+      $result = $rbacService->revokeRoleApp($rid, $app);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function grantRoleMenu() {
+    try {
+      $rid = $this->postv('rid');
+      $app = $this->postv('app');
+      $mid = $this->postv('mid');
+      $rbacService = new RBACService();
+      $result = $rbacService->grantRoleMenu($rid, $app, $mid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function revokeRoleMenu() {
+    try {
+      $rid = $this->postv('rid');
+      $app = $this->postv('app');
+      $mid = $this->postv('mid');
+      $rbacService = new RBACService();
+      $result = $rbacService->revokeRoleMenu($rid, $app, $mid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function grantRoleFunction() {
+    try {
+      $rid = $this->postv('rid');
+      $app = $this->postv('app');
+      $fid = $this->postv('fid');
+      $rbacService = new RBACService();
+      $result = $rbacService->grantRoleFunction($rid, $app, $fid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function revokeRoleFunction() {
+    try {
+      $rid = $this->postv('rid');
+      $app = $this->postv('app');
+      $fid = $this->postv('fid');
+      $rbacService = new RBACService();
+      $result = $rbacService->revokeRoleFunction($rid, $app, $fid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
 
 
 
@@ -224,6 +329,32 @@ class RBACApiController extends CoreApi {
       $password  = $this->postv('password');
       $userService = new UserService();
       $result = $userService->updateUser($username, $nusername, $name, $password);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function updateUserProfile() {
+    try {
+      $username = $this->postv('username');
+      $name     = $this->postv('name');
+      $userService = new UserService();
+      $user = $userService->updateUserProfile($username, $name);
+      $result = $userService->getRBACUser($user->username);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function changeUserPassword() {
+    try {
+      $username        = $this->postv('username');
+      $password        = $this->postv('password');
+      $currentPassword = $this->postv('currentPassword');
+      $userService = new UserService();
+      $result = $userService->changeUserPassword($username, $password, $currentPassword);
       CoreResult::instance($result)->show();
     } catch (Exception $ex) {
       CoreError::instance($ex->getMessage())->show();
@@ -378,16 +509,74 @@ class RBACApiController extends CoreApi {
 
 
 
+  function getModules() {
+    try {
+      $modulesDir = CORE_APP_PATH . "module" . DS;
+      $runtimeModules = CORE_APP_PATH . "runtime" . DS . "modules.ini";
+      $activeModules = parse_ini_file($runtimeModules);
+  
+      $data['active-modules'] = isset($activeModules['modules']) ? $activeModules['modules'] : [];
+      $data['modules'] = array_diff(scandir($modulesDir), array('.', '..')); // var_dump($dirs);
+      $data['modules'] = preg_grep('/^\./i', $data['modules'], PREG_GREP_INVERT);
+      CoreResult::instance($data)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
   function getModuleSettings($module) {
     try {
       $sidebarMenuDefinition = CORE_APP_PATH . "module" . DS . urldecode($module) . DS . "sidebar.menu.json";
-      $functionDefinition    = CORE_APP_PATH . "module" . DS . urldecode($module) . DS . "function.ini"; 
+      $functionDefinition    = CORE_APP_PATH . "module" . DS . urldecode($module) . DS . "fun.json"; 
       $settings = new stdClass;
       $settings->app      = $module;
       $settings->menu     = file_exists($sidebarMenuDefinition) ? json_decode(file_get_contents($sidebarMenuDefinition)) : [];
-      $settings->function = file_exists($functionDefinition) ? parse_ini_file($functionDefinition) : [];
+      $settings->function = file_exists($functionDefinition) ? json_decode(file_get_contents($functionDefinition)) : [];
       if (!is_array($settings->menu)) $settings->menu = array($settings->menu);
       CoreResult::instance($settings)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+  function getAppMenu($module = null) {
+    try {
+      $sidebarMenuDefinition = CORE_APP_PATH . "module" . DS . $module . DS . "sidebar.menu.json";
+      $result = json_decode(file_get_contents($sidebarMenuDefinition));
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+  function registerMenu() {
+    try {
+      $app = $this->postv('app');
+      $menu = $this->postv('menu');
+      $rbac = new RBACService();
+      $result = $rbac->registerMenu($app, $menu);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+  function deregisterMenu() {
+  }
+  function getAppFunction($module = null) {
+    try {
+      $functionDefinition = CORE_APP_PATH . "module" . DS . $module . DS . "fun.json";
+      $result = file_exists($functionDefinition) ? 
+        json_decode(file_get_contents($functionDefinition)) :
+        [];
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+  function registerFunction() {
+    try {
+      $app = $this->postv('app');
+      $function = $this->postv('function');
+      $rbac = new RBACService();
+      $result = $rbac->registerFunction($app, $function);
+      CoreResult::instance($result)->show();
     } catch (Exception $ex) {
       CoreError::instance($ex->getMessage())->show();
     }

@@ -88,7 +88,7 @@
     <i class="bi bi-x-lg bt-close bt-x" role="button"></i>
   </h6>
   <div class="card-body d-flex flex-column">
-    <form class="row form-user g-3 needs-validation flex-fill mt-1" novalidate>
+    <form class="form-user needs-validation flex-fill mt-1" novalidate>
       <div class="row gx-2 mb-2">
         <div class="col mt-2 d-flex flex-column">
           <input type="text"class="form-control" id="input-user-name" placeholder="Full Name" required>

@@ -300,8 +300,10 @@ class KitMapService extends CoreService {
   function getKitListByConceptMap($cmid) { // var_dump($cmid);
     try {
       $db = self::instance('kbv2');
-      $qb = QB::instance('kit');
-      $qb->select()->where('cmid', QB::esc($cmid));
+      $qb = QB::instance('kit k');
+      $qb->select()
+        ->select(QB::raw('(SELECT count(*) FROM kit_set ks WHERE ks.kid = k.kid) AS sets'))
+        ->where('cmid', QB::esc($cmid));
       return $db->query($qb->get());
     } catch (Exception $ex) {
       throw CoreError::instance($ex->getMessage());

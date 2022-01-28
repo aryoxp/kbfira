@@ -23,21 +23,22 @@ class CoreUri {
   private $method;
   private $args;
 
-  const CONTROLLER  = 1;
-  const METHOD      = 2;
-  const ARGS        = 3;
-  const APP         = 4;
-  const SCHEME      = 11;
-  const HOST        = 12;
-  const PORT        = 13;
-  const URI         = 14;
-  const SCRIPT      = 15;
-  const PATHINFO    = 16;
-  const BASEPATH    = 17;
-  const BASEURL     = 18;
-  const BASEFILEURL = 19;
-  const BASELINKURL = 20;
-  const QUERYSTRING = 21;
+  const CONTROLLER   = 1;
+  const METHOD       = 2;
+  const ARGS         = 3;
+  const APP          = 4;
+  const CONTROLLERID = 5;
+  const SCHEME       = 11;
+  const HOST         = 12;
+  const PORT         = 13;
+  const URI          = 14;
+  const SCRIPT       = 15;
+  const PATHINFO     = 16;
+  const BASEPATH     = 17;
+  const BASEURL      = 18;
+  const BASEFILEURL  = 19;
+  const BASELINKURL  = 20;
+  const QUERYSTRING  = 21;
 
   private static $instance;
 
@@ -58,7 +59,7 @@ class CoreUri {
     $this->uri      = $_SERVER['REQUEST_URI'];
     $this->script   = end($xscript);
     $this->query    = $_SERVER['QUERY_STRING'];
-    $this->pathinfo = isset($_SERVER['PATH_INFO']) ? (trim($_SERVER['PATH_INFO'], "?" . $_SERVER['QUERY_STRING'])) : "";
+    $this->pathinfo = isset($_SERVER['PATH_INFO']) ? (trim($_SERVER['PATH_INFO'], $_SERVER['QUERY_STRING'])) : "";
 
     /**
      * Base URL extraction.
@@ -105,12 +106,13 @@ class CoreUri {
       $this->baselinkurl .= $this->app ? $this->app . DS : '';
       $this->basefileurl .= $this->app ? $this->app . DS : '';
     }
-    $controller  = ucfirst($pathParts ? array_shift($pathParts) : '');
+    $controller  = $pathParts ? array_shift($pathParts) : '';
     $method      = array_shift($pathParts);
 
+    $this->controllerId = $controller ? $controller : $coreConfig['runtime']['default_controller'];
     $this->controller = (($controller == "") ?
       ucfirst($coreConfig['runtime']['default_controller']) :
-      $controller) . 'Controller';
+      ucfirst($controller)) . 'Controller';
     $this->method = ($method == "") ?
       $coreConfig['runtime']['default_method'] :
       $method;
@@ -146,6 +148,8 @@ class CoreUri {
         return $this->app;
       case CoreUri::CONTROLLER:
         return $this->controller;
+      case CoreUri::CONTROLLERID:
+        return $this->controllerId;
       case CoreUri::METHOD:
         return $this->method;
       case CoreUri::ARGS:

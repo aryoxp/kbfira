@@ -202,6 +202,8 @@ class Analyzer {
     if (level & Analyzer.EXPECT) { // draw expected links
       cy.edges('.expect').remove()
       compare.miss.forEach(e => {
+        if (cy.nodes(`#${e.sid}`).length == 0) return;
+        if (cy.nodes(`#${e.tid}`).length == 0) return;
         cy.add({
           group: "edges",
           data: {
@@ -217,6 +219,8 @@ class Analyzer {
       cy.edges('.miss').remove()
       compare.miss.forEach(e => {
         let source = (cy.nodes(`[type="link"][label="${e.link}"]`).connectedEdges(`[type="left"][target="${e.sid}"]`).data('source'))
+        if (cy.nodes(`#${e.tid}`).length == 0) return;
+        if (cy.nodes(`#${source ? source : e.lid}`).length == 0) return;
         cy.add({
           group: "edges",
           data: {
@@ -226,6 +230,8 @@ class Analyzer {
           }
         }).addClass('miss')
         if (!source) {
+          if (cy.nodes(`#${e.sid}`).length == 0) return;
+          if (cy.nodes(`#${e.lid}`).length == 0) return;
           cy.add({
             group: "edges",
             data: {

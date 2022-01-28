@@ -22,6 +22,11 @@ class CmapComposeController extends ModuleController {
     $this->render($this->view("makekit.php"));
   }
 
+  function settings() {
+    $this->useScript("settings.compose.js");
+    $this->render();
+  }
+
   
 
 }

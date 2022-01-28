@@ -24,12 +24,6 @@
       "label": "Group/Class",
       "url": "user/group",
       "icon": "people-fill"
-    },
-    {
-      "id": "authorization",
-      "label": "Authorization",
-      "url": "user/authorization",
-      "icon": "key"
     }
   ]
 }

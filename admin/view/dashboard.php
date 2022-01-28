@@ -1,12 +1,51 @@
 <div class="row mt-5">
-  <div class="col-sm-10 col-md-8 col-lg-6 mx-auto">
+  <div class="col-sm-10 col-md-8 col-lg-6 mx-auto py-3 px-4 card shadow-sm">
 
-    <?php if (isset($_SESSION['user'])) { ?>
-    <span class="fs-1 mb-3">Hi, <?php echo $_SESSION['user']['name']; ?>!</span>
+    <?php if (isset($_SESSION['user'])) { // var_dump($data, $_SESSION['user']); ?>
+    <div class="d-flex justify-content-between">
+      <span>
+        <span class="fs-2">Hi, <span class="text-primary"><?php echo $_SESSION['user']['name']; ?></span></span>.
+      <?php 
+        $roles = ($_SESSION['user']['roles']) ? explode(",", $_SESSION['user']['roles']) : [];
+        $rids = ($_SESSION['user']['rids']) ? explode(",", $_SESSION['user']['rids']) : [];
+        if (count($roles)) {
+          echo '<br><span>';
+          foreach($roles as $r) {
+            echo '<span class="badge rounded-pill bg-primary px-3 me-1">'.$r.'</span>';
+          }
+          echo '</span>';
+        }
+        $groups = ($_SESSION['user']['groups']) ? explode(",", $_SESSION['user']['groups']) : [];
+        $gids = ($_SESSION['user']['gids']) ? explode(",", $_SESSION['user']['gids']) : [];
+        if (count($groups)) {
+          echo '<span>';
+          foreach($groups as $g) {
+            echo '<span class="badge rounded-pill bg-warning text-dark px-3 me-1">'.$g.'</span>';
+          }
+          echo '</span>';
+        }
+        // echo $_SESSION['user']['roles'];
+      ?>
+      </span>
+      <span class="fs-2 ms-4">
+        <a class="btn btn-danger text-nowrap bt-app-sign-out">Sign Out</a>
+      </span>
+    </div>
     <hr>
+    <?php } else { ?>
+
+      <div class="d-flex justify-content-between">
+        <span class="fs-2">Welcome!</span>
+        <span class="fs-2 ms-4">
+          <a class="btn btn-primary text-nowrap bt-app-sign-in">Sign In</a>
+        </span>
+      </div>
+      <hr>
+      <p>Please sign-in to utilize this system.</p>
+
     <?php } ?>
     
-    <div class="card shadow <?php if (isset($_SESSION['user'])) echo "d-none"; ?>" id="card-sign-in">
+    <!-- <div class="card shadow" id="card-sign-in">
       <div class="card-body">
         <span class="text-primary">Sign In</span>
         <hr>
@@ -32,7 +71,7 @@
           </div>
         </form>
       </div>
-    </div>
+    </div> -->
 
   </div>
 </div>

@@ -40,7 +40,7 @@
 <div class="card d-none" id="modal-sign-in" tabindex="-1" aria-hidden="true">
   <div class="card-body mx-3 text-center">
     <form name="form-sign-in" autocomplete="off">
-    <h1 class="h3 mb-4 mt-4 fw-normal">Please sign in</h1>
+    <h1 class="h3 mb-4 mt-4 fw-normal">Sign in</h1>
     <div class="form-floating">
       <input type="text" class="form-control rounded-0 rounded-top" id="input-username" placeholder="Username" autocomplete="new-password" style="margin-bottom: -1px;">
       <label for="input-username">Username</label>

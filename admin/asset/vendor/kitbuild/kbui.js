@@ -903,11 +903,257 @@ class KitBuildUI {
       return kitMap;  
     } catch (error) { throw error }
   }
+  static composeExtendedKitMap(kitMapData, kitSet, order = 1) {
+    if(!kitMapData.conceptMap || !kitMapData.concepts 
+      || !kitMapData.links || !kitMapData.linktargets)
+      throw "Invalid kit data.";
+    if (!kitSet) throw "Invalid kit set data.";
+    try {
+      // console.log(kitSet);
+      let kitMap = [];
+      let setids = [];
+      kitSet.sets.forEach(set => {
+        if (parseInt(set.order) <= order) setids.push(set.setid);
+      })
+      let getConceptPosition = (cid) => {
+        for(let c of kitMapData.concepts) {
+          if (c.cid == cid) return {x: parseInt(c.x), y: parseInt(c.y)};
+        }
+        return false;
+      }
+      let getLinkPosition = (lid) => {
+        for(let l of kitMapData.links) {
+          if (l.lid == lid) return {x: parseInt(l.x), y: parseInt(l.y)};
+        }
+        return false;
+      }
+      let getLink = (lid) => {
+        for(let l of kitMapData.links) {
+          if (l.lid == lid) return l
+        }
+        return false;
+      }
+      let countLinkTargets = (lid) => {
+        let count = 0
+        for(let l of kitMapData.conceptMap.linktargets) {
+          if (l.lid == lid) count++
+        }
+        return count;
+      }
+      
+      kitMapData.conceptMap.concepts.forEach(c => {
+        let included = false;
+        for (let concept of kitSet.concepts) {
+          if (setids.includes(concept.setid) && c.cid == concept.cid) {
+            included = true;
+            break;
+          };
+        }
+        if (!included) return;
+        let position = getConceptPosition(c.cid)
+        kitMap.push({
+          group: 'nodes',
+          position: position === false ? {x: parseInt(c.x), y: parseInt(c.y)} : position,
+          data: Object.assign(JSON.parse(c.data), { 
+            id: c.cid,
+            label: c.label,
+          }),
+          invalid: position === false ? true : undefined
+        })
+      })
+      kitMapData.conceptMap.links.forEach(l => {
+        let included = false;
+        for (let link of kitSet.links) {
+          if (setids.includes(link.setid) && l.lid == link.lid) {
+            included = true;
+            break;
+          };
+        }
+        if (!included) return;
+        let position = getLinkPosition(l.lid);
+        kitMap.push({
+          group: 'nodes',
+          position: position === false ? {x: parseInt(l.x), y: parseInt(l.y)} : position,
+          data: Object.assign(JSON.parse(l.data), { 
+            id: l.lid,
+            label: l.label,
+            limit: countLinkTargets(l.lid)
+          }),
+          invalid: position === false ? true : undefined
+        })
+        let link = getLink(l.lid)
+        included = false;
+        for (let edge of kitSet.sourceEdges) {
+          if (setids.includes(edge.setid) && 
+            edge.lid == link.lid && 
+            edge.source_cid == link.source_cid) {
+            included = true;
+            break;
+          };
+        }
+        if (!included) return;
+        if (link && link.source_cid) {
+          kitMap.push({
+            group: 'edges',
+            data: Object.assign(link.source_data ? JSON.parse(link.source_data) : {}, { 
+              source: link.lid,
+              target: link.source_cid,
+            }),
+          })
+        }
+      })
+      kitMapData.linktargets.forEach(lt => {
+        let included = false;
+        for (let edge of kitSet.sourceEdges) {
+          if (setids.includes(edge.setid) && 
+            edge.lid == lt.lid && 
+            edge.target_cid == lt.target_cid) {
+              included = true;
+              break;
+          };
+        }
+        if (!included) return;
+        kitMap.push({
+          group: 'edges',
+          data: Object.assign(JSON.parse(lt.target_data), { 
+            source: lt.lid,
+            target: lt.target_cid,
+          }),
+        })
+      })
+      return kitMap;  
+    } catch (error) { throw error }
+  }
+  static composeExtendedKitSet(kitMapData, kitSet, order = 1) {
+    if(!kitMapData.conceptMap || !kitMapData.concepts 
+      || !kitMapData.links || !kitMapData.linktargets)
+      throw "Invalid kit data.";
+    if (!kitSet) throw "Invalid kit set data.";
+    try {
+      // console.log(kitSet);
+      let kitMap = [];
+      let setids = [];
+      for (let set of kitSet.sets) {
+        if (parseInt(set.order) == order) {
+          setids.push(set.setid);
+          break;
+        }
+      }
+      let getConceptPosition = (cid) => {
+        for(let c of kitMapData.concepts) {
+          if (c.cid == cid) return {x: parseInt(c.x), y: parseInt(c.y)};
+        }
+        return false;
+      }
+      let getLinkPosition = (lid) => {
+        for(let l of kitMapData.links) {
+          if (l.lid == lid) return {x: parseInt(l.x), y: parseInt(l.y)};
+        }
+        return false;
+      }
+      let getLink = (lid) => {
+        for(let l of kitMapData.links) {
+          if (l.lid == lid) return l
+        }
+        return false;
+      }
+      let countLinkTargets = (lid) => {
+        let count = 0
+        for(let l of kitMapData.conceptMap.linktargets) {
+          if (l.lid == lid) count++
+        }
+        return count;
+      }
+      
+      kitMapData.conceptMap.concepts.forEach(c => {
+        let included = false;
+        for (let concept of kitSet.concepts) {
+          if (setids.includes(concept.setid) && c.cid == concept.cid) {
+            included = true;
+            break;
+          };
+        }
+        if (!included) return;
+        let position = getConceptPosition(c.cid)
+        kitMap.push({
+          group: 'nodes',
+          position: position === false ? {x: parseInt(c.x), y: parseInt(c.y)} : position,
+          data: Object.assign(JSON.parse(c.data), { 
+            id: c.cid,
+            label: c.label,
+          }),
+          invalid: position === false ? true : undefined
+        })
+      })
+      kitMapData.conceptMap.links.forEach(l => {
+        let included = false;
+        for (let link of kitSet.links) {
+          if (setids.includes(link.setid) && l.lid == link.lid) {
+            included = true;
+            break;
+          };
+        }
+        if (!included) return;
+        let position = getLinkPosition(l.lid)
+        kitMap.push({
+          group: 'nodes',
+          position: position === false ? {x: parseInt(l.x), y: parseInt(l.y)} : position,
+          data: Object.assign(JSON.parse(l.data), { 
+            id: l.lid,
+            label: l.label,
+            limit: countLinkTargets(l.lid)
+          }),
+          invalid: position === false ? true : undefined
+        })
+        let link = getLink(l.lid)
+        included = false;
+        for (let edge of kitSet.sourceEdges) {
+          if (setids.includes(edge.setid) && 
+            edge.lid == link.lid && 
+            edge.source_cid == link.source_cid) {
+            included = true;
+            break;
+          };
+        }
+        if (!included) return;
+        if (link && link.source_cid) {
+          kitMap.push({
+            group: 'edges',
+            data: Object.assign(link.source_data ? JSON.parse(link.source_data) : {}, { 
+              source: link.lid,
+              target: link.source_cid,
+            }),
+          })
+        }
+      })
+      kitMapData.linktargets.forEach(lt => {
+        let included = false;
+        for (let edge of kitSet.sourceEdges) {
+          if (setids.includes(edge.setid) && 
+            edge.lid == lt.lid && 
+            edge.target_cid == lt.target_cid) {
+              included = true;
+              break;
+          };
+        }
+        if (!included) return;
+        kitMap.push({
+          group: 'edges',
+          data: Object.assign(JSON.parse(lt.target_data), { 
+            source: lt.lid,
+            target: lt.target_cid,
+          }),
+        })
+      })
+      return kitMap;  
+    } catch (error) { throw error }
+  }
   static composeLearnerMap(learnerMapData) {
     if(!learnerMapData.conceptMap || !learnerMapData.concepts 
       || !learnerMapData.links || !learnerMapData.linktargets)
       throw "Invalid kit data.";
     try {
+      console.log(learnerMapData);
       let kitMap = []
       let getConceptPosition = (cid) => {
         for(let c of learnerMapData.concepts) {
@@ -935,8 +1181,10 @@ class KitBuildUI {
         for(let l of learnerMapData.links) {
           if (l.lid == lid) return l
         }
-        for(let l of learnerMapData.links_ext) {
-          if (l.lid == lid) return l
+        if (learnerMapData.links_ext) {
+          for(let l of learnerMapData.links_ext) {
+            if (l.lid == lid) return l
+          }
         }
         return false;
       }
@@ -1037,6 +1285,218 @@ class KitBuildUI {
       }
 
       learnerMapData.linktargets.forEach(lt => {
+        kitMap.push({
+          group: 'edges',
+          data: Object.assign(JSON.parse(lt.target_data), { 
+            source: lt.lid,
+            target: lt.target_cid,
+          }),
+        })
+      })
+
+      if (learnerMapData.linktargets_ext) {
+        learnerMapData.linktargets_ext.forEach(lt => {
+          kitMap.push({
+            group: 'edges',
+            data: Object.assign(JSON.parse(lt.target_data), { 
+              source: lt.lid,
+              target: lt.target_cid,
+            }),
+          })
+        })
+      }
+      return kitMap;  
+    } catch (error) { throw error }
+  }
+  static composeExtendedLearnerMap(learnerMapData, kitSet, order = 1) {
+    if(!learnerMapData.conceptMap || !learnerMapData.concepts 
+      || !learnerMapData.links || !learnerMapData.linktargets)
+      throw "Invalid kit data.";
+    if (!kitSet) throw "Invalid kit set data.";
+    try {
+      // console.log(learnerMapData);
+      let kitMap = [];
+      let setids = [];
+      kitSet.sets.forEach(set => {
+        if (parseInt(set.order) <= order) setids.push(set.setid);
+      })
+      let getConceptPosition = (cid) => {
+        for(let c of learnerMapData.concepts) {
+          if (c.cid == cid) return {x: parseInt(c.x), y: parseInt(c.y)};
+        }
+        if (learnerMapData.concepts_ext) {
+          for(let c of learnerMapData.concepts_ext) {
+            if (c.cid == cid) return {x: parseInt(c.x), y: parseInt(c.y)};
+          }
+        }
+        return false;
+      }
+      let getLinkPosition = (lid) => {
+        for(let l of learnerMapData.links) {
+          if (l.lid == lid) return {x: parseInt(l.x), y: parseInt(l.y)};
+        }
+        if (learnerMapData.links_ext) {
+          for(let l of learnerMapData.links_ext) {
+            if (l.lid == lid) return {x: parseInt(l.x), y: parseInt(l.y)};
+          }
+        }
+        return false;
+      }
+      let getLink = (lid) => {
+        for(let l of learnerMapData.links) {
+          if (l.lid == lid) return l
+        }
+        if (learnerMapData.links_ext) {
+          for(let l of learnerMapData.links_ext) {
+            if (l.lid == lid) return l
+          }
+        }
+        return false;
+      }
+      let countLinkTargets = (lid) => {
+        let count = 0
+        for(let l of learnerMapData.conceptMap.linktargets) {
+          if (l.lid == lid) count++
+        }
+        return count;
+      }
+
+      // console.error(learnerMapData)
+      learnerMapData.conceptMap.concepts.forEach(c => {
+        let included = false;
+        for (let concept of kitSet.concepts) {
+          if (setids.includes(concept.setid) && c.cid == concept.cid) {
+            included = true;
+            break;
+          };
+        }
+        if (!included) return;
+        let position = getConceptPosition(c.cid)
+        kitMap.push({
+          group: 'nodes',
+          position: position === false ? {x: parseInt(c.x), y: parseInt(c.y)} : position,
+          data: Object.assign(JSON.parse(c.data), { 
+            id: c.cid,
+            label: c.label,
+          }),
+          invalid: position === false ? true : undefined
+        })
+      })
+      if (learnerMapData.concepts_ext) {
+        learnerMapData.concepts_ext.forEach(c => {
+          let position = getConceptPosition(c.cid)
+          kitMap.push({
+            group: 'nodes',
+            position: position === false ? {x: parseInt(c.x), y: parseInt(c.y)} : position,
+            data: Object.assign(JSON.parse(c.data), { 
+              id: c.cid,
+              label: c.label,
+              extension: true
+            }),
+            invalid: position === false ? true : undefined
+          })
+        })
+      }
+
+      learnerMapData.conceptMap.links.forEach(l => {
+        let included = false;
+        for (let link of kitSet.links) {
+          if (setids.includes(link.setid) && l.lid == link.lid) {
+            included = true;
+            break;
+          };
+        }
+        if (!included) return;
+        let position = getLinkPosition(l.lid);
+        kitMap.push({
+          group: 'nodes',
+          position: position === false ? {x: parseInt(l.x), y: parseInt(l.y)} : position,
+          data: Object.assign(JSON.parse(l.data), { 
+            id: l.lid,
+            label: l.label,
+            limit: countLinkTargets(l.lid)
+          }),
+          invalid: position === false ? true : undefined
+        })
+      });
+
+      if (learnerMapData.links_ext) {
+        learnerMapData.links_ext.forEach(l => {
+          let position = getLinkPosition(l.lid)
+          kitMap.push({
+            group: 'nodes',
+            position: position === false ? {x: parseInt(l.x), y: parseInt(l.y)} : position,
+            data: Object.assign(JSON.parse(l.data), { 
+              id: l.lid,
+              label: l.label,
+              limit: 9,
+              extension: true
+            }),
+            invalid: position === false ? true : undefined
+          })
+        });
+      }
+
+      learnerMapData.conceptMap.links.forEach(l => {
+        let link = getLink(l.lid)
+        let included = false;
+        for (let concept of kitSet.concepts) {
+          if (setids.includes(concept.setid) && link.source_cid == concept.cid) {
+            included = true;
+            break;
+          };
+        }
+        if (!included) return;
+        included = false;
+        for (let lk of kitSet.links) {
+          if (setids.includes(lk.setid) && lk.lid == link.lid) {
+            included = true;
+            break;
+          };
+        }
+        if (!included) return;
+        if (link && link.source_cid) {
+          kitMap.push({
+            group: 'edges',
+            data: Object.assign(link.source_data ? JSON.parse(link.source_data) : {}, { 
+              source: link.lid,
+              target: link.source_cid,
+            }),
+          })
+        }
+      });
+
+      if (learnerMapData.links_ext) {
+        learnerMapData.links_ext.forEach(l => {
+          let link = getLink(l.lid)
+          if (link && link.source_cid) {
+            kitMap.push({
+              group: 'edges',
+              data: Object.assign(link.source_data ? JSON.parse(link.source_data) : {}, { 
+                source: link.lid,
+                target: link.source_cid,
+              }),
+            })
+          }
+        });
+      }
+      learnerMapData.linktargets.forEach(lt => {
+        let included = false;
+        for (let concept of kitSet.concepts) {
+          if (setids.includes(concept.setid) && lt.target_cid == concept.cid) {
+            included = true;
+            break;
+          };
+        }
+        if (!included) return;
+        included = false;
+        for (let lk of kitSet.links) {
+          if (setids.includes(lk.setid) && lk.lid == lt.lid) {
+            included = true;
+            break;
+          };
+        }
+        if (!included) return;
         kitMap.push({
           group: 'edges',
           data: Object.assign(JSON.parse(lt.target_data), { 

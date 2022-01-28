@@ -30,6 +30,12 @@
       "icon": "ui-checks-grid"
     },
     {
+      "id": "recompose-ext",
+      "label": "Recompose (Extended)",
+      "url": "cmap/kitbuild/recomposeExt",
+      "icon": "ui-checks-grid"
+    },
+    {
       "id": "runtime-recompose",
       "label": "Runtime Settings",
       "url": "cmap/kitbuild/settings",

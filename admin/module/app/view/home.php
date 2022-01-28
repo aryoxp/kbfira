@@ -84,12 +84,12 @@
   </h6>
   <div class="card-body">
     <div class="text-primary mb-2"><i class="bi bi-menu-button me-2"></i> Menus</div>
-    <div class="list-menu"></div>
+    <div class="list-menu scroll-y" style="max-height: 100px;"></div>
     <div class="text-end mt-2"><button class="btn btn-sm btn-primary bt-register-menu"><i class="bi bi-pencil"></i> Register Menus</button></div>
     <hr>
     <div class="text-primary mb-2"><i class="bi bi-gear-wide me-2"></i> Functions and Features</div>
+    <div class="list-function scroll-y" style="max-height: 100px;"></div>
     <div class="text-end mt-2"><button class="btn btn-sm btn-primary bt-register-function"><i class="bi bi-pencil"></i> Register Functions</button></div>
-    <div class="list-function"></div>
   </div>
   <div class="card-footer text-end">
     <button class="btn btn-sm btn-secondary bt-close px-5">OK</button>

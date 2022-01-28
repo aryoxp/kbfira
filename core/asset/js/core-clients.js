@@ -11,8 +11,9 @@ class Ajax {
     };
     this.settings = Object.assign(this.def, options);
     this.response = null;
-    
+
     this._rejectHandled = false;
+    this._rejectHandler = null;
   }
 
   static instance(options) {
@@ -21,32 +22,32 @@ class Ajax {
 
   defaultReject(error) {
     if (!this._rejectHandled) console.error(`Ajax Error: ${error}`);
+    else this._rejectHandler(error);
+    return Promise.reject(error);
   }
 
   get(url, data, options) {
-    this.send("get", url, data, options);
-    return this;
+    return this.send("get", url, data, options);
   }
 
   post(url, data, options) {
-    this.send("post", url, data, options);
-    return this;
+    return this.send("post", url, data, options);
   }
 
   send(method, url, data, options) {    
     let requestSettings = Object.assign({}, this.settings, options);
-    this._rejectHandled = false;
     if (requestSettings.baseUrl.trim().substr(-1) != "/")
       requestSettings.baseUrl += "/";
-    let requestUrl = url.toLowerCase().startsWith("http") ?
-      url :
-      requestSettings.baseUrl + url;
+    this._method = method;
+    this._requestUrl = url.toLowerCase().startsWith("http") ? url : requestSettings.baseUrl + url;
+    this._data = data;
+    this._rejectHandled = false;
     this.requestPromise = new Promise((resolve, reject) => {
       $.ajax({
-          url: requestUrl,
-          method: method,
-          data: data,
-          timeout: requestSettings.timeout,
+          url     : this._requestUrl,
+          method  : this._method,
+          data    : this._data,
+          timeout : requestSettings.timeout,
         })
         .done((response) => {
           this.response = response;
@@ -75,27 +76,18 @@ class Ajax {
           return;
         })
         .fail((response) => {
+          console.warn("foes here");
           this.response = response;
           if (!response.coreStatus && response.coreError) reject(response.coreError);
           else reject(response.responseText);
         });
-    });
-
-    this.requestPromise.catch(this.defaultReject.bind(this));
-    return this;
+    }).catch(this.defaultReject.bind(this));
+    return this.requestPromise; // important, for Promise.all();
   }
 
-  then(onResolve, onReject) {
-    this.requestPromise.then(onResolve, onReject ? onReject : () => {});
-    return this;
-  }
-
-  catch (onReject) {
-    this._rejectHandled = (typeof onReject == 'function')
-    this.requestPromise.catch(onReject)
-    return this;
-  } finally(onFinally) {
-    this.requestPromise.finally(onFinally);
+  catch (onReject) { // only has effect if called before get(), post(), or send()
+    this._rejectHandled = (typeof onReject == 'function');
+    if (this._rejectHandled) this._rejectHandler = onReject
     return this;
   }
 

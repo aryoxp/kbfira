@@ -24,6 +24,10 @@
     </div>
   
     <div class="btn-group btn-group-sm ms-2">
+      <button class="bt-extend btn btn-primary"><i class="bi bi-node-plus-fill"></i> Extend</button>
+    </div>
+
+    <div class="btn-group btn-group-sm ms-2">
       <button class="bt-submit btn btn-danger"><i class="bi bi-send"></i> Submit</button>
     </div>
 
@@ -39,7 +43,7 @@
     <?php $this->pluginView('kitbuild-ui', ["id" => "recompose-canvas"], 0); ?>
   </div>
   <div class="d-flex">
-    <div class="status-panel flex-fill m-2 mt-0 d-flex"></div>
+    <div class="status-panel flex-fill m-2 mt-0 d-flex align-items-center"></div>
     <div class="status-control text-end m-2 mt-0"></div>
   </div>
     

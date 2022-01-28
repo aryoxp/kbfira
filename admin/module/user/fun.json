@@ -1,0 +1,26 @@
+[
+  {
+    "id": "list-user",
+    "description": "List and view the detail of users"
+  },
+  {
+    "id": "create-user",
+    "description": "Create a new user"
+  },
+  {
+    "id": "delete-user",
+    "description": "Remove users from system"
+  },
+  {
+    "id": "update-user",
+    "description": "Update user information from system"
+  },
+  {
+    "id": "update-user-self",
+    "description": "Update their own information from system"
+  },
+  {
+    "id": "change-password",
+    "description": "Change a user own password"
+  }
+]

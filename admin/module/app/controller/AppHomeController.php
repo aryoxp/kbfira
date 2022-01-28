@@ -12,6 +12,7 @@ class AppHomeController extends ModuleController {
 
     $modulesDir = CORE_APP_PATH . "module" . DS;
     $dirs = array_diff(scandir($modulesDir), array('.', '..')); // var_dump($dirs);
+    $dirs = preg_grep('/^\./i', $dirs, PREG_GREP_INVERT);
     $runtimeModules = CORE_APP_PATH . "runtime" . DS . "modules.ini";
     $activeModules = parse_ini_file($runtimeModules);
    

@@ -28,6 +28,25 @@ class UserService extends CoreService {
     return $this->selectUser($nusername);
   }
 
+  function updateUserProfile($username, $name) {
+    $db = self::instance('kbv2');  
+    $update['name'] = trim(QB::esc($name));
+    $qb = QB::instance('user')->update($update)->where('username', trim(QB::esc($username)));
+    $db->query($qb->get());
+    return $this->selectUser($username);
+  }
+
+  function changeUserPassword($username, $password, $currentPassword = null) {
+    $db = self::instance('kbv2');  
+    $update['password'] = md5(trim(QB::esc($password)));
+    $qb = QB::instance('user')->update($update)->where('username', trim(QB::esc($username)));
+    if ($currentPassword !== null)
+      $qb->where('password', md5(trim(QB::esc($currentPassword))));
+    $db->query($qb->get());
+    if ($db->getAffectedRows() == 0) throw CoreError::instance('Invalid current password or new password is the same as current password.');
+    return $this->selectUser($username);
+  }
+
   function registerUser($name, $username, $password, $rid = null, $gid = null) {
     $db = self::instance('kbv2');
     try {
@@ -86,13 +105,11 @@ class UserService extends CoreService {
       ->where(QB::EG)
       ->orderBy('created', QB::DESC)
       ->limit(($page-1)*$perpage, $perpage);
-    // echo $created;
     if ($created) $qb = $qb->where(QB::raw('DATE(created)'), QB::esc($created));
-    // echo $qb->get();
     return $db->query($qb->get());
   }
 
-  function getRBACUser($username, $password, $role = null) {
+  function getRBACUser($username, $password = null, $role = null) {
     $db = self::instance('kbv2');
     $qb = QB::instance('user u')->select()
       ->select(QB::raw('(SELECT GROUP_CONCAT(r.name) FROM role r RIGHT JOIN user_role ur ON ur.rid = r.rid RIGHT JOIN user u2 ON u2.username = ur.username WHERE u2.username = u.username) AS `roles`'))
@@ -100,10 +117,9 @@ class UserService extends CoreService {
       ->select(QB::raw('(SELECT GROUP_CONCAT(g.name) FROM grup g RIGHT JOIN grup_user gu ON gu.gid = g.gid RIGHT JOIN user u2 ON u2.username = gu.username WHERE u2.username = u.username) AS `groups`'))
       ->select(QB::raw('(SELECT GROUP_CONCAT(gu.gid) FROM grup_user gu RIGHT JOIN user u2 ON u2.username = gu.username WHERE u2.username = u.username) AS `gids`'))
       ->where('username', $username)
-      ->where('password', md5($password))
       ->limit(1);
-    if ($role) $qb = $qb->where(QB::raw("'$role'"), QB::IN, QB::raw('(SELECT r.name FROM role r RIGHT JOIN user_role ur ON ur.rid = r.rid RIGHT JOIN user u2 ON u2.username = ur.username WHERE u2.username = u.username)'));
-    // echo $qb->get();
+    if ($password !== null) $qb->where('password', md5($password));
+    if ($role !== null) $qb = $qb->where(QB::raw("'$role'"), QB::IN, QB::raw('(SELECT r.name FROM role r RIGHT JOIN user_role ur ON ur.rid = r.rid RIGHT JOIN user u2 ON u2.username = ur.username WHERE u2.username = u.username)'));
     return $db->getRow($qb->get());
   }
 
@@ -130,19 +146,5 @@ class UserService extends CoreService {
       ->where('username', QB::IN, QB::raw("(" . implode(", ", $users) . ")"));
     return $db->query($qb->get());
   }
-
-  // function assignTextToUser($text, $username) {
-  //   $db = self::instance('kbv2');
-  //   $qb = QB::instance('user')->update(['text' => $text])
-  //     ->where('username', QB::esc($username));
-  //   return $db->query($qb->get());
-  // }
-
-  // function unassignTextFromUser($username) {
-  //   $db = self::instance('kbv2');
-  //   $qb = QB::instance('user')->update(['text' => null])
-  //     ->where('username', QB::esc($username));
-  //   return $db->query($qb->get());
-  // }
 
 }

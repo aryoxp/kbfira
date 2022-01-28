@@ -1,5 +1,5 @@
 {
-  "heading": "RBAC",
+  "heading": "Authorization",
   "menu": [{
       "id": "role-app",
       "label": "Role &mdash; App Module",

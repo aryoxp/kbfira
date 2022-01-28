@@ -9,7 +9,7 @@
       <div class="sidebar-panel overflow-hidden <?php echo $sidebarcollapse ? 'collapsed' : ''; ?>">
         <a href="/" class="text-dark text-decoration-none mx-3 my-2 d-flex align-items-center" style="white-space: nowrap;">
           <i class="bi bi-slash-square-fill me-2 text-danger fs-4" role="img" aria-label="Bootstrap"></i>
-          <span class="text-dark">Kit-Build Administration</span>
+          <span class="text-dark">Kit-Build</span>
         </a>
       </div>
       
@@ -38,29 +38,38 @@
         </div>
 
         <div class="d-flex align-items-center ms-3">
-          <form>
-            <input type="search" class="form-control form-control-sm" placeholder="Search..." aria-label="Search">
+          <?php 
+            $controller = MController::instance() ? 
+              (MController::instance())->get(MController::CONTROLLERID) : 
+              Core::instance()->lib(Core::URI)->get(CoreUri::CONTROLLERID);
+          ?>
+          <form action="<?php echo $this->location($controller . '/search'); ?>" method="get">
+            <input type="search" name="q" class="form-control form-control-sm" placeholder="Search..." aria-label="Search">
           </form>
-          <div class="dropdown text-end mx-2">
+          <div class="dropdown text-end mx-3">
             <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
               <i class="h4 text-secondary bi bi-person-circle"></i>
               <!-- <img src="https://github.com/mdo.png" alt="mdo" width="28" height="28" class="rounded-circle"> -->
             </a>
             <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1">
-              <li><a class="dropdown-item" href="#">Settings</a></li>
-              <li><a class="dropdown-item" href="#">Profile</a></li>
+              <!-- <li><a class="dropdown-item" href="#">Settings</a></li> -->
+              <li><a class="dropdown-item" href="<?php echo $this->location('home/profile'); ?>">Profile</a></li>
               <li>
                 <hr class="dropdown-divider">
               </li>
-              <li><a class="dropdown-item" href="#">Sign out</a></li>
+              <?php if(isset($_SESSION['user'])) : ?>
+              <li><a class="dropdown-item bt-app-sign-out text-danger" href="#"><i class="bi bi-box-arrow-right"></i> Sign out</a></li>
+              <?php else: ?>
+              <li><a class="dropdown-item bt-app-sign-in text-primary" href="#"><i class="bi bi-box-arrow-in-right"></i> Sign in</a></li>
+              <?php endif; ?>
             </ul>
           </div>
-          <a class="px-3" role="button">
+          <!-- <a class="px-3" role="button">
             <i class="bi bi-fullscreen"></i>
           </a>
           <a class="px-3 admin-toggle-sidepanel" role="button">
             <i class="bi bi-layout-sidebar-reverse"></i>
-          </a>
+          </a> -->
         </div>
 
       </div>
