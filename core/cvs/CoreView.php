@@ -18,6 +18,7 @@ class CoreView {
   public const CORE = 4;
   public const ASSET = 8;
   public const APP = 16;
+  public const SHARED = 32;
 
   public const ALL_VIEW = -1;
 
@@ -77,14 +78,16 @@ class CoreView {
     $core     = $options & self::CORE;
     $asset    = $options & self::ASSET;
     $app      = $options & self::APP;
+    $shared   = $options & self::SHARED;
 
     $viewDir  = Core::lib(Core::CONFIG)->get('core_app_view_directory', CoreConfig::CONFIG_TYPE_CORE);
     $viewPath = $relative ? $extra . DS . $view : CORE_APP_PATH . $viewDir . DS . $view;
     $viewPath = $asset ? CORE_APP_PATH . CORE_APP_ASSET . $view : $viewPath;
+    $viewPath = $shared ? $extra . DS . $view : $viewPath;
     $viewPath = $app ? CORE_APP_PATH . $view : $viewPath;
     $viewPath = $core ? CORE_VIEW_PATH . $view : $viewPath;
 
-    // var_dump($return, $relative, $core, $asset, $app, $options);
+    // var_dump($return, $relative, $core, $shared, $asset, $app, $options);
     // var_dump($viewPath);
 
     if (is_array($data)) {
@@ -93,17 +96,20 @@ class CoreView {
     }
     if ($return) ob_start();
     if (file_exists($viewPath) and is_readable($viewPath)) include $viewPath;
-    else echo 'View: ' . $view . ' not found at ' . $viewPath . "\n";
+    else {
+      echo 'View: ' . $view . ' not found at ' . $viewPath . $extra . "\n";
+      echo var_dump($extra, $shared, $options);
+    }
     if ($return) return ob_get_clean();
   }
 
-  public function pluginView($key, $data = null, $index = CoreView::ALL_VIEW, $options = CoreView::ASSET) {
-    // var_dump($key, $this->pluginDefs, $this);
+  public function pluginView($key, $data = null, $index = CoreView::ALL_VIEW, $options = CoreView::SHARED) {
     if (isset($this->pluginDefs[$key]) && $p = $this->pluginDefs[$key]) {
       $views = $p['views'];
+      $path = $p['path'] ? $p['path'] : null;
       if ($index == CoreView::ALL_VIEW) {
-        foreach($views as $v) $this->view($v, $data, $options);
-      } else $this->view($views[$index], $data, $options);
+        foreach($views as $v) $this->view($v, $data, $options, $path);
+      } else $this->view($views[$index], $data, $options, $path);
     }
   }
 
@@ -177,13 +183,16 @@ class CoreView {
     if (!count($this->pluginDefs)) {
       $pluginDefsFile = CORE_CONFIG_PATH . CoreView::PLUGIN_DEF_FILE;
       $appPluginDefsFile = CORE_APP_PATH . CORE_APP_CONFIG . CoreView::PLUGIN_DEF_FILE;
+      $sharedPluginDefsFile = CORE_SHARED_PATH . CORE_SHARED_CONFIG . CoreView::PLUGIN_DEF_FILE;
 
-      // var_dump($pluginDefsFile, $appPluginDefsFile);
+      // var_dump($pluginDefsFile, $appPluginDefsFile, $sharedPluginDefsFile);
 
       if (file_exists($pluginDefsFile) and is_readable($pluginDefsFile))
         $this->pluginDefs = parse_ini_file($pluginDefsFile, true);
       if (file_exists($appPluginDefsFile) and is_readable($appPluginDefsFile))
         $this->pluginDefs = array_merge($this->pluginDefs, parse_ini_file($appPluginDefsFile, true));
+      if (file_exists($sharedPluginDefsFile) and is_readable($sharedPluginDefsFile))
+        $this->pluginDefs = array_merge($this->pluginDefs, parse_ini_file($sharedPluginDefsFile, true));
     }
 
     foreach ($key as $k) {
@@ -195,12 +204,12 @@ class CoreView {
         }
         if (isset($p['scripts'])) {
           foreach ($p['scripts'] as $s) {
-            $this->useScript($s);
+            $this->useScript($s, null, $p['path'] ? $p['path'] . DS : null);
           }
         }
         if (isset($p['styles'])) {
           foreach ($p['styles'] as $s) {
-            $this->useStyle($s);
+            $this->useStyle($s, null, $p['path'] ? $p['path'] . DS : null);
           }
         }
         if (isset($p['corescripts'])) {

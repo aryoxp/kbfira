@@ -22,6 +22,7 @@ class CoreAutoloader {
 		spl_autoload_register(array($this, 'appControllerLoader'));
     spl_autoload_register(array($this, 'appServiceLoader'));
     spl_autoload_register(array($this, 'appModelLoader'));
+		spl_autoload_register(array($this, 'sharedLoader'));
 	}
 
 	private function coreLibLoader( $className ) {
@@ -58,6 +59,14 @@ class CoreAutoloader {
   
   private function appModelLoader( $className ) {
 		@include_once CORE_APP_PATH . CORE_APP_MODEL . $className .'.php';
+	}
+
+	private function sharedLoader( $className ) {
+		@include_once CORE_SHARED_PATH . CORE_SHARED_CONTROLLER . $className .'.php';
+		@include_once CORE_SHARED_PATH . CORE_SHARED_API . $className .'.php';
+		@include_once CORE_SHARED_PATH . CORE_SHARED_SERVICE . $className .'.php';
+		@include_once CORE_SHARED_PATH . CORE_SHARED_LIB . $className .'.php';
+		@include_once CORE_SHARED_PATH . CORE_SHARED_MODEL . $className .'.php';			
 	}
 	
 	public static function register($loader) {

@@ -43,6 +43,15 @@ define('CORE_APP_ASSET', $coreConfig['core']['core_app_asset_directory'] . DS);
 define('CORE_APP_LANG', CORE_APP_ASSET . $coreConfig['core']['core_app_language_directory'] . DS);
 define('CORE_APP_VENDOR', CORE_APP_ASSET . $coreConfig['core']['core_app_vendor_directory'] . DS);
 
+// defining shared libraries across apps
+define('CORE_SHARED_PATH', $coreConfig['core']['core_shared_path'] . DS);
+define('CORE_SHARED_CONFIG', $coreConfig['core']['core_shared_config_directory'] . DS);
+define('CORE_SHARED_CONTROLLER', $coreConfig['core']['core_shared_controller_directory'] . DS);
+define('CORE_SHARED_SERVICE', $coreConfig['core']['core_shared_service_directory'] . DS);
+define('CORE_SHARED_MODEL', $coreConfig['core']['core_shared_model_directory'] . DS);
+define('CORE_SHARED_LIB', $coreConfig['core']['core_shared_library_directory'] . DS);
+define('CORE_SHARED_API', $coreConfig['core']['core_shared_api_directory'] . DS);
+
 
 // instantiate the Core object
 require_once CORE_LIB_PATH . 'Core.php';
@@ -68,9 +77,12 @@ try {
   session_name("CORESID-" . CORE_ENV . DS . $app);
   session_start();
 
+  // var_dump(CORE_SHARED_PATH . CORE_SHARED_API . $controller . ".php", getcwd(), file_exists(CORE_SHARED_PATH . CORE_SHARED_API . $controller . ".php"));
   // try to instantiate the controller and execute method with the provided args
   if (file_exists(CORE_APP_PATH . CORE_APP_CONTROLLER . $controller . ".php") 
-    || file_exists(CORE_APP_PATH . CORE_APP_API . $controller . ".php") 
+    || file_exists(CORE_APP_PATH . CORE_APP_API . $controller . ".php")
+    || file_exists(CORE_SHARED_PATH . CORE_SHARED_CONTROLLER . $controller . ".php")
+    || file_exists(CORE_SHARED_PATH . CORE_SHARED_API . $controller . ".php") 
     || file_exists(CORE_API_PATH . $controller . ".php")) {
     $C = new $controller();
     if (method_exists($controller, $method)) {
