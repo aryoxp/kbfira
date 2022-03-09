@@ -9,14 +9,19 @@ class ModuleAutoloader {
   {
     self::$module = $module;
     self::$autoloader = new ModuleAutoloader();
+    CoreAutoloader::register(array(ModuleAutoloader::$autoloader, 'module_api'));
     CoreAutoloader::register(array(ModuleAutoloader::$autoloader, 'module_controller'));
     CoreAutoloader::register(array(ModuleAutoloader::$autoloader, 'module_service'));
     CoreAutoloader::register(array(ModuleAutoloader::$autoloader, 'module_library'));
   }
 
+  public function module_api($className) {
+    $classFile = CORE_APP_PATH . "module" . DS . self::$module . DS . "api" . DS . $className . ".php";
+    if (file_exists($classFile)) @require_once($classFile);
+  }
+
   public function module_controller($className) {
     $classFile = CORE_APP_PATH . "module" . DS . self::$module . DS . "controller" . DS . $className . ".php";
-    // var_dump($classFile, file_exists($classFile));
     if (file_exists($classFile)) @require_once($classFile);
   }
 

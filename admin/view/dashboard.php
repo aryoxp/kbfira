@@ -2,7 +2,7 @@
   <div class="col-sm-10 col-md-8 col-lg-6 mx-auto py-3 px-4 card shadow-sm">
 
     <?php if (isset($_SESSION['user'])) { // var_dump($data, $_SESSION['user']); ?>
-    <div class="d-flex justify-content-between">
+    <div class="card-body d-flex justify-content-between mb-3">
       <span>
         <span class="fs-2">Hi, <span class="text-primary"><?php echo $_SESSION['user']['name']; ?></span></span>.
       <?php 
@@ -31,7 +31,7 @@
         <a class="btn btn-danger text-nowrap bt-app-sign-out">Sign Out</a>
       </span>
     </div>
-    <hr>
+    <!-- <hr> -->
     <?php } else { ?>
 
       <div class="d-flex justify-content-between">
@@ -41,7 +41,7 @@
         </span>
       </div>
       <hr>
-      <p>Please sign-in to utilize this system.</p>
+      <p>This is system administration and management page.<br>Please <a class="bt-app-sign-in" role="button">sign-in</a> to use this feature.</p>
 
     <?php } ?>
     

@@ -67,11 +67,13 @@ class RoleMenu {
       promises.push(this.ajax.get(`RBACApi/getRoleDetail/${rid}`));
       promises.push(this.ajax.get(`RBACApi/getRoleAuthApp/${rid}`));
       promises.push(this.ajax.get(`RBACApi/getModules`));
+      promises.push(this.ajax.get(`RBACApi/getRegisteredApps`));
       Promise.all(promises).then(result => { // console.log(result);
         let role = result[0];
         let authApps = result[1];
         let modules = result[2];
-        RoleMenu.populateRoleDetail(role, authApps, modules);
+        let registeredApps = result[3];
+        RoleMenu.populateRoleDetail(role, authApps, modules, registeredApps);
       }).catch(error => {
         UI.error(error).show();
       });
@@ -85,18 +87,25 @@ class RoleMenu {
 
     $('#detail-role').on('click', '.item-app', e => {
       let app = $(e.currentTarget).attr('data-app');
+      let module = $(e.currentTarget).attr('data-module');
       let rid = $(e.currentTarget).attr('data-rid');
       Promise.all([
-        this.ajax.get(`RBACApi/getRoleAuthAppMenu/${rid}/${app}`),
-        this.ajax.get(`RBACApi/getAppMenu/${app}`)]).then(result => {
+        this.ajax.get(`RBACApi/getRoleAuthAppMenu/${rid}/${app ? app : module}`),
+        module ? this.ajax.get(`RBACApi/getModuleMenu/${module}`) : 
+        this.ajax.get(`RBACApi/getAppMenu/${app ? app : module}`)]).then(result => {
           let authMenu = result[0];
           let appMenu = result[1];
           let menus = [];
-          if(Array.isArray(appMenu))
-            appMenu.forEach(aMenu => menus.push(...RoleMenu.flatten(aMenu.menu)));
-          else menus.push(...RoleMenu.flatten(appMenu.menu));
+          if (module) {
+            if(Array.isArray(appMenu))
+              appMenu.forEach(aMenu => menus.push(...RoleMenu.flatten(aMenu.menu)));
+            else menus.push(...RoleMenu.flatten(appMenu.menu));
+          } else {
+            console.log(appMenu);
+            menus = appMenu;
+          }
           // console.log(menus);
-          RoleMenu.populateMenus(app, rid, menus, authMenu);
+          RoleMenu.populateMenus(app ? app : module, rid, menus, authMenu);
         }).catch(error => {
           UI.error(error).show();
         })
@@ -219,8 +228,8 @@ RoleMenu.populatePagination = (count, page, perpage) => {
 }
 
 RoleMenu.populateRoleDetail = (role, auths = [], app = []) => {
-  // console.log(app)
-  let activeModules = app['active-modules'];
+
+  // let activeModules = app['active-modules'];
   let modules = new Map(Object.entries(app['modules']));
   let roleDetailHtml = '';
   
@@ -232,10 +241,13 @@ RoleMenu.populateRoleDetail = (role, auths = [], app = []) => {
 
   roleDetailHtml += `<span class="d-block mt-3">This role is currently associated with: <span class="text-primary">${auths.length} modules.</span></span>`;
   roleDetailHtml += `<div class="mt-1 mb-2"><em>Please select an application module to list its applicable menus.</em></div>`;
-  authApps = []
+
   auths.forEach(auth => {
-    authApps.push(auth.app);
-    roleDetailHtml += `<span class="item-app badge rounded-pill bg-primary me-1 px-3" data-app="${auth.app}" data-rid="${role.rid}" role="button">${auth.app}</span>`;
+    if (!Array.from(modules.values()).includes(auth.app)) {
+      roleDetailHtml += `<span class="item-app badge rounded-pill bg-success me-1 px-3" data-app="${auth.app}" data-rid="${role.rid}" role="button">${auth.app}</span>`;
+      return;
+    }
+    roleDetailHtml += `<span class="item-app badge rounded-pill bg-primary me-1 px-3" data-module="${auth.app}" data-rid="${role.rid}" role="button">${auth.app}</span>`;
   });
 
   $('#detail-role').html(roleDetailHtml)
@@ -248,9 +260,10 @@ RoleMenu.populateMenus = (module, rid, menus = [], activeMenus = []) => {
   let aMenus = activeMenus.map((m, i) => { return m.mid; });
   listMenuHtml = ``;
   menus.forEach(menu => {
-    let checked = aMenus.includes(menu.id) ? 'checked' : '';
-    listMenuHtml += `<div class="d-flex align-items-center item-menu justify-content-between py-1 border-bottom" data-app="${module}" data-mid="${menu.id}" data-rid="${rid}">`;
-    listMenuHtml += `<span class="me-1 px-3">${menu.label} <span class="badge rounded-pill bg-warning text-dark me-1 ms-3 px-2">${menu.id}</span><br><code>${menu.url}</code>`
+    let mid = menu.id ? menu.id : menu.mid;
+    let checked = aMenus.includes(mid) ? 'checked' : '';
+    listMenuHtml += `<div class="d-flex align-items-center item-menu justify-content-between py-1 border-bottom" data-app="${module}" data-mid="${mid}" data-rid="${rid}">`;
+    listMenuHtml += `<span class="me-1 px-3">${menu.label} <span class="badge rounded-pill bg-warning text-dark me-1 ms-2 px-2">${mid}</span><br><code>${menu.url}</code>`
     listMenuHtml += `</span>`;
     listMenuHtml += `<div class="form-check form-switch">`
     listMenuHtml += `  <input class="form-check-input switch-role-menu" type="checkbox" role="switch" id="switch-${menu.id}" ${checked}>`

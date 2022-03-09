@@ -130,7 +130,7 @@ class KitBuildApiController extends CoreApi {
           $data->create_time,
           $data->enabled, 
           $data->author, 
-          $data->cmid,
+          $data->cmid
         );
       }
       $cmService = new ConceptMapService();

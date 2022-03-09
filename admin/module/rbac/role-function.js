@@ -85,14 +85,15 @@ class RoleFunction {
 
     $('#detail-role').on('click', '.item-app', e => {
       let app = $(e.currentTarget).attr('data-app');
+      let module = $(e.currentTarget).attr('data-module')
       let rid = $(e.currentTarget).attr('data-rid');
       Promise.all([
-        this.ajax.get(`RBACApi/getRoleAuthAppFunction/${rid}/${app}`),
+        this.ajax.get(`RBACApi/getRoleAuthAppFunction/${rid}/${app ? app : module}`),
+        module ? this.ajax.get(`RBACApi/getModuleFunction/${module}`) : 
         this.ajax.get(`RBACApi/getAppFunction/${app}`)]).then(result => {
           let authFunction = result[0];
           let functions = result[1];
-          // console.log(functions, authFunction);
-          RoleFunction.populateFunctions(app, rid, functions, authFunction);
+          RoleFunction.populateFunctions(app ? app : module, rid, functions, authFunction);
         }).catch(error => {
           UI.error(error).show();
         })
@@ -215,8 +216,8 @@ RoleFunction.populatePagination = (count, page, perpage) => {
 }
 
 RoleFunction.populateRoleDetail = (role, auths = [], app = []) => {
-  // console.log(app)
-  let activeModules = app['active-modules'];
+
+  // let activeModules = app['active-modules'];
   let modules = new Map(Object.entries(app['modules']));
   let roleDetailHtml = '';
   
@@ -228,11 +229,14 @@ RoleFunction.populateRoleDetail = (role, auths = [], app = []) => {
 
   roleDetailHtml += `<span class="d-block mt-3">This role is currently associated with: <span class="text-primary">${auths.length} modules.</span></span>`;
   roleDetailHtml += `<div class="mt-1 mb-2"><em>Please select an application module to list its applicable functions.</em></div>`;
-  authApps = [];
   roleDetailHtml += `<div>`
+
   auths.forEach(auth => {
-    authApps.push(auth.app);
-    roleDetailHtml += `<span class="item-app badge rounded-pill bg-primary me-1 px-3" data-app="${auth.app}" data-rid="${role.rid}" role="button">${auth.app}</span>`;
+    if (!Array.from(modules.values()).includes(auth.app)) {
+      roleDetailHtml += `<span class="item-app badge rounded-pill bg-success me-1 px-3" data-app="${auth.app}" data-rid="${role.rid}" role="button">${auth.app}</span>`;
+      return;
+    }
+    roleDetailHtml += `<span class="item-app badge rounded-pill bg-primary me-1 px-3" data-module="${auth.app}" data-rid="${role.rid}" role="button">${auth.app}</span>`;
   });
   roleDetailHtml += `</div>`
 
@@ -246,13 +250,14 @@ RoleFunction.populateRoleDetail = (role, auths = [], app = []) => {
 RoleFunction.populateFunctions = (module, rid, functions = [], activeFunctions = []) => {
   let aFunctions = activeFunctions.map((m, i) => { return m.fid; });
   listFunctionHtml = ``;
-  functions.forEach(funct => {
-    let checked = aFunctions.includes(funct.id) ? 'checked' : '';
-    listFunctionHtml += `<div class="d-flex align-items-center item-function justify-content-between py-1 border-bottom" data-app="${module}" data-fid="${funct.id}" data-rid="${rid}">`;
-    listFunctionHtml += `<span class="me-1 px-3">${funct.description} <span class="badge rounded-pill bg-warning text-dark me-1 ms-3 px-2">${funct.id}</span>`
+  functions.forEach(funct => { console.log(funct)
+    let fid = funct.id ? funct.id : funct.fid;
+    let checked = aFunctions.includes(fid) ? 'checked' : '';
+    listFunctionHtml += `<div class="d-flex align-items-center item-function justify-content-between py-1 border-bottom" data-app="${module}" data-fid="${fid}" data-rid="${rid}">`;
+    listFunctionHtml += `<span class="me-1 px-3">${funct.description} <span class="badge rounded-pill bg-warning text-dark me-1 ms-3 px-2">${fid}</span>`
     listFunctionHtml += `</span>`;
     listFunctionHtml += `<div class="form-check form-switch">`
-    listFunctionHtml += `  <input class="form-check-input switch-role-function" type="checkbox" role="switch" id="switch-${funct.id}" ${checked}>`
+    listFunctionHtml += `  <input class="form-check-input switch-role-function" type="checkbox" role="switch" id="switch-${fid}" ${checked}>`
     listFunctionHtml += `</div>`
     listFunctionHtml += `</div>`;
   });

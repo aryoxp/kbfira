@@ -1,4 +1,6 @@
-<?php 
+<?php
+
+use QBRaw as GlobalQBRaw;
 
 defined('CORE') or (header($_SERVER["SERVER_PROTOCOL"] . " 403 Forbidden") and die('403.14 - Access denied.'));
 defined('CORE') or die();
@@ -306,7 +308,8 @@ class QB extends QBBase {
 
   public function insert($insert, $update = null) {
     if (gettype(reset($insert)) == "array") {
-      return $this->inserts($insert, $update ? true : false);
+      $updateCol = array_keys($insert[0]);
+      return $this->inserts($insert, $update ? $updateCol : false);
     }
     $this->_type = QB::T_INSERT;
     $this->_insert = $insert;
@@ -345,6 +348,16 @@ class QB extends QBBase {
   public function where($col, $opVal = null, $val = null, $con = QB::AND) {
     $this->_wheres[] = new QBWhere($col, $opVal, $val, $con);
     return $this;
+  }
+
+  public function whereIn($col, $vals = [], $con = QB::AND) {
+    if ($vals instanceof QBRaw) return $this->where($col, QB::IN, $vals);
+    if (is_null($vals)) return $this->where($col, QB::IS, QB::raw('NULL'));
+    if (!is_array($vals)) $vals = [$vals];
+    $vals = array_map(function ($v) {
+      return (is_null($v)) ? 'NULL' : ($v instanceof QBRaw ? $v : QB::qt($v));
+    }, $vals);
+    return $this->where($col, QB::IN, QB::raw(QB::OG . implode(", ", $vals) . QB::EG), $con);
   }
 
   public function groupBy(...$cols) {
@@ -441,7 +454,7 @@ class QB extends QBBase {
             $sql .= "\nAS new \nON DUPLICATE KEY UPDATE";
             $update = array_map(function($col) {
               return "\n" . $col . QB::SP . QB::EQ . QB::SP . "new." . $col;
-            }, $this->_insert->cols);
+            }, $this->_update);
             $sql .= implode("," . QB::SP, $update);
           }
           break;

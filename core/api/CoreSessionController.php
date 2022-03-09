@@ -15,6 +15,7 @@ class CoreSessionController extends CoreApi {
   function set() {
     $key = self::postv('key');
     $data = self::postv('data');
+    // var_dump($_POST);
     try {
       if ($key) $_SESSION[$key] = $data;
       else foreach ($_POST as $k => $v) $_SESSION[$k] = $v;

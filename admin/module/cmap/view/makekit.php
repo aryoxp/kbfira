@@ -2,6 +2,7 @@
   
   <div class="btn-group btn-group-sm ms-2">
     <button class="bt-open-kit btn btn-primary"><i class="bi bi-folder2-open"></i> Open Kit</button>
+    <button class="bt-close-kit btn btn-primary"><i class="bi bi-x-lg"></i> Close Kit</button>
     <button class="bt-option btn btn-primary"><i class="bi bi-sliders"></i> Options</button>
     <button class="bt-content btn btn-primary"><i class="bi bi-file-text"></i> Content</button>
     <button class="bt-save btn btn-primary"><i class="bi bi-save"></i> Save</button>

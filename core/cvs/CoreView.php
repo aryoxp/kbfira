@@ -98,7 +98,6 @@ class CoreView {
     if (file_exists($viewPath) and is_readable($viewPath)) include $viewPath;
     else {
       echo 'View: ' . $view . ' not found at ' . $viewPath . $extra . "\n";
-      echo var_dump($extra, $shared, $options);
     }
     if ($return) return ob_get_clean();
   }

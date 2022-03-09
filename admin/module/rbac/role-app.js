@@ -67,11 +67,13 @@ class RoleApp {
       promises.push(this.ajax.get(`RBACApi/getRoleDetail/${rid}`));
       promises.push(this.ajax.get(`RBACApi/getRoleAuthApp/${rid}`));
       promises.push(this.ajax.get(`RBACApi/getModules`));
+      promises.push(this.ajax.get(`RBACApi/getRegisteredApps`));
       Promise.all(promises).then(result => { // console.log(result);
         let role = result[0];
         let authApps = result[1];
         let modules = result[2];
-        RoleApp.populateRoleDetail(role, authApps, modules);
+        let registeredApps = result[3]
+        RoleApp.populateRoleDetail(role, authApps, modules, registeredApps);
       }).catch(error => {
         UI.error(error).show();
       });
@@ -82,15 +84,18 @@ class RoleApp {
       let shouldEnable = $(e.currentTarget).prop('checked');
       let rid = $(e.currentTarget).parents('.item-module').attr('data-rid');
       let app = $(e.currentTarget).parents('.item-module').attr('data-app');
+      if (!app) app = $(e.currentTarget).parents('.item-module').attr('data-module');
+
+      
       if (shouldEnable) {
         this.ajax.post('RBACApi/grantRoleApp', {
           rid: rid,
           app: app
-        }).then(result => {
+        }).then(result => { // console.log(result);
+          if (result == 0) throw('0 affected rows.');
           UI.success(`Application: <code>${app}</code> granted to role: <code>${rid}</code>`).show();
         }).catch(error => {
-          UI.error(`Grant error for app: <code>${app}</code> to role: <code>${rid}</code>`).show();
-          console.error(error);
+          UI.error(`Grant error for app: <code>${app}</code> to role: <code>${rid}</code>. Invalid app/module or app/module is not registered in database.`).show();
           $(e.currentTarget).prop('checked', !$(e.currentTarget).prop('checked'));
         })
       } else {
@@ -189,8 +194,8 @@ RoleApp.populatePagination = (count, page, perpage) => {
   $('#pagination-role').html(paginationHtml)
 }
 
-RoleApp.populateRoleDetail = (role, auths = [], app = []) => {
-  // console.log(app)
+RoleApp.populateRoleDetail = (role, auths = [], app = [], regApps = []) => {
+  
   let activeModules = app['active-modules'];
   let modules = new Map(Object.entries(app['modules']));
   let roleDetailHtml = '';
@@ -225,6 +230,26 @@ RoleApp.populateRoleDetail = (role, auths = [], app = []) => {
     roleDetailHtml += `</div>`
     roleDetailHtml += `</div>`;
   });
+
+  regApps.forEach(app => {
+
+    if (Array.from(modules.values()).includes(app.app)) return;
+
+    let enabled = activeModules.includes(app.app) ? 'Enabled' : 'Disabled';
+    let bg = activeModules.includes(app.app) ? 'success' : 'danger';
+    let checked = authApps.includes(app.app) ? 'checked' : '';
+
+    roleDetailHtml += `<div class="d-flex align-items-center item-module justify-content-between py-1 border-bottom" data-app="${app.app}" data-rid="${rid}">`;
+    roleDetailHtml += `<span class="me-1 px-3">${app.name}`
+    roleDetailHtml += `  <span class="badge rounded-pill bg-warning text-dark ms-3 px-3">${app.app}</span>`;
+    roleDetailHtml += `  <span class="badge rounded-pill bg-${bg} mx-1 px-3">${enabled}</span>`;
+    roleDetailHtml += `</span>`;
+    roleDetailHtml += `<div class="form-check form-switch">`
+    roleDetailHtml += `  <input class="form-check-input switch-role-app" type="checkbox" role="switch" id="switch-${app.app}" ${checked}>`
+    roleDetailHtml += `</div>`
+    roleDetailHtml += `</div>`;
+  });
+
   roleDetailHtml += `</div>`;
 
   roleDetailHtml += `<div class="d-flex justify-content-between">`

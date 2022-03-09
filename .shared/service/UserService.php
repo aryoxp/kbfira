@@ -109,7 +109,7 @@ class UserService extends CoreService {
     return $db->query($qb->get());
   }
 
-  function getRBACUser($username, $password = null, $role = null) {
+  function getRBACUser($username, $password = null, $rid = null) {
     $db = self::instance('kbv2');
     $qb = QB::instance('user u')->select()
       ->select(QB::raw('(SELECT GROUP_CONCAT(r.name) FROM role r RIGHT JOIN user_role ur ON ur.rid = r.rid RIGHT JOIN user u2 ON u2.username = ur.username WHERE u2.username = u.username) AS `roles`'))
@@ -119,7 +119,7 @@ class UserService extends CoreService {
       ->where('username', $username)
       ->limit(1);
     if ($password !== null) $qb->where('password', md5($password));
-    if ($role !== null) $qb = $qb->where(QB::raw("'$role'"), QB::IN, QB::raw('(SELECT r.name FROM role r RIGHT JOIN user_role ur ON ur.rid = r.rid RIGHT JOIN user u2 ON u2.username = ur.username WHERE u2.username = u.username)'));
+    if ($rid !== null) $qb = $qb->where(QB::raw("'$rid'"), QB::IN, QB::raw('(SELECT r.id FROM role r RIGHT JOIN user_role ur ON ur.rid = r.rid RIGHT JOIN user u2 ON u2.username = ur.username WHERE u2.username = u.username)'));
     return $db->getRow($qb->get());
   }
 

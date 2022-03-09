@@ -24,17 +24,17 @@
 
         <?php if (isset($title)) : ?>
         <span id="page-title" class="fs-5 d-flex align-items-center">
-          <span class="text-secondary text-nowrap"><?php echo ($title); ?></span>
-          <span class="fs-4 mx-3 text-muted">&middot;</span>
+          <span class="text-dark text-nowrap"><?php echo ($title); ?></span>
+          <!-- <span class="fs-4 mx-3 text-muted">&middot;</span> -->
         </span>
         <?php endif; ?>
 
         <div class="flex-fill flex-nowrap text-nowrap overflow-hidden d-flex align-items-stretch" style="position:relative; width: 100px">
-          <ul id="nav-bar" class="nav scroll-x d-flex align-items-center flex-nowrap">
+          <!-- <ul id="nav-bar" class="nav scroll-x d-flex align-items-center flex-nowrap">
             <li><a href="#" class="nav-link px-2 link-secondary flex-nowrap">Concept Mapping</a></li>
             <li><a href="#" class="nav-link px-2 link-secondary flex-nowrap">Analyzer</a></li>
             <li><a href="#" class="nav-link px-2 link-secondary flex-nowrap">Administration</a></li>
-          </ul>
+          </ul> -->
         </div>
 
         <div class="d-flex align-items-center ms-3">
@@ -53,7 +53,29 @@
             </a>
             <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1">
               <!-- <li><a class="dropdown-item" href="#">Settings</a></li> -->
-              <li><a class="dropdown-item" href="<?php echo $this->location('home/profile'); ?>">Profile</a></li>
+              <li><a class="dropdown-item" href="<?php echo $this->location('home/profile'); ?>">
+                <?php echo (isset($_SESSION['user'])) ? $_SESSION['user']['name'] : "Profile"; ?>
+                <?php if (isset($_SESSION['user'])) {
+                  $user = $_SESSION['user'];
+                  if (isset($user['roles'])) {
+                    echo '<span class="mb-1 d-block">';
+                    $roles = explode(",", $user['roles']);
+                    foreach($roles as $r) {
+                      echo '<span class="badge rounded-pill bg-primary me-1">' . $r . '</span>';
+                    }
+                    echo '</span>';
+                  }
+                  if (isset($user['groups'])) {
+                    echo '<span class="mb-1 d-block">';
+                    $groups = explode(",", $user['groups']);
+                    foreach($groups as $g) {
+                      echo '<span class="badge rounded-pill bg-warning text-dark me-1">' . $g . '</span>';
+                    }
+                    echo '</span>';
+                  }
+                } ?>
+              </a>
+              </li>
               <li>
                 <hr class="dropdown-divider">
               </li>
@@ -80,15 +102,18 @@
 
       <div class="admin-sidebar-inner px-3">
         <ul>
-          <li class="admin-sidebar-heading">Dashboards</li>
+          <!-- <li class="admin-sidebar-heading">Dashboard</li> -->
           <li>
-            <a href="<?php echo $this->location(); ?>">
+            <a href="<?php echo $this->location(); ?>" class="text-primary">
               <i class="bi bi-house"></i> Dashboard
             </a>
           </li>
         <?php
           $this->buildMenu = function($menu, $lv = 1, $app = '') {
             foreach($menu as $m) {
+              
+              if (isset($m->id) && !CoreAuth::isMenuAuthorized($app, $m->id)) continue;
+
               $hasMenu = @$m->menu && count($m->menu);
               $hasMenuClass = $hasMenu ? ' has-submenu collapsed' : '';
               echo '<li '. (property_exists($m, 'id') ? 'data-id="' . $app . "-" . $m->id . '"' : '') . ' class="mb-1">';
@@ -106,6 +131,7 @@
             }
           };
           foreach($menus as $app => $menu) {
+            if (!CoreAuth::isAppAuthorized($app)) continue;
             if (is_array($menu)) {
               foreach($menu as $m) {
                 if (@$m->heading)

@@ -18,16 +18,22 @@
       "icon": "diagram-3",
       "menu": [
         {
-          "id": "goalmaps-kits",
-          "label": "Goalmaps and Kits",
-          "url": "m.user/list",
+          "id": "teachermaps",
+          "label": "Teacher Maps",
+          "url": "content/tmap",
+          "icon": "list"
+        },
+        {
+          "id": "kits",
+          "label": "Kits",
+          "url": "content/kit",
           "icon": "list"
         },
         {
           "id": "learnermaps",
-          "label": "Learnermaps",
-          "url": "m.user/role",
-          "icon": "file-person"
+          "label": "Learner Maps",
+          "url": "content/lmap",
+          "icon": "list"
         }
       ]
     }

@@ -121,7 +121,7 @@ class CmapLogger extends Logger {  // TODO: SET cmid
       console.error('CmapLogger requires Core and Analyzer to be loaded.')
       return null
     }
-    let propositions = Analyzer.composePropositions(KitBuildUI.buildConceptMapData(canvas));
+    let propositions = Analyzer.composePropositions(KitBuildUI.buildConceptMapData(this.canvas));
     let concepts = this.canvas.cy.nodes('[type="concept"]');
     let links = this.canvas.cy.nodes('[type="link"]');
     let edges = this.canvas.cy.edges();

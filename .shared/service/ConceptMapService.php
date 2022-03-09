@@ -277,4 +277,89 @@ class ConceptMapService extends CoreService {
     }
   }
 
+  function searchConceptMaps($keyword, $page = 1, $perpage = 10) {
+    try {
+      $keyword = "%" . QB::esc($keyword) . "%";
+      $db = self::instance('kbv2');
+      $qb = QB::instance('conceptmap cm');
+      $qb->select(QB::raw('cm.*'), 't.title AS topictitle')
+        ->leftJoin('topic t', 'cm.topic', 't.tid')
+        ->where('cmfid', 'LIKE', $keyword)
+        ->where('cm.title', 'LIKE', $keyword, QB::OR)
+        ->where('author', 'LIKE', $keyword, QB::OR)
+        ->limit(($page - 1) * $perpage, $perpage);
+      $result = $db->query($qb->get());
+      return $result;
+    } catch (Exception $ex) {
+      throw CoreError::instance($ex->getMessage());
+    }
+  }
+
+  function searchConceptMapsCount($keyword, $page = 1, $perpage = 10) {
+    try {
+      $keyword = "%" . QB::esc($keyword) . "%";
+      $db = self::instance('kbv2');
+      $qb = QB::instance('conceptmap');
+      $qb->select(QB::raw('COUNT(*) AS `count`'))->where('cmfid', 'LIKE', $keyword)
+        ->where('title', 'LIKE', $keyword, QB::OR)
+        ->where('author', 'LIKE', $keyword, QB::OR);
+      $result = $db->getVar($qb->get());
+      return $result;
+    } catch (Exception $ex) {
+      throw CoreError::instance($ex->getMessage());
+    }
+  }
+
+  function assignTopicToConceptMap($cmid, $tid) {
+    try {
+      $db = self::instance('kbv2');
+      $qb = QB::instance('conceptmap')
+        ->update('topic', QB::esc($tid))
+        ->where('cmid', QB::esc($cmid));
+      $result = $db->query($qb->get());
+      return $result && $db->getAffectedRows() ? true : false;
+    } catch (Exception $ex) {
+      throw CoreError::instance($ex->getMessage());
+    }
+  }
+
+  function deassignTopicFromConceptMap($cmid) {
+    try {
+      $db = self::instance('kbv2');
+      $qb = QB::instance('conceptmap')
+        ->update('topic', null)
+        ->where('cmid', QB::esc($cmid));
+      $result = $db->query($qb->get());
+      return $result;
+    } catch (Exception $ex) {
+      throw CoreError::instance($ex->getMessage());
+    }
+  }
+
+  function assignTextToConceptMap($cmid, $tid) {
+    try {
+      $db = self::instance('kbv2');
+      $qb = QB::instance('conceptmap')
+        ->update('text', QB::esc($tid))
+        ->where('cmid', QB::esc($cmid));
+      $result = $db->query($qb->get());
+      return $result && $db->getAffectedRows() ? true : false;
+    } catch (Exception $ex) {
+      throw CoreError::instance($ex->getMessage());
+    }
+  }
+
+  function deassignTextFromConceptMap($cmid) {
+    try {
+      $db = self::instance('kbv2');
+      $qb = QB::instance('conceptmap')
+        ->update('text', null)
+        ->where('cmid', QB::esc($cmid));
+      $result = $db->query($qb->get());
+      return $result;
+    } catch (Exception $ex) {
+      throw CoreError::instance($ex->getMessage());
+    }
+  }
+
 }

@@ -364,6 +364,87 @@ class StatusBar {
   }
 }
 
+class Pagination {
+  constructor (containerElement, count, perpage) {
+    this.containerElement = containerElement
+    this.pagination = {
+      page: 1,
+      maxpage: Math.ceil(count/perpage),
+      perpage: perpage,
+      count: count,
+    }
+  }
+  static instance(containerElement, count, perpage) {
+    return new Pagination(containerElement, count, perpage);
+  }
+  set page(p) {
+    this.pagination.page = parseInt(p);
+  }
+  set perpage(p) {
+    this.pagination.perpage = parseInt(p);
+  }
+  set count(c) {
+    this.pagination.count = parseInt(c);
+  }
+  get page() {
+    return this.pagination.page;
+  }
+  get perpage() {
+    return this.pagination.perpage
+  }
+  get count() {
+    return this.pagination.count;
+  }
+  listen(formElement) {
+    $(this.containerElement).off('click', '.pagination-next').on('click', '.pagination-next', (e) => {
+      console.log(this.pagination)
+      if (this.pagination.page < this.pagination.maxpage) {
+        this.pagination.page++
+        $(formElement).trigger('submit')
+        this.update()
+      }
+    })
+
+    $(this.containerElement).off('click', '.pagination-prev').on('click', '.pagination-prev', (e) => {
+      if (this.pagination.page > 1) {
+        this.pagination.page--
+        $(formElement).trigger('submit')
+        this.update()
+      }
+    })
+
+    $(this.containerElement).off('click', '.pagination-page').on('click', '.pagination-page', (e) => {
+      this.pagination.page = parseInt($(e.currentTarget).attr('data-page'))
+      $(formElement).trigger('submit')
+      this.update()
+    })
+    return this;
+  }
+  update(count = null, perpage = null) { // console.warn(this.pagination)
+    if (count) this.pagination.count = count;
+    if (perpage) this.pagination.perpage = perpage;
+    let paginationHtml = '';
+    let page = this.pagination.page;
+    let maxpage = Math.ceil(this.pagination.count/this.pagination.perpage); // console.log(count, page, maxpage)
+    this.pagination.maxpage = maxpage
+    if (this.pagination.count) {
+      paginationHtml += `<li class="page-item${page == 1 ? ' disabled': ''}">`
+      paginationHtml += `  <a class="page-link pagination-prev" href="#" tabindex="-1" aria-disabled="true">Previous</a>`
+      paginationHtml += `</li>`
+      let min = page - 2 < 1 ? 1 : page - 2
+      let max = page + 2 > maxpage ? maxpage : page + 2
+      for(let p = min; p <= max; p++) {
+        paginationHtml += `<li class="page-item${page == p ? ' disabled': ''}"><a class="page-link pagination-page" data-page="${p}" href="#">${p}</a></li>`
+      }
+      paginationHtml += `<li class="page-item${page == maxpage ? ' disabled': ''}">`
+      paginationHtml += `  <a class="page-link pagination-next" href="#">Next</a>`
+      paginationHtml += `</li>`
+    }
+    $(this.containerElement).html(paginationHtml)
+    return this;
+  }
+}
+
 class UI {
   static error(content) {
     return $.toastInstance(content, {type: 'danger'})

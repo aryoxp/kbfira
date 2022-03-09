@@ -124,13 +124,10 @@ class PartitionTool extends KitBuildToolbarTool {
         return;
       }
       let confirm = UI.confirm("Remove all sets from this kit?").positive(() => {
-        this.partsMap.clear();
-        confirm.hide();
-        $('.partition-tool .part-list .item-set').slideUp('fast').promise().done(() => {
-          $('.partition-tool .item-set').remove();
-        });
+        this.clearParts();
         this.broadcastEvent('remove-sets');
         UI.info('All sets have been removed from this kit.').show();
+        confirm.hide();
       }).show();
 
     });
@@ -230,7 +227,6 @@ class PartitionTool extends KitBuildToolbarTool {
         } else doAddPart()
   }
 
-
   refreshPartList() {
     $('.partition-tool .part-list').html('');
     let order = 0;
@@ -274,6 +270,13 @@ class PartitionTool extends KitBuildToolbarTool {
       $(e).find('.set-order').html(`#${++order}`);
     });
   }
+
+  clearParts() {
+    this.partsMap.clear();
+    $('.partition-tool .part-list .item-set').slideUp('fast').promise().done(() => {
+      $('.partition-tool .item-set').remove();
+    });
+  }
 }
 
 class KitSetTool extends KitBuildCanvasTool {
@@ -307,6 +310,7 @@ class MakeKitApp {
 
     let partitionTool = new PartitionTool(canvas, this.kitMap, this.conceptMap, { stack: 'left'});
     partitionTool.on('event', this.onToolbarEvent.bind(this));
+    this.partitionTool = partitionTool;
 
     canvas.toolbar.addTool("partition", partitionTool);
     canvas.toolbar.render()
@@ -873,6 +877,31 @@ MakeKitApp.handleEvent = (kbui) => {
 
 
 
+  /**
+   * Close Kit
+   */
+
+   $('.app-navbar .bt-close-kit').on('click', () => { // console.log(MakeKitApp.inst)
+    if (!MakeKitApp.inst.kitMap) {
+      UI.info("No kit to close.").show()
+      return
+    }
+    let confirm = UI.confirm('Close this kit?').positive(() => {
+      MakeKitApp.inst.canvas.cy.elements().remove();
+      MakeKitApp.inst.canvas.canvasTool.clearCanvas();
+      MakeKitApp.inst.canvas.canvasTool.clearIndicatorCanvas();
+      MakeKitApp.inst.partitionTool.clearParts();
+      MakeKitApp.inst.setKitMap();
+      confirm.hide();
+    }).show();
+  });
+
+
+
+
+
+
+
   /** 
    * Set Options for Kit
    * */
@@ -1182,7 +1211,6 @@ MakeKitApp.handleRefresh = (kbui) => {
     if (kid) promises.push(KitBuild.openKitMap(kid));
     if (kid) promises.push(KitBuild.openKitSet(kid));
     Promise.all(promises).then(maps => {
-
       let kitMap = maps[1]
       if (kitMap) {
         MakeKitApp.inst.setKitMap(kitMap) // will also set the concept map
@@ -1200,6 +1228,8 @@ MakeKitApp.handleRefresh = (kbui) => {
         canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
         return
       }
+    }).catch(error => {
+      UI.error("Unable to load kit from session data.<br>Please open a kit manually.").show();
     })
   })
 }

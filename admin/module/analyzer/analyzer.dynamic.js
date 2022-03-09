@@ -1,66 +1,9 @@
-$(() => { let app = StaticAnalyzerApp.instance() })
+$(() => { let app = DynamicAnalyzerApp.instance() })
 
-class CompareSwitchTool extends KitBuildToolbarTool {
-  constructor(canvas, options) {
-    super(canvas, options)
-    this.settings = Object.assign(this.settings, {
-      showLabel: false,
-      stack: 'left'
-    }, options)
-  }
-
-  control() {
-    let controlHtml = 
-      `<div class="btn-group btn-group-sm">
-        <button id="bt-dd-compare-switches" class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="false" aria-expanded="false">
-          <i class="bi bi-toggles"></i>
-        </button>
-        <div id="dd-menu-compare-switches" class="dropdown-menu p-2" style="min-width:0">
-          <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" id="switch-match" checked>
-            <label class="form-check-label" for="switch-match"><span class="badge rounded-pill bg-success text-truncate" style="width: 4rem">Match</span></label>
-          </div>
-          <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" id="switch-miss" checked>
-            <label class="form-check-label" for="switch-miss"><span class="badge rounded-pill bg-danger text-truncate" style="width: 4rem">Miss</span></label>
-          </div>
-          <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" id="switch-excess" checked>
-            <label class="form-check-label" for="switch-excess"><span class="badge rounded-pill bg-info text-dark text-truncate" style="width: 4rem">Excess</span></label>
-          </div>
-        </div>
-      </div>`
-    return controlHtml
-  }
-
-  handle() {
-    $('#dd-menu-compare-switches input[type="checkbox"]').on('change', e => {
-      this.apply()
-    })
-  }
-
-  apply() {
-    let match  = $('#switch-match').prop('checked')
-    let miss   = $('#switch-miss').prop('checked')
-    let excess = $('#switch-excess').prop('checked')
-    if (match) this.canvas.cy.edges('.match').removeClass('hide')
-    else this.canvas.cy.edges('.match').addClass('hide')
-    if (miss) this.canvas.cy.edges('.miss').removeClass('hide')
-    else this.canvas.cy.edges('.miss').addClass('hide')
-    if (excess) this.canvas.cy.edges('.excess').removeClass('hide')
-    else this.canvas.cy.edges('.excess').addClass('hide')
-  }
-
-  postRender() {
-    $('#bt-dd-compare-switches').trigger('click')
-  }
-
-}
-
-class StaticAnalyzerApp {
+class DynamicAnalyzerApp {
   constructor() {
-    this.kbui = KitBuildUI.instance(StaticAnalyzerApp.canvasId)
-    let canvas = this.kbui.canvases.get(StaticAnalyzerApp.canvasId)
+    this.kbui = KitBuildUI.instance(DynamicAnalyzerApp.canvasId)
+    let canvas = this.kbui.canvases.get(DynamicAnalyzerApp.canvasId)
     // canvas.addToolbarTool(KitBuildToolbar.UNDO_REDO, { priority: 3 })
     canvas.addCanvasTool(KitBuildCanvasTool.FOCUS, { gridPos: { x: 0, y: -1}})
     canvas.addToolbarTool(KitBuildToolbar.CAMERA, { priority: 4 })
@@ -73,16 +16,16 @@ class StaticAnalyzerApp {
     this.session = Core.instance().session()
     // Hack for sidebar-panel show/hide
     // To auto-resize the canvas.
-    let observer = new MutationObserver((mutations) => $(`#${StaticAnalyzerApp.canvasId} > div`).css('width', 0))
+    let observer = new MutationObserver((mutations) => $(`#${DynamicAnalyzerApp.canvasId} > div`).css('width', 0))
     observer.observe(document.querySelector('#admin-sidebar-panel'), {attributes: true})
     // Enable tooltip
     $('[data-bs-toggle="tooltip"]').tooltip({ html: true }) 
   }
 
   static instance() {
-    StaticAnalyzerApp.inst = new StaticAnalyzerApp()
-    StaticAnalyzerApp.handleEvent(StaticAnalyzerApp.inst.kbui)
-    StaticAnalyzerApp.handleRefresh(StaticAnalyzerApp.inst.kbui)
+    DynamicAnalyzerApp.inst = new DynamicAnalyzerApp()
+    DynamicAnalyzerApp.handleEvent(DynamicAnalyzerApp.inst.kbui)
+    DynamicAnalyzerApp.handleRefresh(DynamicAnalyzerApp.inst.kbui)
   }
 
   setConceptMap(conceptMap) { console.warn("CONCEPT MAP SET:", conceptMap)
@@ -101,11 +44,11 @@ class StaticAnalyzerApp {
   }
 }
 
-StaticAnalyzerApp.canvasId = "analyzer-canvas"
+DynamicAnalyzerApp.canvasId = "analyzer-canvas"
 
-StaticAnalyzerApp.handleEvent = kbui => {
+DynamicAnalyzerApp.handleEvent = kbui => {
 
-  let canvas = kbui.canvases.get(StaticAnalyzerApp.canvasId)
+  let canvas = kbui.canvases.get(DynamicAnalyzerApp.canvasId)
   let ajax = Core.instance().ajax()
   let session = Core.instance().session()
 
@@ -218,9 +161,9 @@ StaticAnalyzerApp.handleEvent = kbui => {
         this.canvas.applyElementStyle()
         this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0});
         this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
-        StaticAnalyzerApp.inst.setConceptMap(conceptMap)
-        StaticAnalyzerApp.populateLearnerMaps(conceptMap.map.cmid)
-        StaticAnalyzerApp.populateKits(conceptMap.map.cmid)
+        DynamicAnalyzerApp.inst.setConceptMap(conceptMap)
+        DynamicAnalyzerApp.populateLearnerMaps(conceptMap.map.cmid)
+        DynamicAnalyzerApp.populateKits(conceptMap.map.cmid)
         UI.success('Concept map loaded.').show()
         openDialog.hide()
       }
@@ -253,11 +196,11 @@ StaticAnalyzerApp.handleEvent = kbui => {
    * */
 
   $('.app-navbar .bt-teacher-map').on('click', (e) => { // console.log(e)
-    if (!StaticAnalyzerApp.inst.conceptMap) {
+    if (!DynamicAnalyzerApp.inst.conceptMap) {
       UI.info('Please open a concept map.').show()
       return
     }
-    let cyData = KitBuildUI.composeConceptMap(StaticAnalyzerApp.inst.conceptMap)
+    let cyData = KitBuildUI.composeConceptMap(DynamicAnalyzerApp.inst.conceptMap)
     this.canvas.cy.elements().remove()
     this.canvas.cy.add(cyData)
     this.canvas.applyElementStyle()
@@ -278,7 +221,7 @@ StaticAnalyzerApp.handleEvent = kbui => {
    * */
 
    $('.app-navbar .bt-student-map').on('click', (e) => { // console.log(e)
-    if (!StaticAnalyzerApp.inst.conceptMap) {
+    if (!DynamicAnalyzerApp.inst.conceptMap) {
       UI.info('Please open a concept map.').show()
       return
     }
@@ -288,7 +231,7 @@ StaticAnalyzerApp.handleEvent = kbui => {
       return
     }
     KitBuild.openLearnerMap(lmid).then(learnerMap => {
-      learnerMap.conceptMap = StaticAnalyzerApp.inst.conceptMap
+      learnerMap.conceptMap = DynamicAnalyzerApp.inst.conceptMap
       let cyData = KitBuildUI.composeLearnerMap(learnerMap)
       this.canvas.cy.elements().remove()
       this.canvas.cy.add(cyData)
@@ -311,7 +254,7 @@ StaticAnalyzerApp.handleEvent = kbui => {
    * */
 
    $('.app-navbar .bt-compare-map').on('click', (e) => { // console.log(e)
-    if (!StaticAnalyzerApp.inst.conceptMap) {
+    if (!DynamicAnalyzerApp.inst.conceptMap) {
       UI.info('Please open a concept map.').show()
       return
     }
@@ -338,7 +281,7 @@ StaticAnalyzerApp.handleEvent = kbui => {
 
   $('#list-learnermap').on('click', '.learnermap', (e) => {
     let lmid = $(e.currentTarget).data('lmid').toString()
-    let learnerMap = StaticAnalyzerApp.inst.learnerMaps.get(lmid)
+    let learnerMap = DynamicAnalyzerApp.inst.learnerMaps.get(lmid)
     $('#list-learnermap .learnermap')
       .removeClass('active')
       .filter(`[data-lmid="${learnerMap.map.lmid}"]`)
@@ -354,7 +297,7 @@ StaticAnalyzerApp.handleEvent = kbui => {
     Analyzer.composePropositions(learnerMap);
     let compare = Analyzer.compare(learnerMap); 
     Analyzer.showCompareMap(compare, this.canvas.cy, learnerMap.conceptMap.map.direction);
-    StaticAnalyzerApp.updateStatus(learnerMap, compare)
+    DynamicAnalyzerApp.updateStatus(learnerMap, compare)
     
     this.canvas.canvasTool.tools.get(KitBuildCanvasTool.FOCUS).changeState('show')
     this.canvas.toolbar.tools.get("compare-switch").apply()
@@ -368,13 +311,13 @@ StaticAnalyzerApp.handleEvent = kbui => {
     else $('#list-learnermap .score').addClass('d-none')
   })
 
-  $('#cb-lm-feedback').on('change', StaticAnalyzerApp.onCheckBoxChanged)
-  $('#cb-lm-draft').on('change', StaticAnalyzerApp.onCheckBoxChanged)
-  $('#cb-lm-final').on('change', StaticAnalyzerApp.onCheckBoxChanged)
-  $('#cb-lm-first').on('change', StaticAnalyzerApp.onCheckBoxChanged)
-  $('#cb-lm-last').on('change', StaticAnalyzerApp.onCheckBoxChanged)
-  $('#cb-lm-auto').on('change', StaticAnalyzerApp.onCheckBoxChanged)
-  $('#cb-lm-all').on('change', StaticAnalyzerApp.onCheckBoxChanged)
+  $('#cb-lm-feedback').on('change', DynamicAnalyzerApp.onCheckBoxChanged)
+  $('#cb-lm-draft').on('change', DynamicAnalyzerApp.onCheckBoxChanged)
+  $('#cb-lm-final').on('change', DynamicAnalyzerApp.onCheckBoxChanged)
+  $('#cb-lm-first').on('change', DynamicAnalyzerApp.onCheckBoxChanged)
+  $('#cb-lm-last').on('change', DynamicAnalyzerApp.onCheckBoxChanged)
+  $('#cb-lm-auto').on('change', DynamicAnalyzerApp.onCheckBoxChanged)
+  $('#cb-lm-all').on('change', DynamicAnalyzerApp.onCheckBoxChanged)
 
 
 
@@ -395,14 +338,14 @@ StaticAnalyzerApp.handleEvent = kbui => {
     $('#list-learnermap input[type="checkbox"]:checked').each((i, e) => {
       lmids.push($(e).parents('.learnermap').attr('data-lmid'))
     })
-    if (!StaticAnalyzerApp.inst.learnerMaps || 
-        StaticAnalyzerApp.inst.learnerMaps.size == 0 ||
+    if (!DynamicAnalyzerApp.inst.learnerMaps || 
+        DynamicAnalyzerApp.inst.learnerMaps.size == 0 ||
         lmids.length == 0) {
           UI.info('Please open a concept map and tick student maps from the list').show()
           return
     }
 
-    let cyData = KitBuildUI.composeConceptMap(StaticAnalyzerApp.inst.conceptMap)
+    let cyData = KitBuildUI.composeConceptMap(DynamicAnalyzerApp.inst.conceptMap)
     this.canvas.cy.elements().remove()
     this.canvas.cy.add(cyData)
     this.canvas.applyElementStyle()
@@ -410,7 +353,7 @@ StaticAnalyzerApp.handleEvent = kbui => {
     this.canvas.canvasTool.tools.get(KitBuildCanvasTool.FOCUS).changeState('show')
 
     let learnerMaps = []
-    StaticAnalyzerApp.inst.learnerMaps.forEach((lm, k) => {
+    DynamicAnalyzerApp.inst.learnerMaps.forEach((lm, k) => {
       if (lmids.includes(k)) learnerMaps.push(lm)
     })
 
@@ -423,7 +366,7 @@ StaticAnalyzerApp.handleEvent = kbui => {
     $('#group-max-val-label').html(mapData.max)
     $("#min-max-range").html(`${$('#group-min-val').val()} ~ ${$('#group-max-val').val()}`)
 
-    StaticAnalyzerApp.updateStatus(null, groupCompare)
+    DynamicAnalyzerApp.updateStatus(null, groupCompare)
 
   });
 
@@ -431,14 +374,14 @@ StaticAnalyzerApp.handleEvent = kbui => {
     let val = $('#group-min-val').val()
     let maxVal = $('#group-max-val').val()
     if (val > maxVal) $('#group-min-val').val(maxVal)
-    StaticAnalyzerApp.updateRangeInformation()
+    DynamicAnalyzerApp.updateRangeInformation()
   })
 
   $('#group-max-val').on('change', (e) => {
     let val = $('#group-max-val').val()
     let minVal = $('#group-min-val').val()
     if (val < minVal) $('#group-max-val').val(minVal)
-    StaticAnalyzerApp.updateRangeInformation()
+    DynamicAnalyzerApp.updateRangeInformation()
   })
 
   canvas.cy.on('tap', 'edge', (e) => {
@@ -449,7 +392,7 @@ StaticAnalyzerApp.handleEvent = kbui => {
 
 }
 
-StaticAnalyzerApp.updateRangeInformation = () => {
+DynamicAnalyzerApp.updateRangeInformation = () => {
   $("#min-max-range").html(`${$('#group-min-val').val()} ~ ${$('#group-max-val').val()}`)
   let min = $('#group-min-val').val()
   let max = $('#group-max-val').val()
@@ -457,16 +400,16 @@ StaticAnalyzerApp.updateRangeInformation = () => {
   this.canvas.cy.edges(`[count >= ${min}][count <= ${max}]`).removeClass('hide')
 }
 
-StaticAnalyzerApp.populateLearnerMaps = (cmid) => {
+DynamicAnalyzerApp.populateLearnerMaps = (cmid) => {
   return new Promise((resolve, reject) => {
     Core.instance().ajax().get(`kitBuildApi/getLearnerMapsOfConceptMap/${cmid}`)
       .then(learnerMaps => { // console.log(learnerMaps)
       let list = ''
       let score = '147%'
-      StaticAnalyzerApp.inst.learnerMaps = new Map(learnerMaps.map(obj => [obj.map.lmid, obj]));
+      DynamicAnalyzerApp.inst.learnerMaps = new Map(learnerMaps.map(obj => [obj.map.lmid, obj]));
 
       learnerMaps.map(learnerMap => {
-        learnerMap.conceptMap = StaticAnalyzerApp.inst.conceptMap
+        learnerMap.conceptMap = DynamicAnalyzerApp.inst.conceptMap
         Analyzer.composePropositions(learnerMap)
         learnerMap.compare = Analyzer.compare(learnerMap)
       })
@@ -493,13 +436,13 @@ StaticAnalyzerApp.populateLearnerMaps = (cmid) => {
         list += `</div>`
       })
       $('#list-learnermap').html(list == '' ? '<em class="text-secondary">No learnermaps.</em>' : list)
-      StaticAnalyzerApp.onCheckBoxChanged()
+      DynamicAnalyzerApp.onCheckBoxChanged()
       resolve()
     })
   }).catch(error => reject(error))
 }
 
-StaticAnalyzerApp.populateKits = (cmid) => {
+DynamicAnalyzerApp.populateKits = (cmid) => {
   Core.instance().ajax().get(`kitBuildApi/getKitListByConceptMap/${cmid}`)
     .then(kits => { // console.log(kits)
       $('#select-kid option').not('.default').remove()  
@@ -512,7 +455,7 @@ StaticAnalyzerApp.populateKits = (cmid) => {
   })
 }
 
-StaticAnalyzerApp.onCheckBoxChanged = (e) => { // onsole.log(e)
+DynamicAnalyzerApp.onCheckBoxChanged = (e) => { // onsole.log(e)
   $('#list-learnermap .learnermap').each((i, lm) => {
     let lmid = $(lm).data('lmid')
     let type = $(lm).data('type')
@@ -526,7 +469,7 @@ StaticAnalyzerApp.onCheckBoxChanged = (e) => { // onsole.log(e)
   })
 }
 
-StaticAnalyzerApp.updateStatus = (learnerMap, compare) => {
+DynamicAnalyzerApp.updateStatus = (learnerMap, compare) => {
   if (learnerMap) {
     let statusLearnerMap = `<span class="mx-2 d-flex align-items-center status-learnermap">`
       + `<span class="badge rounded-pill bg-warning text-dark ms-1">ID: ${learnerMap.map.lmid}</span> `
@@ -547,9 +490,9 @@ StaticAnalyzerApp.updateStatus = (learnerMap, compare) => {
   } else StatusBar.instance().remove('.status-compare')
 }
 
-StaticAnalyzerApp.handleRefresh = kbui => {
+DynamicAnalyzerApp.handleRefresh = kbui => {
   let session = Core.instance().session()
-  let canvas  = kbui.canvases.get(StaticAnalyzerApp.canvasId)
+  let canvas  = kbui.canvases.get(DynamicAnalyzerApp.canvasId)
   session.getAll().then(sessions => { // console.log(sessions)
     let cmid = sessions.cmid
     let lmid = sessions.lmid
@@ -559,8 +502,8 @@ StaticAnalyzerApp.handleRefresh = kbui => {
         canvas.cy.add(KitBuildUI.composeConceptMap(conceptMap))
         canvas.applyElementStyle()
         canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
-        StaticAnalyzerApp.inst.setConceptMap(conceptMap)
-        StaticAnalyzerApp.populateLearnerMaps(cmid).then(() => {
+        DynamicAnalyzerApp.inst.setConceptMap(conceptMap)
+        DynamicAnalyzerApp.populateLearnerMaps(cmid).then(() => {
           if (lmid) {
             let row = $('#list-learnermap')
               .find(`.learnermap[data-lmid="${lmid}"]`)
@@ -568,7 +511,7 @@ StaticAnalyzerApp.handleRefresh = kbui => {
             if (row.length) row[0].scrollIntoView({ block: 'center' })
           }
         })
-        StaticAnalyzerApp.populateKits(cmid)
+        DynamicAnalyzerApp.populateKits(cmid)
       })
     }
 

@@ -50,12 +50,13 @@ class CmapApp {
         this.logger.onCanvasEvent.bind(this.logger)
       canvas.on("event", CmapApp.loggerListener)
     }
+
+    this.handleEvent()
+    this.handleRefresh()
   }
 
   static instance() {
     CmapApp.inst = new CmapApp()
-    CmapApp.handleEvent(CmapApp.inst.kbui)
-    CmapApp.handleRefresh(CmapApp.inst.kbui)
   }
 
   setConceptMap(conceptMap) { console.warn("CONCEPT MAP SET:", conceptMap)
@@ -73,390 +74,388 @@ class CmapApp {
       this.session.unset('cmid')
     }
   }
+
+  handleEvent() {
+
+    this.canvas = this.kbui.canvases.get(CmapApp.canvasId)
+    this.ajax = Core.instance().ajax()
+    this.session = Core.instance().session()
+  
+    let saveAsDialog = UI.modal('#concept-map-save-as-dialog', {
+      onShow: () => { $('#concept-map-save-as-dialog .input-title').focus() },
+      hideElement: '.bt-cancel'
+    })
+    saveAsDialog.setConceptMap = (conceptMap) => {
+      if (conceptMap) {
+        saveAsDialog.cmid = conceptMap.map.cmid
+        $('#input-fid').val(conceptMap.map.cmfid)
+        $('#input-title').val(conceptMap.map.title)
+        $('#select-topic').val(conceptMap.map.topic)
+        $('#select-text').val(conceptMap.map.text)
+        saveAsDialog.create_time = conceptMap.map.create_time
+      } else {
+        saveAsDialog.cmid = null
+        $('#input-fid').val('')
+        $('#input-title').val('')
+        $('#select-topic').val(null)
+        $('#select-text').val(null)
+      }
+      return saveAsDialog;
+    }
+    saveAsDialog.setTitle = (title) => {
+      $('#concept-map-save-as-dialog .dialog-title').html(title)
+      return saveAsDialog
+    }
+    saveAsDialog.setIcon = (icon) => {
+      $('#concept-map-save-as-dialog .dialog-icon').removeClass()
+        .addClass(`dialog-icon bi bi-${icon} me-2`)
+      return saveAsDialog
+    }
+  
+    let openDialog = UI.modal('#concept-map-open-dialog', {
+      hideElement: '.bt-cancel'
+    })
+  
+    let exportDialog = UI.modal('#concept-map-export-dialog', {
+      hideElement: '.bt-cancel'
+    })
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    /** 
+     * 
+     * New Map
+    */
+  
+    $('.app-navbar .bt-new').on('click', () => {
+      let proceed = () => {
+        this.canvas.reset()
+        this.setConceptMap(null)
+        UI.info("Canvas has been reset").show()
+      }
+      if (this.canvas.cy.elements().length > 0 || this.conceptMap) {
+        let confirm = UI.confirm("Discard this map and create a new concept map from scratch?")
+          .positive(() => {
+            proceed()
+            confirm.hide()
+            return
+          })
+          .show()
+        return
+      }
+      proceed()
+    })
+    
+    $('.app-navbar .bt-save').on('click', () => { // console.log(CmapApp.inst)
+      if (!this.conceptMap) $('.app-navbar .bt-save-as').trigger('click')
+      else saveAsDialog.setConceptMap(this.conceptMap)
+        .setTitle("Save Concept Map (Update)")
+        .setIcon("file-earmark-check")
+        .show()
+    })
+    
+    $('.app-navbar .bt-save-as').on('click', () => {
+      if (this.canvas.cy.elements().length == 0) {
+        UI.warning("Nothing to save. Canvas is empty.").show()
+        return
+      }
+      saveAsDialog.setConceptMap()
+        .setTitle("Save Concept Map As...")
+        .setIcon("file-earmark-plus")
+        .show()
+    })
+  
+    $('#concept-map-save-as-dialog').on('click', '.bt-generate-fid', (e) => { // console.log(e)
+      $('#input-fid').val($('#input-title').val().replace(/\s/g, '').substring(0, 15).trim().toUpperCase()),
+      e.preventDefault()
+    })
+  
+    $('#concept-map-save-as-dialog').on('click', '.bt-new-topic-form', (e) => { // console.log(e)
+      $('#concept-map-save-as-dialog .form-new-topic').slideDown('fast')
+      e.preventDefault()
+    })
+  
+    $('#concept-map-save-as-dialog').on('submit', (e) => {
+      e.preventDefault()
+      let data = Object.assign({
+        cmid: saveAsDialog.cmid ? saveAsDialog.cmid : null,
+        cmfid: $('#input-fid').val().match(/^ *$/) ? null : $('#input-fid').val().trim().toUpperCase(),
+        title: $('#input-title').val(),
+        direction: this.canvas.direction,
+        topic: $('#select-topic').val().match(/^ *$/) ? null : $('#select-topic').val().trim(),
+        text: $('#select-text').val().match(/^ *$/) ? null : $('#select-text').val().trim(),
+        author: this.user ? this.user.username : null,
+        create_time: null
+      }, KitBuildUI.buildConceptMapData(this.canvas)); // console.log(data); return
+      if (data.cmid === null) delete data.cmid;
+      this.ajax.post("kitBuildApi/saveConceptMap", { data: Core.compress(data) })
+        .then(conceptMap => { 
+          this.setConceptMap(conceptMap);
+          UI.success("Concept map has been saved successfully.").show(); 
+          saveAsDialog.hide(); 
+        })
+        .catch(error => { UI.error("Error saving concept map: " + error).show(); })
+    })
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    /** 
+     * 
+     * Open
+    */
+  
+    $('.app-navbar .bt-open').on('click', () => {
+      openDialog.show()
+      let tid = openDialog.tid;
+      if (!tid) $('#concept-map-open-dialog .list-topic .list-item.default').trigger('click');
+      else $(`#concept-map-open-dialog .list-topic .list-item[data-tid="${tid}"]`).trigger('click');
+    })
+  
+    $('#concept-map-open-dialog .list-topic').on('click', '.list-item', (e) => {
+      if (openDialog.tid != $(e.currentTarget).attr('data-tid')) // different concept map?
+        openDialog.cmid = null; // reset selected concept map id.
+      openDialog.tid = $(e.currentTarget).attr('data-tid');
+      $('#concept-map-open-dialog .list-topic .bi-check-lg').addClass('d-none');
+      $('#concept-map-open-dialog .list-topic .list-item').removeClass('active');
+      $(e.currentTarget).find('.bi-check-lg').removeClass('d-none');
+      $(e.currentTarget).addClass('active');
+  
+      this.ajax.get(`kitBuildApi/getConceptMapListByTopic/${openDialog.tid}`).then(cmaps => { // console.log(cmaps)
+        let cmapsHtml = '';
+        cmaps.forEach(cm => {
+          cmapsHtml += `<span class="concept-map list-item" data-cmid="${cm.cmid}" data-cmfid="${cm.cmfid}">`
+            + `<span class="text-truncate">${cm.title}</span>`
+            + `<bi class="bi bi-check-lg text-primary d-none"></bi></span>`
+        })
+        $('#concept-map-open-dialog .list-concept-map').slideUp({
+          duration: 100,
+          complete: () => {
+            $('#concept-map-open-dialog .list-concept-map')
+              .html(cmapsHtml).slideDown({
+                duration: 100,
+                complete: () => {
+                  if(openDialog.cmid) {
+                    $(`#concept-map-open-dialog .list-concept-map .list-item[data-cmid="${openDialog.cmid}"]`)
+                      .trigger('click')[0]
+                      .scrollIntoView({
+                        behavior: "smooth",
+                        block: "center"
+                      });
+                  } else $('#concept-map-open-dialog .list-concept-map').scrollTop(0)
+                }
+              })
+          }
+        })
+      })
+    })
+  
+    $('#concept-map-open-dialog .list-concept-map').on('click', '.list-item', (e) => {
+      openDialog.cmid = $(e.currentTarget).attr('data-cmid');
+      $('#concept-map-open-dialog .list-concept-map .bi-check-lg').addClass('d-none');
+      $('#concept-map-open-dialog .list-concept-map .list-item').removeClass('active');
+      $(e.currentTarget).find('.bi-check-lg').removeClass('d-none');
+      $(e.currentTarget).addClass('active');
+    })
+    
+    $('#concept-map-open-dialog .bt-refresh-topic-list').on('click', () => {
+      this.ajax.get('kitBuildApi/getTopicList').then(topics => { // console.log(topics)
+        let topicsHtml = '';
+        topics.forEach(t => { // console.log(t);
+          topicsHtml += `<span class="topic list-item" data-tid="${t.tid}">`
+           + `<em>${t.title}</em>`
+           + `<bi class="bi bi-check-lg text-primary d-none"></bi></span>`
+        });
+        $('#concept-map-open-dialog .list-topic').slideUp({
+          duration: 100,
+          complete: () => {
+            $('#concept-map-open-dialog .list-topic .list-item').not('.default').remove()
+            $('#concept-map-open-dialog .list-topic').append(topicsHtml).slideDown(100)
+            $(`#concept-map-open-dialog .list-topic .list-item[data-tid="${openDialog.tid}"]`).trigger('click')
+          }
+        })
+      })
+    })
+  
+    $('#concept-map-open-dialog').on('click', '.bt-open', (e) => {
+      e.preventDefault()
+  
+      let target = $('#open-concept-map-tab').find('.nav-link.active').attr('data-bs-target');
+      // console.log(target)
+  
+      let openPromise = []
+      if (target == '#database') {
+        if (!openDialog.cmid) {
+          UI.dialog('Please select a concept map.').show();
+          return
+        }
+        openPromise.push(new Promise((resolve, reject) => {
+          KitBuild.openConceptMap(openDialog.cmid).then(conceptMap => {
+            resolve(Object.assign(conceptMap, {
+              cyData: KitBuildUI.composeConceptMap(conceptMap)
+            }))
+          }).catch((error) => { reject(error) })
+        }))
+      } else { // #decode
+        openPromise.push(new Promise((resolve, reject) => {
+          try {
+            let data = $('#decode-textarea').val().trim();
+            let conceptMap = Core.decompress(data)
+            resolve(Object.assign(conceptMap, {
+              cyData: KitBuildUI.composeConceptMap(conceptMap)
+            }))
+          } catch (error) { reject(error) }
+        }))
+      }
+      if (openPromise.length) 
+        Promise.any(openPromise).then(conceptMap => { console.log(conceptMap)
+          let proceed = () => {
+            this.setConceptMap(conceptMap)
+            this.canvas.cy.elements().remove()
+            this.canvas.cy.add(conceptMap.cyData)
+            this.canvas.applyElementStyle()
+            this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0});
+            this.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(conceptMap.map.direction)
+            this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
+            UI.success('Concept map loaded.').show()
+            openDialog.hide()
+            CmapApp.collab("command", "set-concept-map", conceptMap, conceptMap.cyData)
+          }
+          if (this.canvas.cy.elements().length) {
+            let confirm = UI.confirm('Do you want to open and replace current concept map on canvas?').positive(() => {            
+              confirm.hide()
+              proceed()
+            }).show()
+          } else proceed()
+  
+        }).catch(error => {
+          console.error(error.errors); 
+          UI.dialog("The concept map data is invalid.", {
+            icon: 'exclamation-triangle',
+            iconStyle: 'danger'
+          }).show()
+        })
+    });
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    /** 
+     * 
+     * Export
+    */
+  
+    $('.app-navbar .bt-export').on('click', (e) => { // console.log(e)
+      let canvasData = KitBuildUI.buildConceptMapData(this.canvas);
+      canvasData.direction = this.canvas.direction;
+      if (this.conceptMap && this.conceptMap.map) canvasData.map = this.conceptMap.map
+      else canvasData.map = {
+          cmid: null,
+          cmfid: null,
+          title: "Untitled",
+          direction: this.canvas.direction,
+          topic: null,
+          text: null,
+          author: this.user ? this.user.username : null,
+          create_time: null
+        }
+      $('#concept-map-export-dialog .encoded-data').val(Core.compress(canvasData))
+      exportDialog.show()
+    })
+  
+    $('#concept-map-export-dialog').on('click', '.bt-clipboard', (e) => {
+      navigator.clipboard.writeText($('#concept-map-export-dialog .encoded-data').val().trim());
+      $(e.currentTarget).html('<i class="bi bi-clipboard"></i> Data has been copied to Clipboard!')
+      setTimeout(() => {
+        $(e.currentTarget).html('<i class="bi bi-clipboard"></i> Copy to Clipboard')
+      }, 3000)
+    })
+  
+  
+  
+  }
+  
+  handleRefresh() {
+    // let session = Core.instance().session()
+    // let canvas  = this.kbui.canvases.get(CmapApp.canvasId)
+    let stateData = JSON.parse(localStorage.getItem(CmapApp.name))
+    // console.log("STATE DATA: ", stateData)
+    this.session.getAll().then(sessions => {
+      let cmid = sessions.cmid
+      if (cmid) KitBuild.openConceptMap(cmid).then(conceptmap => {
+        this.setConceptMap(conceptmap)
+        if (stateData && stateData.map) { // console.log(stateData.direction)
+          this.canvas.cy.elements().remove()
+          this.canvas.cy.add(Core.decompress(stateData.map))
+          this.canvas.applyElementStyle()
+          this.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(stateData.direction)
+        } else {
+          this.canvas.cy.add(KitBuildUI.composeConceptMap(conceptmap))
+          this.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(conceptmap.map.direction)
+        }
+        this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
+        this.canvas.cy.elements(':selected').unselect()
+        
+      })
+      try { 
+        if (stateData.logger) {
+          this.logger = CmapLogger.instance(stateData.logger.username, stateData.logger.seq, stateData.logger.sessid, this.canvas).enable();
+          if (CmapApp.loggerListener)
+            this.canvas.off("event", CmapApp.loggerListener)
+          CmapApp.loggerListener = this.logger.onCanvasEvent.bind(CmapApp.inst.logger)
+          this.canvas.on("event", CmapApp.loggerListener)
+        }
+      } catch (error) { console.warn(error) }
+  
+      // init collaboration feature
+      if (sessions.user) {
+        CmapApp.collabInst = KitBuildCollab.instance('cmap', sessions.user, this.canvas)
+        CmapApp.collabInst.on('event', CmapApp.onCollabEvent)
+        KitBuildCollab.enableControl()
+      }
+  
+      // listen to events for broadcast to collaboration room as commands
+      this.canvas.on('event', CmapApp.onCanvasEvent)
+  
+    })
+  }
 }
 
 CmapApp.canvasId = "goalmap-canvas"
 
-CmapApp.handleEvent = (kbui) => {
 
-  let canvas = kbui.canvases.get(CmapApp.canvasId)
-  let ajax = Core.instance().ajax()
-  let session = Core.instance().session()
-
-  this.canvas = canvas
-  this.ajax = ajax
-  this.session = session
-
-  let saveAsDialog = UI.modal('#concept-map-save-as-dialog', {
-    onShow: () => { $('#concept-map-save-as-dialog .input-title').focus() },
-    hideElement: '.bt-cancel'
-  })
-  saveAsDialog.setConceptMap = (conceptMap) => {
-    if (conceptMap) {
-      saveAsDialog.cmid = conceptMap.map.cmid
-      $('#input-fid').val(conceptMap.map.cmfid)
-      $('#input-title').val(conceptMap.map.title)
-      $('#select-topic').val(conceptMap.map.topic)
-      $('#select-text').val(conceptMap.map.text)
-      saveAsDialog.create_time = conceptMap.map.create_time
-    } else {
-      saveAsDialog.cmid = null
-      $('#input-fid').val('')
-      $('#input-title').val('')
-      $('#select-topic').val(null)
-      $('#select-text').val(null)
-    }
-    return saveAsDialog;
-  }
-  saveAsDialog.setTitle = (title) => {
-    $('#concept-map-save-as-dialog .dialog-title').html(title)
-    return saveAsDialog
-  }
-  saveAsDialog.setIcon = (icon) => {
-    $('#concept-map-save-as-dialog .dialog-icon').removeClass()
-      .addClass(`dialog-icon bi bi-${icon} me-2`)
-    return saveAsDialog
-  }
-
-  let openDialog = UI.modal('#concept-map-open-dialog', {
-    hideElement: '.bt-cancel'
-  })
-
-  let exportDialog = UI.modal('#concept-map-export-dialog', {
-    hideElement: '.bt-cancel'
-  })
-
-
-
-
-
-
-
-
-
-
-
-
-  /** 
-   * 
-   * New Map
-  */
-
-  $('.app-navbar .bt-new').on('click', () => {
-    let proceed = () => {
-      canvas.reset()
-      CmapApp.inst.setConceptMap(null)
-      UI.info("Canvas has been reset").show()
-    }
-    if (canvas.cy.elements().length > 0 || CmapApp.inst.conceptMap) {
-      let confirm = UI.confirm("Discard this map and create a new concept map from scratch?")
-        .positive(() => {
-          proceed()
-          confirm.hide()
-          return
-        })
-        .show()
-      return
-    }
-    proceed()
-  })
-  
-  $('.app-navbar .bt-save').on('click', () => { // console.log(CmapApp.inst)
-    if (!CmapApp.inst.conceptMap) $('.app-navbar .bt-save-as').trigger('click')
-    else saveAsDialog.setConceptMap(CmapApp.inst.conceptMap)
-      .setTitle("Save Concept Map (Update)")
-      .setIcon("file-earmark-check")
-      .show()
-  })
-  
-  $('.app-navbar .bt-save-as').on('click', () => {
-    if (canvas.cy.elements().length == 0) {
-      UI.warning("Nothing to save. Canvas is empty.").show()
-      return
-    }
-    saveAsDialog.setConceptMap()
-      .setTitle("Save Concept Map As...")
-      .setIcon("file-earmark-plus")
-      .show()
-  })
-
-  $('#concept-map-save-as-dialog').on('click', '.bt-generate-fid', (e) => { // console.log(e)
-    $('#input-fid').val($('#input-title').val().replace(/\s/g, '').substring(0, 15).trim().toUpperCase()),
-    e.preventDefault()
-  })
-
-  $('#concept-map-save-as-dialog').on('click', '.bt-new-topic-form', (e) => { // console.log(e)
-    $('#concept-map-save-as-dialog .form-new-topic').slideDown('fast')
-    e.preventDefault()
-  })
-
-  $('#concept-map-save-as-dialog').on('submit', (e) => {
-    e.preventDefault()
-    let data = Object.assign({
-      cmid: saveAsDialog.cmid ? saveAsDialog.cmid : null,
-      cmfid: $('#input-fid').val().match(/^ *$/) ? null : $('#input-fid').val().trim().toUpperCase(),
-      title: $('#input-title').val(),
-      direction: this.canvas.direction,
-      topic: $('#select-topic').val().match(/^ *$/) ? null : $('#select-topic').val().trim(),
-      text: $('#select-text').val().match(/^ *$/) ? null : $('#select-text').val().trim(),
-      author: this.user ? this.user.username : null,
-      create_time: null
-    }, KitBuildUI.buildConceptMapData(this.canvas)); // console.log(data); return
-    if (data.cmid === null) delete data.cmid;
-    this.ajax.post("kitBuildApi/saveConceptMap", { data: Core.compress(data) })
-      .then(conceptMap => { 
-        CmapApp.inst.setConceptMap(conceptMap);
-        UI.success("Concept map has been saved successfully.").show(); 
-        saveAsDialog.hide(); 
-      })
-      .catch(error => { UI.error("Error saving concept map: " + error).show(); })
-  })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  /** 
-   * 
-   * Open
-  */
-
-  $('.app-navbar .bt-open').on('click', () => {
-    openDialog.show()
-    let tid = openDialog.tid;
-    if (!tid) $('#concept-map-open-dialog .list-topic .list-item.default').trigger('click');
-    else $(`#concept-map-open-dialog .list-topic .list-item[data-tid="${tid}"]`).trigger('click');
-  })
-
-  $('#concept-map-open-dialog .list-topic').on('click', '.list-item', (e) => {
-    if (openDialog.tid != $(e.currentTarget).attr('data-tid')) // different concept map?
-      openDialog.cmid = null; // reset selected concept map id.
-    openDialog.tid = $(e.currentTarget).attr('data-tid');
-    $('#concept-map-open-dialog .list-topic .bi-check-lg').addClass('d-none');
-    $('#concept-map-open-dialog .list-topic .list-item').removeClass('active');
-    $(e.currentTarget).find('.bi-check-lg').removeClass('d-none');
-    $(e.currentTarget).addClass('active');
-
-    this.ajax.get(`kitBuildApi/getConceptMapListByTopic/${openDialog.tid}`).then(cmaps => { // console.log(cmaps)
-      let cmapsHtml = '';
-      cmaps.forEach(cm => {
-        cmapsHtml += `<span class="concept-map list-item" data-cmid="${cm.cmid}" data-cmfid="${cm.cmfid}">`
-          + `<span class="text-truncate">${cm.title}</span>`
-          + `<bi class="bi bi-check-lg text-primary d-none"></bi></span>`
-      })
-      $('#concept-map-open-dialog .list-concept-map').slideUp({
-        duration: 100,
-        complete: () => {
-          $('#concept-map-open-dialog .list-concept-map')
-            .html(cmapsHtml).slideDown({
-              duration: 100,
-              complete: () => {
-                if(openDialog.cmid) {
-                  $(`#concept-map-open-dialog .list-concept-map .list-item[data-cmid="${openDialog.cmid}"]`)
-                    .trigger('click')[0]
-                    .scrollIntoView({
-                      behavior: "smooth",
-                      block: "center"
-                    });
-                } else $('#concept-map-open-dialog .list-concept-map').scrollTop(0)
-              }
-            })
-        }
-      })
-    })
-  })
-
-  $('#concept-map-open-dialog .list-concept-map').on('click', '.list-item', (e) => {
-    openDialog.cmid = $(e.currentTarget).attr('data-cmid');
-    $('#concept-map-open-dialog .list-concept-map .bi-check-lg').addClass('d-none');
-    $('#concept-map-open-dialog .list-concept-map .list-item').removeClass('active');
-    $(e.currentTarget).find('.bi-check-lg').removeClass('d-none');
-    $(e.currentTarget).addClass('active');
-  })
-  
-  $('#concept-map-open-dialog .bt-refresh-topic-list').on('click', () => {
-    this.ajax.get('kitBuildApi/getTopicList').then(topics => { // console.log(topics)
-      let topicsHtml = '';
-      topics.forEach(t => { // console.log(t);
-        topicsHtml += `<span class="topic list-item" data-tid="${t.tid}">`
-         + `<em>${t.title}</em>`
-         + `<bi class="bi bi-check-lg text-primary d-none"></bi></span>`
-      });
-      $('#concept-map-open-dialog .list-topic').slideUp({
-        duration: 100,
-        complete: () => {
-          $('#concept-map-open-dialog .list-topic .list-item').not('.default').remove()
-          $('#concept-map-open-dialog .list-topic').append(topicsHtml).slideDown(100)
-          $(`#concept-map-open-dialog .list-topic .list-item[data-tid="${openDialog.tid}"]`).trigger('click')
-        }
-      })
-    })
-  })
-
-  $('#concept-map-open-dialog').on('click', '.bt-open', (e) => {
-    e.preventDefault()
-
-    let target = $('#open-concept-map-tab').find('.nav-link.active').attr('data-bs-target');
-    console.log(target)
-
-    let openPromise = []
-    if (target == '#database') {
-      if (!openDialog.cmid) {
-        UI.dialog('Please select a concept map.').show();
-        return
-      }
-      openPromise.push(new Promise((resolve, reject) => {
-        KitBuild.openConceptMap(openDialog.cmid).then(conceptMap => {
-          resolve(Object.assign(conceptMap, {
-            cyData: KitBuildUI.composeConceptMap(conceptMap)
-          }))
-        }).catch((error) => { reject(error) })
-      }))
-    } else { // #decode
-      openPromise.push(new Promise((resolve, reject) => {
-        try {
-          let data = $('#decode-textarea').val().trim();
-          let conceptMap = Core.decompress(data)
-          resolve(Object.assign(conceptMap, {
-            cyData: KitBuildUI.composeConceptMap(conceptMap)
-          }))
-        } catch (error) { reject(error) }
-      }))
-    }
-    if (openPromise.length) 
-      Promise.any(openPromise).then(conceptMap => { console.log(conceptMap)
-        let proceed = () => {
-          CmapApp.inst.setConceptMap(conceptMap)
-          this.canvas.cy.elements().remove()
-          this.canvas.cy.add(conceptMap.cyData)
-          this.canvas.applyElementStyle()
-          this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0});
-          this.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(conceptMap.map.direction)
-          this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
-          UI.success('Concept map loaded.').show()
-          openDialog.hide()
-          CmapApp.collab("command", "set-concept-map", conceptMap, conceptMap.cyData)
-        }
-        if (this.canvas.cy.elements().length) {
-          let confirm = UI.confirm('Do you want to open and replace current concept map on canvas?').positive(() => {            
-            confirm.hide()
-            proceed()
-          }).show()
-        } else proceed()
-
-      }).catch(error => {
-        console.error(error.errors); 
-        UI.dialog("The concept map data is invalid.", {
-          icon: 'exclamation-triangle',
-          iconStyle: 'danger'
-        }).show()
-      })
-  });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  /** 
-   * 
-   * Export
-  */
-
-  $('.app-navbar .bt-export').on('click', (e) => { // console.log(e)
-    let canvasData = KitBuildUI.buildConceptMapData(this.canvas);
-    canvasData.direction = this.canvas.direction;
-    if (CmapApp.inst.conceptMap && CmapApp.inst.conceptMap.map) canvasData.map = CmapApp.inst.conceptMap.map
-    else canvasData.map = {
-        cmid: null,
-        cmfid: null,
-        title: "Untitled",
-        direction: this.canvas.direction,
-        topic: null,
-        text: null,
-        author: this.user ? this.user.username : null,
-        create_time: null
-      }
-    $('#concept-map-export-dialog .encoded-data').val(Core.compress(canvasData))
-    exportDialog.show()
-  })
-
-  $('#concept-map-export-dialog').on('click', '.bt-clipboard', (e) => {
-    navigator.clipboard.writeText($('#concept-map-export-dialog .encoded-data').val().trim());
-    $(e.currentTarget).html('<i class="bi bi-clipboard"></i> Data has been copied to Clipboard!')
-    setTimeout(() => {
-      $(e.currentTarget).html('<i class="bi bi-clipboard"></i> Copy to Clipboard')
-    }, 3000)
-  })
-
-
-
-}
-
-CmapApp.handleRefresh = (kbui) => {
-  let session = Core.instance().session()
-  let canvas  = kbui.canvases.get(CmapApp.canvasId)
-  let stateData = JSON.parse(localStorage.getItem(CmapApp.name))
-  // console.log("STATE DATA: ", stateData)
-  session.getAll().then(sessions => {
-    let cmid = sessions.cmid
-    if (cmid) KitBuild.openConceptMap(cmid).then(conceptmap => {
-      CmapApp.inst.setConceptMap(conceptmap)
-      if (stateData && stateData.map) { // console.log(stateData.direction)
-        canvas.cy.elements().remove()
-        canvas.cy.add(Core.decompress(stateData.map))
-        canvas.applyElementStyle()
-        canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(stateData.direction)
-      } else {
-        canvas.cy.add(KitBuildUI.composeConceptMap(conceptmap))
-        canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(conceptmap.map.direction)
-      }
-      canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
-      canvas.cy.elements(':selected').unselect()
-      
-    })
-    try { 
-      if (stateData.logger) {
-        CmapApp.inst.logger = CmapLogger.instance(stateData.logger.username, stateData.logger.seq, stateData.logger.sessid, canvas).enable();
-        if (CmapApp.loggerListener)
-          canvas.off("event", CmapApp.loggerListener)
-        CmapApp.loggerListener = CmapApp.inst.logger.onCanvasEvent.bind(CmapApp.inst.logger)
-        canvas.on("event", CmapApp.loggerListener)
-      }
-    } catch (error) { console.warn(error) }
-
-    // init collaboration feature
-    if (sessions.user) {
-      CmapApp.collabInst = KitBuildCollab.instance('cmap', sessions.user, canvas)
-      CmapApp.collabInst.on('event', CmapApp.onCollabEvent)
-      KitBuildCollab.enableControl()
-    }
-
-    // listen to events for broadcast to collaboration room as commands
-    CmapApp.inst.canvas.on('event', CmapApp.onCanvasEvent)
-
-  })
-}
 
 CmapApp.onBrowserStateChange = event => { // console.warn(event)
   if (event.newState == "terminated") {

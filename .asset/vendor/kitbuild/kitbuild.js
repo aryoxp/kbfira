@@ -1,13 +1,16 @@
 class KitBuild {
   static openConceptMap(cmid) {
+    if (!cmid) throw new Error(`Invalid Concept Map ID: ${cmid}`);
     this.ajax = Core.instance().ajax()
     return this.ajax.get(`kitBuildApi/openConceptMap/${cmid}`)
   }
   static openKitMap(kid) {
+    if (!kid) throw new Error(`Invalid Kit Map ID: ${kid}`);
     this.ajax = Core.instance().ajax()
     return this.ajax.get(`kitBuildApi/openKitMap/${kid}`)
   }
   static openKitSet(kid) {
+    if (!kid) throw new Error(`Invalid Kit Map ID: ${kid}`);
     this.ajax = Core.instance().ajax()
     let promise = new Promise((resolve, reject) => {
       this.ajax.post(`kitBuildApi/getKitSets`, {
@@ -23,6 +26,7 @@ class KitBuild {
     return promise;
   }
   static updateKitOption(kid, option) {
+    if (!kid) throw new Error(`Invalid Kit Map ID: ${kid}`);
     this.ajax = Core.instance().ajax()
     return this.ajax.post(`kitBuildApi/updateKitOption`, {
       kid: kid,
@@ -30,10 +34,12 @@ class KitBuild {
     })
   }
   static openLearnerMap(lmid) {
+    if (!lmid) throw new Error(`Invalid Learner Map ID: ${lmid}`);
     this.ajax = Core.instance().ajax()
     return this.ajax.get(`kitBuildApi/openLearnerMap/${lmid}`)
   }
   static openExtendedLearnerMap(lmid) {
+    if (!lmid) throw new Error(`Invalid Extended Learner Map ID: ${lmid}`);
     this.ajax = Core.instance().ajax()
     return this.ajax.get(`kitBuildApi/openExtendedLearnerMap/${lmid}`)
   }

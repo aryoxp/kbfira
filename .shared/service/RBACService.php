@@ -2,6 +2,36 @@
 
 class RBACService extends CoreService {
 
+  function getUserAuth($rids = []) {
+    try {
+      $ridList = array_map(fn($v) => QB::qt($v), $rids);
+      $auth = new stdClass;
+      $db = self::instance('kbv2');
+
+      $qb = QB::instance('auth_app')->select('app')->distinct()
+        ->where('rid', QB::IN, QB::raw('(' . implode(",", $ridList) . ')'));
+      $app = $db->query($qb->get());
+      if ($app) $app = array_map(fn($a) => $a->app, $app);
+
+      $qb = QB::instance('auth_menu')->select('app', 'mid')->distinct()
+        ->where('rid', QB::IN, QB::raw('(' . implode(",", $ridList) . ')'));
+      $menu = $db->query($qb->get());
+
+      $qb = QB::instance('auth_function')->select('app', 'fid')->distinct()
+        ->where('rid', QB::IN, QB::raw('(' . implode(",", $ridList) . ')'));
+      $function = $db->query($qb->get());
+
+      $auth->app      = $app ? $app : [];
+      $auth->menu     = $menu ? $menu : [];
+      $auth->function = $function ? $function : [];
+
+      return $auth;
+    } catch (Exception $ex) {
+      throw CoreError::instance($ex->getMessage());
+    }
+  }
+
+
   function getRegisteredApps() {
     try {
       $db = self::instance('kbv2');
@@ -234,7 +264,7 @@ class RBACService extends CoreService {
         ->insert(['rid' => QB::esc($rid), 'app' => QB::esc($app), 'mid' => QB::esc($mid)])
         ->ignore();
       $result = $db->query($qb->get());
-      return $result;
+      return $result ? $db->getAffectedRows() : false;
     } catch (Exception $ex) {
       throw CoreError::instance($ex->getMessage());
     }

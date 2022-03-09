@@ -102,4 +102,40 @@ class AppModuleController extends ModuleApiController {
     }
   }
 
+  function registerModule() {
+    try {
+      $module = $this->postv('module');
+      $registerService = new RegisterService();
+      $result = $registerService->registerModule($module);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function registerApp() {
+    try {
+      $app = $this->postv('app');
+      $name = $this->postv('name');
+      $shortdesc = $this->postv('shortdesc');
+      $description = $this->postv('description');
+      $registerService = new RegisterService();
+      $result = $registerService->registerApp($app, $name, $shortdesc, $description);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function deregisterApp() {
+    try {
+      $app = $this->postv('app');
+      $registerService = new RegisterService();
+      $result = $registerService->deregisterApp($app);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
 }; 

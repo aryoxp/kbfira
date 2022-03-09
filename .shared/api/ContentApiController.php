@@ -91,6 +91,29 @@ class ContentApiController extends CoreApi {
     }
   }
 
+  function assignTopicToConceptMap() {
+    try {
+      $cmid = $this->postv('cmid');
+      $tid = $this->postv('tid');
+      $cmService = new ConceptMapService();
+      $result = $cmService->assignTopicToConceptMap($cmid, $tid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function deassignTopicFromConceptMap() {
+    try {
+      $cmid = $this->postv('cmid');
+      $cmService = new ConceptMapService();
+      $result = $cmService->deassignTopicFromConceptMap($cmid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
   function assignTextToTopic() {
     try {
       $tid = $this->postv('tid');
@@ -245,6 +268,78 @@ class ContentApiController extends CoreApi {
       $tid = $this->postv('tid', '');
       $textService = new TextService();
       $result = $textService->deleteText($tid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function assignTextToConceptMap() {
+    try {
+      $cmid = $this->postv('cmid');
+      $tid = $this->postv('tid');
+      $cmService = new ConceptMapService();
+      $result = $cmService->assignTextToConceptMap($cmid, $tid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function deassignTextFromConceptMap() {
+    try {
+      $cmid = $this->postv('cmid');
+      $cmService = new ConceptMapService();
+      $result = $cmService->deassignTextFromConceptMap($cmid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+
+
+
+
+
+
+
+  function searchConceptMap($page = 1, $perpage = 10) {
+    try {
+      $keyword = $this->postv('keyword', '');
+      $cmService = new ConceptMapService();
+      $cmaps = $cmService->searchConceptMaps($keyword, $page, $perpage);
+      $count = $cmService->searchConceptMapsCount($keyword, $page, $perpage);
+      $result = new stdClass;
+      $result->cmaps = $cmaps;
+      $result->count = $count;
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function getConceptMapsByTopicId() {
+    try {
+      $tid = $this->postv('tid');
+      $cmService = new ConceptMapService();
+      $cmaps = $cmService->getConceptMapListByTopic($tid);
+      CoreResult::instance($cmaps)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+
+
+
+  /* Kit */
+
+  function deleteKit() {
+    try {
+      $kid = $this->postv('kid');
+      $kitService = new KitMapService();
+      $result = $kitService->delete($kid);
       CoreResult::instance($result)->show();
     } catch (Exception $ex) {
       CoreError::instance($ex->getMessage())->show();

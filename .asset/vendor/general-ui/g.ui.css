@@ -7,3 +7,9 @@
 }
 #modal-loading .animation { height: 16px; }
 #modal-loading .animation svg { position: absolute; }
+
+.pagination {
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.35rem;
+}

@@ -12,8 +12,10 @@ class HomeController extends ModuleController {
     $this->loadModuleMenus();
     $this->ui->view('head.php', array(
       'menus' => $this->menus,
-      'modules' => $this->modules
+      'modules' => $this->modules,
+      'title' => 'Dashboard'
     ));
+    $auth = new CoreAuth("kbv2");
     $this->ui->view('dashboard.php');
     $this->ui->view('foot.php');
   }
@@ -28,7 +30,8 @@ class HomeController extends ModuleController {
     $this->loadModuleMenus();
     $this->ui->view('head.php', array(
       'menus' => $this->menus,
-      'modules' => $this->modules
+      'modules' => $this->modules,
+      'title' => 'User Profile'
     ));
     $this->ui->view('profile.php');
     $this->ui->view('foot.php');

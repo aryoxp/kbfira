@@ -158,6 +158,7 @@ class KitMapService extends CoreService {
       }
       if (count($concepts)) {
         $qb = QB::instance('kit_concept')->insert($concepts, true);
+        // echo $qb->get();
         $db->query($qb->get());
       }
 
@@ -246,6 +247,17 @@ class KitMapService extends CoreService {
       throw CoreError::instance($ex->getMessage());
     }
 
+  }
+
+  function delete($kid) {
+    try {
+      $db = self::instance('kbv2');
+      $qb = QB::instance('kit')->delete()->where('kid', QB::esc($kid));
+      $result = $db->query($qb->get());
+      return $result;
+    } catch (Exception $ex) {
+      throw CoreError::instance($ex->getMessage());
+    }
   }
 
   function getConceptMapListByTopic($topicId = null) {

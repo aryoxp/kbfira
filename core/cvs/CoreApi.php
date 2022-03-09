@@ -8,6 +8,8 @@ class CoreApi {
 
   public function __construct() {
     $this->core = Core::instance();
+    $config = Core::lib(Core::CONFIG);
+    $config->set("rbac", "data", CoreConfig::CONFIG_TYPE_CLIENT);
   }
 
   // get request variables and sanitizes them

@@ -626,8 +626,12 @@ class RBACApiController extends CoreApi {
       $userService = new UserService();
       $username = $this->postv('username');
       $password = $this->postv('password');
-      $result = $userService->getRBACUser($username, $password);
-      CoreResult::instance($result)->show();
+      $user = $userService->getRBACUser($username, $password);
+      if ($user) {
+        $rbacService = new RBACService();
+        $user->auth = $rbacService->getUserAuth(explode(",", $user->rids));
+      }
+      CoreResult::instance($user)->show();
     } catch (Exception $ex) {
       CoreError::instance($ex->getMessage())->show();
     }
@@ -643,6 +647,10 @@ class RBACApiController extends CoreApi {
       $gid      = $this->postv('gid');
       $result = $userService->registerUser($name, $username, $password, $rid, $gid);
       $user = $userService->getRBACUser($username, $password);
+      if ($user) {
+        $rbacService = new RBACService();
+        $user->auth = $rbacService->getUserAuth(explode(",", $user->rids));
+      }
       CoreResult::instance($user)->show();
     } catch (Exception $ex) {
       CoreError::instance($ex->getMessage())->show();
