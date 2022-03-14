@@ -143,7 +143,7 @@ class NodeCreationTool extends KitBuildToolbarTool {
       <div class="card-header">${title}</div>
       <div class="card-body">
         <form class="form-edit-label">
-        <input type="text" value="${n.label ? n.label : "OK"}" class="input-label form-control" placeholder="${placeholder}" aria-label="${placeholder}">
+        <input type="text" value="${n.label ? n.label : ""}" class="input-label form-control" placeholder="${placeholder}" aria-label="${placeholder}">
         </form>
       </div>
       <div class="card-footer d-flex justify-content-end">

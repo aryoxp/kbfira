@@ -62,6 +62,11 @@ class KitBuild {
     return this.ajax.get(`RBACApi/getUserListOfGroups/${groups.join(",")}`);
   }
 
+  static getTextOfKit(kid = '') {
+    this.ajax = Core.instance().ajax()
+    return this.ajax.get(`kitBuildApi/getTextOfKit/${kid}`);
+  }
+
 }
 
 class KitBuildRBAC {

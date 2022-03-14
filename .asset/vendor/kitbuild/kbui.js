@@ -1153,7 +1153,6 @@ class KitBuildUI {
       || !learnerMapData.links || !learnerMapData.linktargets)
       throw "Invalid kit data.";
     try {
-      console.log(learnerMapData);
       let kitMap = []
       let getConceptPosition = (cid) => {
         for(let c of learnerMapData.concepts) {
