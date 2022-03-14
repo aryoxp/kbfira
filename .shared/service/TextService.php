@@ -72,4 +72,26 @@ class TextService extends CoreService {
     return $db->query($qb->get());
   }
 
+
+
+
+
+  function getTextOfKit($kid) {
+    $db = self::instance();
+    $qb = QB::instance('text')->select()
+      ->where('tid', QB::raw("(SELECT tid FROM kit WHERE kid = '".QB::esc($kid)."')"));
+    return $db->getRow($qb->get());
+  }
+
+  function getTextOfKitConceptMapTopic($kid) {
+    $db = self::instance();
+    $sqb = QB::instance('kit k')->select('c.topic')
+      ->leftJoin('conceptmap c', 'c.cmid', 'k.cmid')
+      ->where('k.kid', QB::esc($kid));
+    // SELECT c.topic FROM kit k LEFT JOIN conceptmap c ON c.cmid = k.cmid LEFT WHERE k.kid = '".QB::esc($kid)."'
+    $qb = QB::instance('text')->select()
+      ->where('tid', QB::raw(QB::OG . $sqb->get() . QB::EG));
+    return $db->getRow($qb->get());
+  }
+
 }

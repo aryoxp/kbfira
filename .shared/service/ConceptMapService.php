@@ -243,8 +243,36 @@ class ConceptMapService extends CoreService {
   function getConceptMapListByTopic($topicId = null) {
     try {
       $db = self::instance();
+      $qb = QB::instance('conceptmap c')
+        ->leftJoin('user u', 'u.username', 'c.author');
+      $qb->select()->where('c.topic', QB::esc($topicId));
+
+      // filter to show concept maps that were created by configured role(s)
+      if ($rid = Core::lib("config")->get('filter_kit_author_role')) {
+        $rids = explode(",", QB::esc($rid));
+        $rids = array_map(function($r) { // wrap with single-quote
+          return QB::qt($r);
+        }, $rids);
+        $sqb = QB::instance('user_role')
+          ->select('username')
+          ->where('rid', QB::IN, QB::raw(QB::OG . implode(", ", $rids) . QB::EG));
+        $qb->where('c.author', QB::IN, QB::raw(QB::OG . $sqb->get() . QB::EG));
+      }
+
+      $result = $db->query($qb->get());
+      return $result;
+    } catch (Exception $ex) {
+      throw CoreError::instance($ex->getMessage());
+    }
+  }
+
+  function getUserConceptMapListByTopic($username, $topicId = null) {
+    try {
+      $db = self::instance();
       $qb = QB::instance('conceptmap');
-      $qb->select()->where('topic', $topicId);
+      $qb->select()
+        ->where('topic', QB::esc($topicId))
+        ->where('author', QB::esc($username));
       $result = $db->query($qb->get());
       return $result;
     } catch (Exception $ex) {

@@ -321,8 +321,6 @@ TextApp.populateTextDetail = text => {
     ? new showdown.Converter({}).makeHtml(text.content) 
     : '<em class="text-muted">This text has no content.</em>'
 
-  console.log(hljs)
-
   textDetailHtml += `<span class="text-title h4 text-primary">${text.title}</span>`
   textDetailHtml += `<div class="align-middle"><span class="badge rounded-pill bg-warning text-dark px-3">${text.tid}</span>`
   textDetailHtml += ` <span class="badge rounded-pill bg-secondary mx-1 px-3">${text.created}</span></div>`

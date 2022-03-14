@@ -11,7 +11,7 @@
       <div class="btn-group btn-group-sm ms-2">
         <button class="bt-save btn btn-primary"><i class="bi bi-save"></i> Save</button>
         <button class="bt-save-as btn btn-primary"><i class="bi bi-front"></i> Save As...</button>
-        <button class="bt-export btn btn-primary"><i class="bi bi-send"></i> Export</button>
+        <button class="bt-export btn btn-primary d-none"><i class="bi bi-send"></i> Export</button>
       </div>
     </span>
     <div class="flex-fill">&nbsp;</div>
@@ -38,7 +38,7 @@
       <div class="row mb-1 align-items-center">
         <label for="input-title" class="col-sm-3 col-form-label">Title</label>
         <div class="col-sm-9">
-          <input type="text" name="title" class="form-control input-title" id="input-title">
+          <input type="text" name="title" class="form-control form-control-sm input-title" id="input-title">
         </div>
       </div>
       <div class="row mb-1 align-items-center">
@@ -68,7 +68,7 @@
       <div class="row my-2"><small class="col-sm-12 text-center text-secondary fst-italic"><strong class="fs-bold text-primary">optionally</strong> associate with existing text:</small></div>
       <div class="row mb-1 align-items-center">
         <div class="col-sm-12">
-          <select class="form-select form-select-sm" id="select-text" name="text" aria-label="Default select example">
+          <select class="form-select form-select-sm" id="select-text" name="text" aria-label="Default select example" disabled>
             <option value="" selected>No text associated</option>
             <!-- <option value="1">One</option>
             <option value="2">Two</option>
@@ -114,7 +114,7 @@
         <button class="nav-link px-2 py-1 active" id="home-tab" data-bs-toggle="tab" data-bs-target="#database" type="button" role="tab" aria-controls="home" aria-selected="true"><small>Database</small></button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link px-2 py-1" id="profile-tab" data-bs-toggle="tab" data-bs-target="#decode" type="button" role="tab" aria-controls="profile" aria-selected="false"><small>Decode</small></button>
+        <button class="nav-link px-2 py-1 text-muted" id="profile-tab" data-bs-toggle="tab" data-bs-target="#decode" type="button" role="tab" aria-controls="profile" aria-selected="false" disabled><small>Decode</small></button>
       </li>
     </ul>
     <hr class="my-2">
@@ -129,7 +129,7 @@
         <div class="row gx-2 mb-3">
           <div class="col list list-topic">
             <span class="topic list-item default" data-tid="">
-              <em>Unassigned</em><bi class="bi bi-check-lg text-primary"></bi>
+              <em class="text-muted">Unassigned</em><bi class="bi bi-check-lg text-primary"></bi>
             </span>
           </div>
           <div class="col list list-concept-map"></div>

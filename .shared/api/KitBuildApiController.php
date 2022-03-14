@@ -77,6 +77,18 @@ class KitBuildApiController extends CoreApi {
     }
   }
 
+  function getUserConceptMapListByTopic() {
+    try {
+      $username = $this->postv('username');
+      $tid = $this->postv('tid');
+      $cmService = new ConceptMapService();
+      $result = $cmService->getUserConceptMapListByTopic($username, $tid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
   function openConceptMap($cmid = null) {
     try {
       $cmService = new ConceptMapService();
@@ -231,6 +243,32 @@ class KitBuildApiController extends CoreApi {
   }
 
 
+
+
+
+
+
+
+
+  /**
+   * Text
+   * 
+   */
+
+  function getTextOfKit($kid) {
+    try {
+      $textService = new TextService();
+      $text = $textService->getTextOfKit($kid);
+      if ($text) {
+        $result = $text;
+        CoreResult::instance($result)->show();
+        return;
+      }
+      $text = $textService->getTextOfKitConceptMapTopic($kid);
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
 
 
 

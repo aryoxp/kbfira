@@ -120,15 +120,17 @@ class Dialog {
     $('#modal-dialog .bt-positive').html(this.positiveLabel)
     $('#modal-dialog .bt-negative').html(this.negativeLabel)
     if (this.negCallback) {
-      $('#modal-dialog .bt-negative').show()
+      $('#modal-dialog .bt-negative').show();
       $('#modal-dialog .bt-negative').off('click').on('click', this.negCallback)
       if (!this instanceof Confirm)
         $('#modal-dialog .dialog-foot').removeClass('text-center').addClass('text-end')
       else $('#modal-dialog .dialog-foot').removeClass('text-end').addClass('text-center')
     } else {
+      setTimeout(() => { $('#modal-dialog .bt-positive').focus(); }, 200);
       $('#modal-dialog .bt-negative').hide()
       $('#modal-dialog .bt-negative').off('click').on('click', this.hide)
       $('#modal-dialog .dialog-foot').removeClass('text-end').addClass('text-center')
+
     }
     if (this.emphasized) {
       $("#modal-dialog .bt-positive")
@@ -408,6 +410,9 @@ class SignIn {
     this.signInModal = UI.modal('#modal-sign-in', {width: 350}).show();
     return this;
   }
+  hide() {
+    this.signInModal.hide();
+  }
   get modal() {
     return this.signInModal;
   }
@@ -437,24 +442,28 @@ class SignIn {
       if (this.settings.apps) data.apps = this.settings.apps;
       if (this.settings.rids) data.rids = this.settings.rids;
       if (this.settings.gids) data.gids = this.settings.gids;
-
       this.ajax.post('RBACApi/signIn', data).then(user => { // console.error(result)
         if (typeof user != 'object' || !user) {
           if (typeof this.settings.fail == 'function') this.settings.fail(error);
-          else UI.error(error).show()
+          else UI.dialog(error, {
+            icon: 'x-circle-fill',
+            iconStyle: 'danger'
+          }).show()
           return;
         }
         $('#card-sign-in').addClass('d-none')
         if (typeof this.settings.success == 'function') this.settings.success(user);
         if (this.settings.redirect) {
           let redir = this.settings.redirect;
-          console.log(Core.location(redir));
           window.location.replace(redir.startsWith('http') ? redir : Core.location(redir));
           return;
         }
       }).catch(error => { // console.log(error);
         if (typeof this.settings.fail == 'function') this.settings.fail(error);
-        else UI.error(error).show()
+        else UI.dialog(error, {
+          icon: 'x-circle-fill',
+          iconStyle: 'danger'
+        }).show()
       })
     });
   }

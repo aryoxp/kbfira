@@ -247,7 +247,7 @@ TopicApp.populateTopics = topics => {
     topicsHtml += `  data-tid="${topic.tid}" data-title="${topic.title}">`
     topicsHtml += `  <span class="flex-fill ps-2">`
     topicsHtml += `  <span class="text-truncate text-nowrap">${topic.title}</span>`
-    if (topic.text) topicsHtml += `    <span class="badge rounded-pill bg-success">Text</span>`
+    if (topic.text) topicsHtml += `    <span class="badge rounded-pill bg-success ms-2">Text: ${topic.texttitle}</span>`
     topicsHtml += `  </span>`
     topicsHtml += `  <span class="text-end text-nowrap ms-3">`
     topicsHtml += `    <button class="btn btn-sm btn-secondary bt-detail"><i class="bi bi-journal-text"></i></button>`

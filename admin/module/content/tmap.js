@@ -382,9 +382,9 @@ TeachermapApp.populateCmaps = cmaps => {
     cmapsHtml += `  data-cmid="${cmap.cmid}" data-title="${cmap.title}">`
     cmapsHtml += `  <span class="d-flex flex-fill ps-2 align-items-center" style="min-width:0">`
     cmapsHtml += `  <span class="text-truncate d-inline-block">${cmap.title}</span>`
-    if (cmap.text) cmapsHtml += `    <span class="badge rounded-pill bg-success ms-2"><i class="bi bi-file-text"></i></span>`
-    if (cmap.topictitle) cmapsHtml += `    <span class="badge rounded-pill bg-success ms-2 text-truncate"><i class="bi bi-lightbulb-fill"></i> ${cmap.topictitle}</span>`
-    cmapsHtml += `    <span class="badge rounded-pill bg-warning text-dark ms-2"><i class="bi bi-clock-fill"></i> ${cmap.create_time}</span>`
+    if (cmap.text) cmapsHtml += `    <span class="badge rounded-pill bg-success ms-1"><i class="bi bi-file-text"></i>Text ID: ${cmap.text}</span>`
+    if (cmap.topictitle) cmapsHtml += `    <span class="badge rounded-pill bg-success ms-1 text-truncate" title="${cmap.topictitle}"><i class="bi bi-lightbulb-fill"></i> ${cmap.topictitle}</span>`
+    cmapsHtml += `    <span class="badge rounded-pill bg-warning text-dark ms-1" title="${cmap.create_time}"><i class="bi bi-clock-fill"></i></span>`
     cmapsHtml += `  </span>`
     cmapsHtml += `  <span class="text-end text-nowrap ms-3">`
     cmapsHtml += `    <span class="btn btn-sm btn-primary bt-show-cmap"><i class="bi bi-eye-fill"></i></span>`
@@ -421,7 +421,7 @@ TeachermapApp.populateTopics = topics => {
     topicsHtml += `  data-tid="${topic.tid}" data-title="${topic.title}">`
     topicsHtml += `  <span class="flex-fill d-flex align-items-center ps-2">`
     topicsHtml += `  <span class="text-truncate text-nowrap">${topic.title}</span>`
-    if (topic.text) topicsHtml += `    <span class="badge rounded-pill bg-success ms-2">${topic.text} <i class="bi bi-file-text"></i></span>`
+    if (topic.text) topicsHtml += `    <span class="badge rounded-pill bg-success ms-2">Text ID: ${topic.text} <i class="bi bi-file-text"></i></span>`
     topicsHtml += `  </span>`
     topicsHtml += `  <span class="text-end text-nowrap ms-3">`
     topicsHtml += `    <div class="dropstart">`

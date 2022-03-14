@@ -58,9 +58,9 @@
           </div>
           <div class="row gx-2 mb-3">
             <div class="col list list-topic">
-              <span class="topic list-item default" data-tid="">
+              <!-- <span class="topic list-item default" data-tid="">
                 <em>Unassigned</em><bi class="bi bi-check-lg text-primary"></bi>
-              </span>
+              </span> -->
             </div>
             <div class="col list list-concept-map"></div>
             <div class="col list list-kit"></div>

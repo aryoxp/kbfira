@@ -670,16 +670,19 @@ class RBACApiController extends CoreApi {
         $rbacService = new RBACService();
         $user->auth = $rbacService->getUserAuth(explode(",", $user->rids));
         if ($gids) {
+          if (!$user->gids) throw CoreError::instance("Group authentication failed. Invalid group.");
           $gids = explode(",", strtoupper($gids));
           $ugids = explode(",", $user->gids);
           if(!count(array_intersect($gids, $ugids))) throw CoreError::instance("Group authentication failed. Invalid group.");
         }
         if ($rids) {
+          if (!$user->rids) throw CoreError::instance("Role authentication failed. Invalid role.");
           $rids = explode(",", strtoupper($rids));
           $urids = explode(",", $user->rids);
           if(!count(array_intersect($rids, $urids))) throw CoreError::instance("Role authentication failed. Invalid role.");
         }
         if ($apps) {
+          if (!$user->auth->app) throw CoreError::instance("Application access is not authorized.");
           $apps = explode(",", strtoupper($apps));
           $uapps = $user->auth->app;
           if(!count(array_intersect($apps, $uapps))) throw CoreError::instance("Application access is not authorized.");

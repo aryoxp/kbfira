@@ -21,7 +21,7 @@
             <option value="500">500</option>
             <option value="1000">1000</option>
           </select>
-          <span class="btn btn-secondary bt-search"><i class="bi bi-search"></i></span>
+          <button class="btn btn-secondary bt-search"><i class="bi bi-search"></i></button>
         </div>
         <div class="d-flex align-items-center"><input type="checkbox" class="mx-2" id="input-use-date"> <label class="text-nowrap me-2" for="input-use-date">Filter to creation date:</label> <input class="form-control" name="date" id="input-search-date"></div>
       </form>

@@ -4,7 +4,7 @@ class HomeController extends CoreController {
   
   function index() {
     $this->ui->useCoreClients();
-    $this->ui->usePlugin('kitbuild-ui', 'kitbuild', 'kitbuild-analyzer', 'kitbuild-logger', 'kitbuild-collab', 'general-ui');
+    $this->ui->usePlugin('kitbuild-ui', 'kitbuild', 'kitbuild-analyzer', 'kitbuild-logger', 'kitbuild-collab', 'general-ui', 'highlight', 'showdown');
     $this->ui->useScript("recompose.js");
     $this->ui->useStyle("recompose.css");
     

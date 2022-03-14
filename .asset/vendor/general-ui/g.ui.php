@@ -1,7 +1,7 @@
 <!-- Dialog Modal -->
 <div class="modal" id="modal-dialog" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content">
+    <div class="modal-content shadow">
       <div class="modal-body">
         <div class="dialog-head">
           <div class="dialog-title fw-bold"></div>
@@ -37,7 +37,7 @@
 </div>
 <!-- /Loading Modal -->
 <!-- SignIn Modal -->
-<div class="card d-none" id="modal-sign-in" tabindex="-1" aria-hidden="true">
+<div class="card d-none shadow" id="modal-sign-in" tabindex="-1" aria-hidden="true">
   <div class="card-body mx-3 text-center">
     <form name="form-sign-in" autocomplete="off">
       <h1 class="h3 mb-4 mt-4 fw-normal">Sign in</h1>
@@ -55,7 +55,7 @@
       </div>
       <button class="w-100 btn btn-lg btn-primary bt-sign-in" type="submit">Sign in</button>
       <div id="sign-in-filter" class="text-center mt-3"></div>
-      <p class="mt-5 mb-3 text-muted">&copy; 2017–2021</p>
+      <p class="mt-5 mb-3 text-muted">&copy; 2017–<?php echo date('Y'); ?></p>
     </form> 
   </div>
 </div>

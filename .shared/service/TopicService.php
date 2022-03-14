@@ -53,18 +53,21 @@ class TopicService extends CoreService {
 
   function getTopics($keyword = '', $page = 1, $perpage = 10) {
     $db = self::instance();
-    $qb = QB::instance('topic')->select()
-      ->where('title', 'LIKE', "%$keyword%")
-      ->orderBy('created', QB::DESC)
+    $qb = QB::instance('topic t')->select(QB::raw('t.*'))
+      ->select('x.title as texttitle')
+      ->leftJoin('text x', 'x.tid', 't.text')
+      ->where('t.title', 'LIKE', "%$keyword%")
+      ->orderBy('t.created', QB::DESC)
       ->limit(($page-1)*$perpage, $perpage);
     return $db->query($qb->get());
   }
 
   function getTopicsCount($keyword = '') {
     $db = self::instance();
-    $qb = QB::instance('topic')->select(QB::raw('COUNT(*) AS count'))
-      ->where('title', 'LIKE', "%$keyword%")
-      ->orderBy('created', QB::DESC);
+    $qb = QB::instance('topic t')->select(QB::raw('COUNT(*) AS count'))
+      ->leftJoin('text x', 'x.tid', 't.text')
+      ->where('t.title', 'LIKE', "%$keyword%")
+      ->orderBy('t.created', QB::DESC);
     return $db->getVar($qb->get());
   }
 
