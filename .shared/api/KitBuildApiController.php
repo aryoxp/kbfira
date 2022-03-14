@@ -55,11 +55,12 @@ class KitBuildApiController extends CoreApi {
     }
   }
 
-  function getTopicListOfGroup() {
+   function getTopicListOfGroups($groupIds = null) {
     try {
-      $gids = $this->postv('gids');
+      $gids = $this->postv('gids', []);
+      $gids = array_merge($gids, $groupIds ? explode(',', $groupIds) : []);
       $tService = new TopicService();
-      $result = $tService->getTopicListOfGroup();
+      $result = $tService->getTopicListOfGroups($gids);
       CoreResult::instance($result)->show();
     } catch (Exception $ex) {
       CoreError::instance($ex->getMessage())->show();
@@ -173,6 +174,18 @@ class KitBuildApiController extends CoreApi {
     try {
       $kitService = new KitMapService();
       $result     = $kitService->getKitListByConceptMap($cmid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function getKitListOfGroups($groupIds = null) {
+    try {
+      $gids = $this->postv('gids', []);
+      $gids = array_merge($gids, $groupIds ? explode(',', $groupIds) : []);
+      $kitService = new KitMapService();
+      $result = $kitService->getKitListOfGroups($gids);
       CoreResult::instance($result)->show();
     } catch (Exception $ex) {
       CoreError::instance($ex->getMessage())->show();

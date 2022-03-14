@@ -40,21 +40,22 @@
 <div class="card d-none" id="modal-sign-in" tabindex="-1" aria-hidden="true">
   <div class="card-body mx-3 text-center">
     <form name="form-sign-in" autocomplete="off">
-    <h1 class="h3 mb-4 mt-4 fw-normal">Sign in</h1>
-    <div class="form-floating">
-      <input type="text" class="form-control rounded-0 rounded-top" id="input-username" placeholder="Username" autocomplete="new-password" style="margin-bottom: -1px;">
-      <label for="input-username">Username</label>
-    </div>
-    <div class="form-floating">
-      <input type="password" class="form-control rounded-0 rounded-bottom" id="input-password" placeholder="Password" autocomplete="new-password">
-      <label for="input-password">Password</label>
-    </div>
+      <h1 class="h3 mb-4 mt-4 fw-normal">Sign in</h1>
+      <div class="form-floating">
+        <input type="text" class="form-control rounded-0 rounded-top" id="input-username" placeholder="Username" autocomplete="new-password" style="margin-bottom: -1px;">
+        <label for="input-username">Username</label>
+      </div>
+      <div class="form-floating">
+        <input type="password" class="form-control rounded-0 rounded-bottom" id="input-password" placeholder="Password" autocomplete="new-password">
+        <label for="input-password">Password</label>
+      </div>
 
-    <div class="checkbox mb-3 mt-2 mx-2">
-      <label> <input type="checkbox" id="input-remember" value="remember-me"> Remember me </label>
-    </div>
-    <button class="w-100 btn btn-lg btn-primary bt-sign-in" type="submit">Sign in</button>
-    <p class="mt-5 mb-3 text-muted">&copy; 2017–2021</p>
+      <div class="checkbox mb-3 mt-2 mx-2">
+        <label> <input type="checkbox" id="input-remember-me" value="remember-me"> Remember me </label>
+      </div>
+      <button class="w-100 btn btn-lg btn-primary bt-sign-in" type="submit">Sign in</button>
+      <div id="sign-in-filter" class="text-center mt-3"></div>
+      <p class="mt-5 mb-3 text-muted">&copy; 2017–2021</p>
     </form> 
   </div>
 </div>

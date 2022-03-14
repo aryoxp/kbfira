@@ -7,7 +7,7 @@
     <div class="d-flex flex-nowrap align-items-stretch">
       
       <div class="sidebar-panel overflow-hidden <?php echo $sidebarcollapse ? 'collapsed' : ''; ?>">
-        <a href="/" class="text-dark text-decoration-none mx-3 my-2 d-flex align-items-center" style="white-space: nowrap;">
+        <a href="<?php echo $this->location('../home'); ?>" class="text-dark text-decoration-none mx-3 my-2 d-flex align-items-center" style="white-space: nowrap;">
           <i class="bi bi-slash-square-fill me-2 text-danger fs-4" role="img" aria-label="Bootstrap"></i>
           <span class="text-dark">Kit-Build</span>
         </a>
@@ -80,9 +80,14 @@
                 <hr class="dropdown-divider">
               </li>
               <?php if(isset($_SESSION['user'])) : ?>
-              <li><a class="dropdown-item bt-app-sign-out text-danger" href="#"><i class="bi bi-box-arrow-right"></i> Sign out</a></li>
+              <li><a class="dropdown-item bt-app-sign-out" href="#">
+                <span class="btn btn-sm btn-danger">Sign out <i class="bi bi-box-arrow-right"></i></span>
+              </a>
+              </li>
               <?php else: ?>
-              <li><a class="dropdown-item bt-app-sign-in text-primary" href="#"><i class="bi bi-box-arrow-in-right"></i> Sign in</a></li>
+              <li><a class="dropdown-item bt-app-sign-in" href="#">
+                <span class="btn btn-sm btn-primary"><i class="bi bi-box-arrow-in-right"></i> Sign in</a></span>
+              </li>
               <?php endif; ?>
             </ul>
           </div>

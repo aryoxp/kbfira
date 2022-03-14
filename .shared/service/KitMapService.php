@@ -251,7 +251,7 @@ class KitMapService extends CoreService {
 
   function delete($kid) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('kit')->delete()->where('kid', QB::esc($kid));
       $result = $db->query($qb->get());
       return $result;
@@ -262,7 +262,7 @@ class KitMapService extends CoreService {
 
   function getConceptMapListByTopic($topicId = null) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('conceptmap');
       $qb->select()->where('topic', $topicId);
       $result = $db->query($qb->get());
@@ -272,9 +272,21 @@ class KitMapService extends CoreService {
     }
   }
 
+  function getKit($kid) {
+    try {
+      $db = self::instance();
+      $qb = QB::instance('kit');
+      $qb->select()->where('kid', QB::esc($kid));
+      $result = $db->getRow($qb->get());
+      return $result;
+    } catch (Exception $ex) {
+      throw CoreError::instance($ex->getMessage());
+    }
+  }
+
   function getKitMap($kid) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       
       $result = new stdClass;
       
@@ -299,7 +311,7 @@ class KitMapService extends CoreService {
 
   function updateKitMapOption($kid, $option) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('kit');
       $qb->update('options', QB::esc($option))
         ->where('kid', QB::esc($kid));
@@ -309,9 +321,30 @@ class KitMapService extends CoreService {
     }
   }
 
+  function getKits($keyword = '', $page = 1, $perpage = 10) {
+    $db = self::instance();
+    $qb = QB::instance('kit k')->select()
+      ->leftJoin('conceptmap c', 'c.cmid', 'k.cmid')
+      ->where('k.name', 'LIKE', "%$keyword%")
+      ->where('c.title', 'LIKE', "%$keyword%", QB::OR)
+      ->orderBy('k.create_time', QB::DESC)
+      ->limit(($page-1)*$perpage, $perpage);
+    return $db->query($qb->get());
+  }
+
+  function getKitsCount($keyword = '') {
+    $db = self::instance();
+    $qb = QB::instance('kit k')->select(QB::raw('COUNT(*) AS count'))
+      ->leftJoin('conceptmap c', 'c.cmid', 'k.cmid')
+      ->where('k.name', 'LIKE', "%$keyword%")
+      ->where('c.title', 'LIKE', "%$keyword%", QB::OR)
+      ->orderBy('k.create_time', QB::DESC);
+    return $db->getVar($qb->get());
+  }
+
   function getKitListByConceptMap($cmid) { // var_dump($cmid);
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('kit k');
       $qb->select()
         ->select(QB::raw('(SELECT count(*) FROM kit_set ks WHERE ks.kid = k.kid) AS sets'))
@@ -322,9 +355,41 @@ class KitMapService extends CoreService {
     }
   }
 
+  function getKitListOfGroups($gids = []) { // var_dump($cmid);
+    try {
+      if (count($gids) == 0) return [];
+      $quote = function($v) {
+        return "'" . QB::esc($v) . "'";
+      };
+      $db = self::instance();
+      $qb = QB::instance('kit k')->select()
+        ->leftJoin('grup_kit gk', 'gk.kid', 'k.kid')
+        ->where('gk.gid', QB::IN, QB::raw(QB::OG . implode(",", array_map($quote, $gids)) . QB::EG));
+      return $db->query($qb->get());
+    } catch (Exception $ex) {
+      throw CoreError::instance($ex->getMessage());
+    }
+  }
+
+  function assignKitToGroup($kid, $gid) {
+    $db = self::instance();
+    $qb = QB::instance('grup_kit')->insert(['gid' => $gid, 'kid' => $kid])->ignore();
+    $db->query($qb->get());
+    return $db->getAffectedRows();
+  }
+
+  function deassignKitFromGroup($kid, $gid) {
+    $db = self::instance();
+    $qb = QB::instance('grup_kit')->delete()
+      ->where('gid', $gid)
+      ->where('kid', $kid);
+    $db->query($qb->get());
+    return $db->getAffectedRows();
+  }
+
   function assignTextToKitMap($tid, $kid) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('kit');
       $qb->update(['text' => $tid])->where('kid', QB::esc($kid));
       return $db->query($qb->get());
@@ -335,7 +400,7 @@ class KitMapService extends CoreService {
 
   function unassignTextFromKitMap($kid) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('kit');
       $qb->update(['text' => null])->where('kid', QB::esc($kid));
       return $db->query($qb->get());
@@ -345,7 +410,7 @@ class KitMapService extends CoreService {
   }
 
   function getSets($kid) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     try {
       $kitSets = new stdClass;
 
@@ -383,7 +448,7 @@ class KitMapService extends CoreService {
   }
 
   function saveSets($kid, $sets, $concepts, $links, $sourceEdges, $targetEdges) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     try {
       $db->begin();
 
@@ -431,7 +496,7 @@ class KitMapService extends CoreService {
 
   function removeSets($kid) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('kit_set');
       $qb->delete()->where('kid', QB::esc($kid));
       $result = $db->query($qb->get());

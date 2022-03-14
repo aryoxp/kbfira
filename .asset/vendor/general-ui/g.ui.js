@@ -364,8 +364,104 @@ class StatusBar {
   }
 }
 
+class SignIn {
+  constructor(options) {
+    this.settings = Object.assign({
+      redirect: null,
+      apps: null,
+      gids: null,
+      rids: null,
+      remember: false,
+      successCallback: undefined,
+      failCallback: undefined
+    }, options);
+    this.ajax = Core.instance().ajax();
+    this.handleEvent();
+    this.render();
+    console.log(document.cookie);
+  }
+  static instance(options) {
+    SignIn.inst = new SignIn(options);
+    return SignIn.inst;
+  }
+  render() {
+    $('#input-remember-me').prop('checked', (this.settings.remember === true));
+    let filterInput = "";
+    if (this.settings.apps) {
+      this.settings.apps.split(',').forEach(app => {
+        filterInput += `<span class="badge rounded-pill text-white bg-danger ms-1">${app}</span>`;
+      });
+    }
+    if (this.settings.gids) {
+      this.settings.gids.split(',').forEach(gid => {
+        filterInput += `<span class="badge rounded-pill text-white bg-success ms-1">${gid}</span>`;
+      });
+    }
+    if (this.settings.rids) {
+      this.settings.rids.split(',').forEach(rid => {
+        filterInput += `<span class="badge rounded-pill text-white bg-primary ms-1">${rid}</span>`;
+      });
+    }
+    $('#sign-in-filter').html(filterInput);
+  }
+  show() {
+    this.signInModal = UI.modal('#modal-sign-in', {width: 350}).show();
+    return this;
+  }
+  get modal() {
+    return this.signInModal;
+  }
+  set remember(r = true) {
+    if (typeof r === "boolean") this.settings.remember = r;
+    else this.settings.remember = false;
+    this.render();
+  }
+  success(successCallback) {
+    this.settings.success = successCallback;
+    return this;
+  }
+  fail(failCallback) {
+    this.settings.fail = failCallback;
+    return this;
+  }
+  handleEvent() {
+    $('form[name="form-sign-in"]').off('submit').on('submit', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      let username = $('#input-username').val()
+      let password = $('#input-password').val()
+      let data = {
+        username: username,
+        password: password,
+      }
+      if (this.settings.apps) data.apps = this.settings.apps;
+      if (this.settings.rids) data.rids = this.settings.rids;
+      if (this.settings.gids) data.gids = this.settings.gids;
+
+      this.ajax.post('RBACApi/signIn', data).then(user => { // console.error(result)
+        if (typeof user != 'object' || !user) {
+          if (typeof this.settings.fail == 'function') this.settings.fail(error);
+          else UI.error(error).show()
+          return;
+        }
+        $('#card-sign-in').addClass('d-none')
+        if (typeof this.settings.success == 'function') this.settings.success(user);
+        if (this.settings.redirect) {
+          let redir = this.settings.redirect;
+          console.log(Core.location(redir));
+          window.location.replace(redir.startsWith('http') ? redir : Core.location(redir));
+          return;
+        }
+      }).catch(error => { // console.log(error);
+        if (typeof this.settings.fail == 'function') this.settings.fail(error);
+        else UI.error(error).show()
+      })
+    });
+  }
+}
+
 class Pagination {
-  constructor (containerElement, count, perpage) {
+  constructor (containerElement, count = 1, perpage = 5) {
     this.containerElement = containerElement
     this.pagination = {
       page: 1,
@@ -396,16 +492,20 @@ class Pagination {
     return this.pagination.count;
   }
   listen(formElement) {
+    this.formElement = formElement;
     $(this.containerElement).off('click', '.pagination-next').on('click', '.pagination-next', (e) => {
-      console.log(this.pagination)
+      console.log(this.pagination.page, this.pagination.maxpage)
       if (this.pagination.page < this.pagination.maxpage) {
         this.pagination.page++
         $(formElement).trigger('submit')
+        console.log(this.pagination.page, this.pagination.maxpage)
         this.update()
       }
+      e.preventDefault();
     })
 
     $(this.containerElement).off('click', '.pagination-prev').on('click', '.pagination-prev', (e) => {
+      e.preventDefault();
       if (this.pagination.page > 1) {
         this.pagination.page--
         $(formElement).trigger('submit')
@@ -414,6 +514,7 @@ class Pagination {
     })
 
     $(this.containerElement).off('click', '.pagination-page').on('click', '.pagination-page', (e) => {
+      e.preventDefault();
       this.pagination.page = parseInt($(e.currentTarget).attr('data-page'))
       $(formElement).trigger('submit')
       this.update()
@@ -421,15 +522,25 @@ class Pagination {
     return this;
   }
   update(count = null, perpage = null) { // console.warn(this.pagination)
-    if (count) this.pagination.count = count;
-    if (perpage) this.pagination.perpage = perpage;
+    if (count !== null) this.pagination.count = parseInt(count);
+    if (perpage !== null) this.pagination.perpage = parseInt(perpage);
+
+    count   = parseInt(count);
+    perpage = parseInt(perpage);
+
     let paginationHtml = '';
     let page = this.pagination.page;
-    let maxpage = Math.ceil(this.pagination.count/this.pagination.perpage); // console.log(count, page, maxpage)
-    this.pagination.maxpage = maxpage
+    let maxpage = count == 0 ? 1 : Math.ceil(this.pagination.count/this.pagination.perpage);
+    if (page > maxpage) {
+      page = maxpage;
+      return this;
+    }
+    this.pagination.page = page;
+    this.pagination.maxpage = maxpage;    
+    
     if (this.pagination.count) {
       paginationHtml += `<li class="page-item${page == 1 ? ' disabled': ''}">`
-      paginationHtml += `  <a class="page-link pagination-prev" href="#" tabindex="-1" aria-disabled="true">Previous</a>`
+      paginationHtml += `  <a class="page-link pagination-prev" href="#" tabindex="-1" aria-disabled="true"> <i class="bi bi-chevron-left"></i> Prev</a>`
       paginationHtml += `</li>`
       let min = page - 2 < 1 ? 1 : page - 2
       let max = page + 2 > maxpage ? maxpage : page + 2
@@ -437,11 +548,25 @@ class Pagination {
         paginationHtml += `<li class="page-item${page == p ? ' disabled': ''}"><a class="page-link pagination-page" data-page="${p}" href="#">${p}</a></li>`
       }
       paginationHtml += `<li class="page-item${page == maxpage ? ' disabled': ''}">`
-      paginationHtml += `  <a class="page-link pagination-next" href="#">Next</a>`
+      paginationHtml += `  <a class="page-link pagination-next" href="#">Next <i class="bi bi-chevron-right"></i></a>`
       paginationHtml += `</li>`
-    }
-    $(this.containerElement).html(paginationHtml)
+      $(this.containerElement).html(paginationHtml)
+    } else this.renderEmpty();
     return this;
+  }
+
+  renderEmpty(paginationHtml) {
+    let html = '';
+    html += `<li class="page-item disabled">`
+    html += `  <a class="page-link pagination-prev" href="#">Previous</a>`
+    html += `</li>`
+    html += `<li class="page-item disabled">`
+    html += `  <a class="page-link" href="#">--</a>`
+    html += `</li>`
+    html += `<li class="page-item disabled">`
+    html += `  <a class="page-link pagination-next" href="#">Next</a>`
+    html += `</li>`
+    $(this.containerElement).html(html)
   }
 }
 
@@ -574,7 +699,9 @@ class UI {
       .on("mouseup", this, onMouseUp);
     return opt
   }
-
+  static spinner(size = "sm", color = null) {
+    return `<span class="spinner-border spinner-border${size ? `-${size}` : ""} ${color ? `text-${color}` : ""}" role="status" aria-hidden="true"></span>`
+  }
   
 }
 

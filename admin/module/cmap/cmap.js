@@ -119,6 +119,40 @@ class CmapApp {
     let exportDialog = UI.modal('#concept-map-export-dialog', {
       hideElement: '.bt-cancel'
     })
+
+    let topicDialog = UI.modal("#assign-topic-dialog", {
+      hideElement: ".bt-close",
+      onShow: () => {
+        console.warn(topicDialog.cmapTitle)
+        $("#assign-topic-dialog .cmap-title").html(topicDialog.cmapTitle);
+      }
+    });
+    topicDialog.setTopic = (topic = null) => {
+      $("#assign-topic-dialog .cmap-topic").html(topic ? topic.title + `<span class="badge rounded-pill bt-deassign-topic-from-cmap ms-2 bg-danger" role="button" data-cmid="${topicDialog.cmid}">Remove</span>` : `<em class="text-muted">Not specified.</em>`);
+    }
+
+    let textDialog = UI.modal('#assign-text-dialog', {
+      hideElement: '.bt-close',
+      onShow: () => { // console.log(textDialog.topic)
+        if (!textDialog.cmap) {
+          UI.error("Invalid concept map.").show();
+          return;
+        }
+        let tid = textDialog.cmap.map.text;
+        let title = textDialog.cmap.map.title;
+        if (textDialog.cmap.map.text) 
+          this.ajax.get(`contentApi/getText/${tid}`).then(text => textDialog.setText(text));
+        $('#assign-text-dialog form.form-search-text').trigger('submit')
+        $("#assign-text-dialog .cmap-title").html(title)
+      }
+    })
+    textDialog.setCmap = (cmap) => {
+      textDialog.cmap = cmap;
+      return textDialog;
+    }
+    textDialog.setText = (text = null) => {
+      $("#assign-text-dialog .assigned-text").html(text ? `<span class="text-primary">${text.title}</span> <span class="badge rounded-pill bt-deassign-text-from-cmap ms-2 bg-danger" role="button" data-cmid="${textDialog.cmap.map.cmid}">Remove</span>` : `<em class="text-muted">Not specified.</em>`);
+    }
   
   
   
@@ -232,6 +266,7 @@ class CmapApp {
       let tid = openDialog.tid;
       if (!tid) $('#concept-map-open-dialog .list-topic .list-item.default').trigger('click');
       else $(`#concept-map-open-dialog .list-topic .list-item[data-tid="${tid}"]`).trigger('click');
+      $('#concept-map-open-dialog .bt-refresh-topic-list').trigger('click');
     })
   
     $('#concept-map-open-dialog .list-topic').on('click', '.list-item', (e) => {
@@ -285,7 +320,7 @@ class CmapApp {
         let topicsHtml = '';
         topics.forEach(t => { // console.log(t);
           topicsHtml += `<span class="topic list-item" data-tid="${t.tid}">`
-           + `<em>${t.title}</em>`
+           + `<span>${t.title}</span>`
            + `<bi class="bi bi-check-lg text-primary d-none"></bi></span>`
         });
         $('#concept-map-open-dialog .list-topic').slideUp({
@@ -402,9 +437,175 @@ class CmapApp {
         $(e.currentTarget).html('<i class="bi bi-clipboard"></i> Copy to Clipboard')
       }, 3000)
     })
+
+
+
+
+
+
+
+
+    /** 
+     * Assign topic
+     * 
+     * 
+    */
+  
+     $('.app-navbar').on('click', '.bt-assign-topic', (e) => {
+      // let cmid = $(e.currentTarget).parents('.item-cmap').attr('data-cmid');
+      if (!this.conceptMap) {
+        UI.info("Please save or open a concept map.").show();
+        return;
+      }
+      let cmid = this.conceptMap.map.cmid;
+      KitBuild.openConceptMap(cmid).then(cmap => {
+        console.log(cmap)
+        topicDialog.cmapTitle = cmap.map.title;
+        topicDialog.cmid = cmap.map.cmid;
+        topicDialog.show();
+        if (cmap.map.topic) {
+          this.ajax.get(`contentApi/getTopic/${cmap.map.topic}`).then(topic => {
+            console.log(topic)
+            topicDialog.setTopic(topic)
+          })
+        } else topicDialog.setTopic()
+      })
+    })
+
+    $('form.form-assign-search-topic').on('submit', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      let perpage = parseInt($('form.form-assign-search-topic .input-perpage').val())
+      let keyword = $('form.form-assign-search-topic .input-keyword').val()
+      let page = (!CmapApp.assignTopicPagination || 
+        keyword != CmapApp.assignTopicPagination.keyword) ?
+        1 : CmapApp.assignTopicPagination.page
+
+      Promise.all([
+        this.ajax.post(`contentApi/getTopics/${page}/${perpage}`, {
+          keyword: keyword
+        }), 
+        this.ajax.post(`contentApi/getTopicsCount`, {
+          keyword: keyword
+        })])
+      .then(results => {
+        let topics = results[0];
+        let count = parseInt(results[1]);
+        CmapApp.populateAssignTopics(topics, topicDialog.cmid)
+        if (CmapApp.assignTopicPagination) {
+          CmapApp.assignTopicPagination.keyword = keyword;
+          CmapApp.assignTopicPagination.update(count, perpage);  
+        } else CmapApp.assignTopicPagination = 
+          Pagination.instance('form.form-assign-search-topic .list-topic-pagination', count, perpage).listen('form.form-assign-search-topic').update(count, perpage);
+        $('.dropdown-menu-teacher-map-list').addClass('show');
+      });
+
+    })
+
+    $('#assign-topic-dialog .list-topic').on('click', '.bt-assign-topic-to-cmap', (e) => {
+      let cmid = $(e.currentTarget).parents('.item-topic').attr('data-cmid');
+      let tid = $(e.currentTarget).parents('.item-topic').attr('data-tid');
+      console.warn(cmid, tid);
+      this.ajax.post('contentApi/assignTopicToConceptMap', {
+        cmid: cmid,
+        tid: tid
+      }).then(result => {
+        this.ajax.get(`contentApi/getTopic/${tid}`).then(topic => {
+          topicDialog.setTopic(topic);
+        });
+        UI.success('Topic assigned succefully.').show();
+      }).catch(error => UI.error(error).show());
+    })
+
+    $('#assign-topic-dialog').on('click', '.bt-deassign-topic-from-cmap', (e) => {
+      let cmid = $(e.currentTarget).attr('data-cmid');
+      this.ajax.post('contentApi/deassignTopicFromConceptMap', {
+        cmid: cmid
+      }).then(result => { console.log(result);
+        topicDialog.setTopic();
+        UI.success('Topic deassigned succefully.').show();
+      }).catch(error => UI.error(error).show());
+    });
   
   
-  
+
+
+
+
+
+
+    /** 
+     * Assign Text
+     * 
+    */
+
+     $('.app-navbar').on('click', '.bt-assign-text', (e) => {
+      e.preventDefault();
+      // let cmid = $(e.currentTarget).parents('.item-cmap').attr('data-cmid');
+      if (!this.conceptMap) {
+        UI.info("Please save or open a concept map.").show();
+        return;
+      }
+      let cmid = this.conceptMap.map.cmid;
+      KitBuild.openConceptMap(cmid).then(cmap => {
+        textDialog.setCmap(cmap).show();
+      });
+    })
+
+    $('form.form-assign-search-text').on('submit', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      let perpage = parseInt($('form.form-assign-search-text .input-perpage').val())
+      let keyword = $('form.form-assign-search-text .input-keyword').val()
+      let page = (!CmapApp.assignTextPagination || 
+        keyword != CmapApp.assignTextPagination.keyword) ?
+        1 : CmapApp.assignTextPagination.page
+      Promise.all([
+        this.ajax.post(`contentApi/getTexts/${page}/${perpage}`, {
+          keyword: keyword
+        }), 
+        this.ajax.post(`contentApi/getTextsCount`, {
+          keyword: keyword
+        })])
+      .then(results => {
+        let texts = results[0];
+        let count = parseInt(results[1]);
+        CmapApp.populateAssignTexts(texts, textDialog.cmap.map.cmid)
+        if (CmapApp.assignTextPagination) {
+          CmapApp.assignTextPagination.keyword = keyword;
+          CmapApp.assignTextPagination.update(count, perpage);  
+        } else CmapApp.assignTextPagination = 
+          Pagination.instance('form.form-assign-search-text .list-text-pagination', count, perpage).listen('form.form-assign-search-text').update(count, perpage);
+        $('.dropdown-menu-teacher-map-list').addClass('show');
+      });
+
+    });
+
+    $('#assign-text-dialog .list-text').on('click', '.bt-assign-text-to-cmap', (e) => {
+      let cmid = $(e.currentTarget).parents('.item-text').attr('data-cmid');
+      let tid = $(e.currentTarget).parents('.item-text').attr('data-tid');
+      console.warn(cmid, tid);
+      this.ajax.post('contentApi/assignTextToConceptMap', {
+        cmid: cmid,
+        tid: tid
+      }).then(result => {
+        this.ajax.get(`contentApi/getText/${tid}`).then(text => {
+          textDialog.setText(text);
+        });
+        UI.success('Text assigned succefully.').show();
+      }).catch(error => UI.error(error).show());
+    })
+
+    $('#assign-text-dialog').on('click', '.bt-deassign-text-from-cmap', (e) => {
+      let cmid = $(e.currentTarget).attr('data-cmid');
+      this.ajax.post('contentApi/deassignTextFromConceptMap', {
+        cmid: cmid
+      }).then(result => { console.log(result);
+        textDialog.setText();
+        UI.success('Text deassigned succefully.').show();
+      }).catch(error => UI.error(error).show());
+    })
+
   }
   
   handleRefresh() {
@@ -821,4 +1022,62 @@ CmapApp.applyMapState = (mapState) => {
     CmapApp.inst.canvas.canvasTool.clearCanvas().clearIndicatorCanvas()
     resolve(mapState)
   })
+
+}
+
+CmapApp.populateTopics = topics => {
+  let topicsHtml = '';
+  topics.forEach(topic => {
+    topicsHtml += `<div class="item-topic d-flex align-items-center py-1 border-bottom" role="button"`
+    topicsHtml += `  data-tid="${topic.tid}" data-title="${topic.title}">`
+    topicsHtml += `  <span class="flex-fill d-flex align-items-center ps-2">`
+    topicsHtml += `  <span class="text-truncate text-nowrap">${topic.title}</span>`
+    if (topic.text) topicsHtml += `    <span class="badge rounded-pill bg-success ms-2">${topic.text} <i class="bi bi-file-text"></i></span>`
+    topicsHtml += `  </span>`
+    topicsHtml += `  <span class="text-end text-nowrap ms-3">`
+    topicsHtml += `    <div class="dropstart">`
+    topicsHtml += `    <button class="btn btn-sm btn-primary bt-list-cmap" data-bs-toggle="dropdown" data-bs-auto-close="outside"><i class="bi bi-journal-text"></i></button>`
+    topicsHtml += `    <div class="dropdown-menu px-2" data-tid="${topic.tid}"><small><em>Loading...</em></small>`
+    topicsHtml += `    </div>`
+    topicsHtml += `    </div>`
+    topicsHtml += `  </span>`
+    topicsHtml += `</div>`
+  });
+  if (topicsHtml.length == 0) topicsHtml = '<em class="d-block m-3 text-muted">No topics found in current search.</em>';
+  $('#list-topic').html(topicsHtml)
+}
+
+CmapApp.populateAssignTopics = (topics, cmid) => {
+  let topicsHtml = '';
+  topics.forEach(topic => {
+    topicsHtml += `<div class="item-topic d-flex align-items-center py-1 border-bottom" role="button"`
+    topicsHtml += `  data-tid="${topic.tid}" data-cmid="${cmid}" data-title="${topic.title}">`
+    topicsHtml += `  <span class="flex-fill ps-2 d-flex align-items-center">`
+    topicsHtml += `  <span class="text-truncate text-nowrap">${topic.title}</span>`
+    if (topic.text) topicsHtml += `    <span class="badge rounded-pill bg-success ms-2">${topic.text} <i class="bi bi-file-text"></i></span>`
+    topicsHtml += `  </span>`
+    topicsHtml += `  <span class="text-end text-nowrap ms-3">`
+    topicsHtml += `    <span class="btn btn-sm btn-primary bt-assign-topic-to-cmap"><i class="bi bi-check-lg"></i></span>`
+    topicsHtml += `  </span>`
+    topicsHtml += `</div>`
+  });
+  if (topicsHtml.length == 0) topicsHtml = '<em class="d-block m-3 text-muted">No topics found in current search.</em>';
+  $('form.form-assign-search-topic .list-topic').html(topicsHtml)
+}
+
+CmapApp.populateAssignTexts = (texts, cmid) => {
+  let textsHtml = '';
+  texts.forEach(text => {
+    textsHtml += `<div class="item-text d-flex align-items-center py-1 border-bottom" role="button"`
+    textsHtml += `  data-tid="${text.tid}" data-cmid="${cmid}" data-title="${text.title}">`
+    textsHtml += `  <span class="flex-fill ps-2 d-flex align-items-center">`
+    textsHtml += `  <span class="text-truncate text-nowrap">${text.title}</span>`
+    textsHtml += `  </span>`
+    textsHtml += `  <span class="text-end text-nowrap ms-3">`
+    textsHtml += `    <span class="btn btn-sm btn-primary bt-assign-text-to-cmap"><i class="bi bi-check-lg"></i></span>`
+    textsHtml += `  </span>`
+    textsHtml += `</div>`
+  });
+  if (textsHtml.length == 0) textsHtml = '<em class="d-block m-3 text-muted">No texts found in current search.</em>';
+  $('form.form-assign-search-text .list-text').html(textsHtml)
 }

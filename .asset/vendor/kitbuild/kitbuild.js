@@ -43,6 +43,25 @@ class KitBuild {
     this.ajax = Core.instance().ajax()
     return this.ajax.get(`kitBuildApi/openExtendedLearnerMap/${lmid}`)
   }
+
+  static getTopicListOfGroups(groups = []) {
+    if (!groups || groups.length == 0) throw new Error('Invalid groups');
+    this.ajax = Core.instance().ajax()
+    return this.ajax.get(`kitBuildApi/getTopicListOfGroups/${groups.join(",")}`);
+  }
+
+  static getKitListOfGroups(groups = []) {
+    if (!groups || groups.length == 0) throw new Error('Invalid groups');
+    this.ajax = Core.instance().ajax()
+    return this.ajax.get(`kitBuildApi/getKitListOfGroups/${groups.join(",")}`);
+  }
+
+  static getUserListOfGroups(groups = []) {
+    if (!groups || groups.length == 0) throw new Error('Invalid groups');
+    this.ajax = Core.instance().ajax()
+    return this.ajax.get(`RBACApi/getUserListOfGroups/${groups.join(",")}`);
+  }
+
 }
 
 class KitBuildRBAC {

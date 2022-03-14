@@ -36,44 +36,22 @@ class AdminApp {
         });
     });
 
-    $('form.form-sign-in').on('submit', (e) => {
-      e.preventDefault()
-      e.stopPropagation()
-      let username = $('#input-username').val()
-      let password = $('#input-password').val()
-      let data = {
-        username: username,
-        password: password
-      }
-      this.ajax.post('RBACApi/signIn', data).then(result => {
-        if (result === null) {
-          UI.error("Invalid username/password").show();
-          return;
-        }
-        this.session.set('user', result).then(() => {
-          $('#card-sign-in').addClass('d-none')
-          UI.success('Sign in successful.').show()
-        });
-      }).catch(error => UI.error(error).show())
-    });
-
     $('.bt-app-sign-in').on('click', e => {
-      AdminApp.modalSignIn = UI.modal('#modal-sign-in', {width: 350}).show();
+      AdminApp.modalSignIn = SignIn.instance({
+        remember: true,
+        // apps: "kome,moke",
+        // rids: "administrator",
+        // gids: "lel",
+        // redirect: 'some/path'
+      }).success((user) => { // console.error(user);
+        if (typeof user == "object") {
+          this.session.set('user', user).then(() => {  
+            UI.success('Sign in successful.').show();
+            setTimeout(() => location.reload(), 1000);
+          });
+        } else UI.error(user).show();
+      }).show();
     });
-    $('#modal-sign-in').on('click', '.bt-sign-in', (e) => {
-      e.preventDefault();
-      let username = $('#input-username').val();
-      let password = $('#input-password').val();
-      AdminApp.signIn(username, password).then(user => { 
-        // console.log(user)
-        if (typeof user == 'object' && user) {
-          Core.instance().session().set('user', user).then(() => {
-            location.reload();
-          })
-          AdminApp.modalSignIn.hide()
-        } else throw "Invalid username and/or password.";
-      }).catch(error => UI.error(error).show());
-    })
 
     $('.bt-app-sign-out').on('click', e => {
       let confirm = UI.confirm('Do you want to sign out?').positive(() => {

@@ -459,7 +459,7 @@ class LearnerMapService extends CoreService {
 
   function getLearnerMap($lmid) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       
       $result = new stdClass;
       
@@ -484,7 +484,7 @@ class LearnerMapService extends CoreService {
 
   function getExtendedLearnerMap($lmid) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       
       $result = new stdClass;
       
@@ -518,7 +518,7 @@ class LearnerMapService extends CoreService {
 
   function getLearnerMapListByKit($kid) { // var_dump($cmid);
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('learnermap');
       $qb->select()->where('kid', QB::esc($kid));
       return $db->query($qb->get());
@@ -529,7 +529,7 @@ class LearnerMapService extends CoreService {
 
   function getLastDraftLearnerMapOfUser($author, $kid) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('learnermap');
       $qb->select('lmid')
         ->where('author', QB::esc($author))
@@ -545,7 +545,7 @@ class LearnerMapService extends CoreService {
 
   function getLastDraftExtendedLearnerMapOfUser($author, $kid) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('learnermap');
       $qb->select('lmid')
         ->where('author', QB::esc($author))
@@ -561,7 +561,7 @@ class LearnerMapService extends CoreService {
 
   function getLearnerMapsOfConceptMap($cmid) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('learnermap l');
       $qb->select('lmid')
         ->leftJoin('kit k', 'k.kid', 'l.kid')

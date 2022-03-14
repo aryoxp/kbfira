@@ -3,10 +3,7 @@
 defined('CORE') or (header($_SERVER["SERVER_PROTOCOL"] . " 403 Forbidden") and die('403.14 - Access denied.'));
 defined('CORE') or die();
 
-class CoreDBMysqli implements IDatabase {
-
-  private $dbConfig;
-  private $link;
+class CoreDBMysqli extends CoreBaseDatabase implements IDatabase {
 
   private $lastQuery;
   private $insertId;
@@ -15,7 +12,8 @@ class CoreDBMysqli implements IDatabase {
   private $error; // error objects container
 
   public function __construct($config) {
-    $this->dbConfig = $config;
+    // $this->dbConfig = $config;
+    parent::__construct($config);
   }
 
   public static function instance($config) {
@@ -125,6 +123,29 @@ class CoreDBMysqli implements IDatabase {
     $this->insertId = $this->link->insert_id;
     $this->affectedRows = $this->link->affected_rows;
 
+    return $result;
+  }
+
+  public function multiQuery($sql, $flush = TRUE) {
+    if ($sql instanceof QB) $sql = $sql->get();
+    
+    if (!$this->link) $this->connect();
+    $this->lastQuery = $sql;
+
+    // execute query
+    $result = $this->link->query($sql); // var_dump($result);
+    do {
+      // fetch results
+      if($result = $this->link->store_result()) {}
+      if(!$this->link->more_results()) break;
+      if(!$this->link->next_result()) {
+          // report error
+          throw CoreError::instance('Error: ' . $this->link->error);
+          break;
+      }
+    } while(true);
+    mysqli_free_result($result);
+    // if($flush) while ($this->link->next_result()) {;} // flush multi_queries
     return $result;
   }
 

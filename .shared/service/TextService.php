@@ -3,13 +3,13 @@
 class TextService extends CoreService {
 
   function getTextList() {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $qb = QB::instance('text')->select();
     return $db->query($qb->get());
   }
 
   function insertText($title, $type = 'markdown', $content = null, $nlp = null, $data = null) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $insert['title']   = QB::esc($title);
     $insert['type']    = QB::esc($type);
     $insert['content'] = QB::esc($content);
@@ -22,7 +22,7 @@ class TextService extends CoreService {
   }
 
   function updateText($tid, $title, $type = 'markdown', $content = null, $nlp = null, $data = null) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $update['title']   = QB::esc($title);
     $update['type']    = QB::esc($type);
     $update['content'] = QB::esc($content);
@@ -34,7 +34,7 @@ class TextService extends CoreService {
   }
 
   function updateTextNlp($tid, $nlp = null) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $update['nlp'] = QB::esc($nlp);
     $qb = QB::instance('text')->update($update)->where('tid', $tid);
     $db->query($qb->get());
@@ -42,14 +42,14 @@ class TextService extends CoreService {
   }
 
   function selectText($tid) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $qb = QB::instance('text')->select()
       ->where('tid', QB::esc($tid));
     return $db->getRow($qb->get());
   }
 
   function getTexts($keyword = '', $page = 1, $perpage = 10) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $qb = QB::instance('text')->select()
       ->where('title', 'LIKE', "%$keyword%")
       ->orderBy('created', QB::DESC)
@@ -58,7 +58,7 @@ class TextService extends CoreService {
   }
 
   function getTextsCount($keyword = '') {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $qb = QB::instance('text')->select(QB::raw('COUNT(*) AS count'))
       ->where('title', 'LIKE', "%$keyword%")
       ->orderBy('created', QB::DESC);
@@ -66,7 +66,7 @@ class TextService extends CoreService {
   }
 
   function deleteText($tid) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $qb = QB::instance('text')->delete()
       ->where('tid', QB::esc($tid));
     return $db->query($qb->get());

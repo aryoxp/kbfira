@@ -1,0 +1,4 @@
+﻿username,name,password,roleids,groupids,"this line will be IGNORED"
+demo,Demo,demopass,"TEACHER,STUDENT","GROUPA,GROUPB"
+aryo,"Panda",demopass,"TEACHER","LEL"
+sapi,"Sapiku Lari",demopass,"TEACHER,STUDENT","GROUPA,LEL"

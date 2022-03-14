@@ -3,13 +3,13 @@
 class UserService extends CoreService {
 
   function getUserList() {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $qb = QB::instance('user')->select();
     return $db->query($qb->get());
   }
 
   function insertUser($username, $name, $password) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $insert['username'] = trim(QB::esc($username));
     $insert['password'] = md5(trim(QB::esc($password)));
     $insert['name']     = trim(QB::esc($name));
@@ -19,7 +19,7 @@ class UserService extends CoreService {
   }
 
   function updateUser($username, $nusername, $name, $password = null) {
-    $db = self::instance('kbv2');  
+    $db = self::instance();  
     $update['username'] = trim(QB::esc($nusername));
     if ($password) $update['password'] = md5(trim(QB::esc($password)));
     $update['name']     = trim(QB::esc($name));
@@ -29,7 +29,7 @@ class UserService extends CoreService {
   }
 
   function updateUserProfile($username, $name) {
-    $db = self::instance('kbv2');  
+    $db = self::instance();  
     $update['name'] = trim(QB::esc($name));
     $qb = QB::instance('user')->update($update)->where('username', trim(QB::esc($username)));
     $db->query($qb->get());
@@ -37,7 +37,7 @@ class UserService extends CoreService {
   }
 
   function changeUserPassword($username, $password, $currentPassword = null) {
-    $db = self::instance('kbv2');  
+    $db = self::instance();  
     $update['password'] = md5(trim(QB::esc($password)));
     $qb = QB::instance('user')->update($update)->where('username', trim(QB::esc($username)));
     if ($currentPassword !== null)
@@ -48,7 +48,7 @@ class UserService extends CoreService {
   }
 
   function registerUser($name, $username, $password, $rid = null, $gid = null) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     try {
       $db->begin();
       $insert['username'] = trim(QB::esc($username));
@@ -77,14 +77,14 @@ class UserService extends CoreService {
   }
 
   function selectUser($username) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $qb = QB::instance('user')->select()
       ->where('username', QB::esc($username));
     return $db->getRow($qb->get());
   }
 
   function getUsers($keyword = '', $page = 1, $perpage = 10) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $qb = QB::instance('user')->select()
       ->where('name', 'LIKE', "%$keyword%")
       ->where('username', 'LIKE', "%$keyword%", QB::OR)
@@ -93,7 +93,7 @@ class UserService extends CoreService {
   }
 
   function getRBACUsers($keyword = '', $page = 1, $perpage = 10, $created = null) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $qb = QB::instance('user u')->select()
       ->select(QB::raw('(SELECT GROUP_CONCAT(r.name) FROM role r RIGHT JOIN user_role ur ON ur.rid = r.rid RIGHT JOIN user u2 ON u2.username = ur.username WHERE u2.username = u.username) AS `roles`'))
       ->select(QB::raw('(SELECT GROUP_CONCAT(ur.rid) FROM user_role ur RIGHT JOIN user u2 ON u2.username = ur.username WHERE u2.username = u.username) AS `rids`'))
@@ -110,7 +110,7 @@ class UserService extends CoreService {
   }
 
   function getRBACUser($username, $password = null, $rid = null) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $qb = QB::instance('user u')->select()
       ->select(QB::raw('(SELECT GROUP_CONCAT(r.name) FROM role r RIGHT JOIN user_role ur ON ur.rid = r.rid RIGHT JOIN user u2 ON u2.username = ur.username WHERE u2.username = u.username) AS `roles`'))
       ->select(QB::raw('(SELECT GROUP_CONCAT(ur.rid) FROM user_role ur RIGHT JOIN user u2 ON u2.username = ur.username WHERE u2.username = u.username) AS `rids`'))
@@ -124,7 +124,7 @@ class UserService extends CoreService {
   }
 
   function getUsersCount($keyword = '') {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $qb = QB::instance('user')->select(QB::raw('COUNT(*) AS count'))
       ->where('name', 'LIKE', "%$keyword%")
       ->where('username', 'LIKE', "%$keyword%", QB::OR);
@@ -132,18 +132,30 @@ class UserService extends CoreService {
   }
 
   function deleteUser($username) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $qb = QB::instance('user')->delete()
       ->where('username', QB::esc($username));
     return $db->query($qb->get());
   }
 
   function deleteUsers($usernames = []) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $wrap = function($username) { return "'" . QB::esc($username) . "'"; };
     $users = array_map($wrap, $usernames);
     $qb = QB::instance('user')->delete()
       ->where('username', QB::IN, QB::raw("(" . implode(", ", $users) . ")"));
+    return $db->query($qb->get());
+  }
+
+  function getUserListOfGroups($gids = []) {
+    if (count($gids) == 0) return [];
+    $quote = function($v) {
+      return "'" . QB::esc($v) . "'";
+    };
+    $db = self::instance();
+    $qb = QB::instance('user u')->select()
+      ->leftJoin('grup_user gu', 'gu.username', 'u.username')
+      ->where('gu.gid', QB::IN, QB::raw(QB::OG . implode(",", array_map($quote, $gids)) . QB::EG));
     return $db->query($qb->get());
   }
 

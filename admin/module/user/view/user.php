@@ -75,7 +75,25 @@
   </div>
   <div class="col-6">
     <div class="m-2">
-      <div id="detail-user" class="border rounded bg-white p-3"><em>Please select a user from the list to show its detail information.</em></div>
+      <div id="upload-csv" class="card">
+        <div class="card-body bg-white">
+          <div style="font-size: .875rem;">
+            <h4>Batch Create</h4>
+            <div class="btn-group btn-group-sm">
+              <a class="btn btn-sm btn-secondary bt-download-file" href="<?php echo $this->location('module/user/file/user-pass.csv'); ?>"><i class="bi bi-download"></i> Download CSV Template File</a>
+              <button class="btn btn-sm btn-outline-secondary bt-help-csv"><i class="bi bi-question-lg"></i> Help</button>
+            </div>
+            <hr>
+            <form name="form-upload-csv">
+              <div class="input-group input-group-sm">
+                <input class="form-control form-control-sm" name="csv" id="csv-file" type="file">
+                <button class="btn btn-primary btn-sm bt-upload-file"><i class="bi bi-upload"></i> Begin Upload </button>
+              </div>
+            </form>
+            <div class="batch-result card-body"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -135,19 +153,45 @@
 </div>
 
 
-<div id="nlp-dialog" class="card d-none">
+<div id="user-detail-dialog" class="card d-none">
   <h6 class="card-header d-flex">
-    <span class="drag-handle flex-fill"><i class="dialog-icon bi bi-eye-fill me-2"></i> <span class="dialog-title">NLP Data</span></span>
+    <span class="drag-handle flex-fill"><i class="dialog-icon bi bi-person-check-fill me-2"></i> <span class="dialog-title">User Detail</span></span>
     <i class="bi bi-x-lg bt-close bt-x" role="button"></i>
   </h6>
   <div class="card-body d-flex flex-column">
-    <form class="row form-nlp g-3 needs-validation flex-fill" novalidate>
-      <textarea id="input-nlp" class="flex-fill border rounded mx-1 font-monospace"></textarea>
-    </form>
+    <div class="detail-content"></div>
   </div>
   <div class="card-footer text-end">
-    <button class="btn btn-sm btn-secondary bt-close px-4">Cancel</button>
-    <button class="btn btn-sm btn-primary bt-ok px-4 ms-1">OK</button>
+    <button class="btn btn-sm btn-secondary bt-close px-4 ms-1">Close</button>
+    <button class="btn btn-sm resize-handle"><i class="bi bi-arrows-angle-expand"></i></button>
+  </div>
+</div>
+
+<div id="batch-create-help" class="card d-none">
+  <div class="card-header">
+    <h4>Batch Create User Help.</h4>
+  </div>
+  <div class="card-body overflow-scroll">
+    <p>The first line is column headers, it will be ignored if it is left unchanged. Below is an example on how to compose a CSV file to create several users in batch.</p>
+
+    <pre class="text-primary">
+username,name,password,roleids,groupids,"<-- this line will be ignored."
+demo,Demo,demopass,"TEACHER,STUDENT","GROUPA,GROUPB"
+user,"User",demopass,TEACHER,LEL
+nobody,"Nobody Name",demopass,"TEACHER,STUDENT","GROUPA,LEL"
+    </pre>
+
+    <ul>
+      <li>The first column is <code>username</code> field.</li>
+      <li>The second column is <code>name</code> field.</li>
+      <li>The third column is <code>password</code> field.</li>
+      <li>The fourth column is <code>role IDs</code> field. Wrap multiple role ID values in double quote mark and separate each role ID with a single comma.</li>
+      <li>The fifth column is <code>group IDs</code> field. Wrap multiple group ID values in double quote mark and separate each group ID with a single comma.</li>
+    </ul>
+  
+  </div>
+  <div class="card-footer text-end">
+    <button class="btn btn-sm btn-secondary bt-close px-4 ms-1">Close</button>
     <button class="btn btn-sm resize-handle"><i class="bi bi-arrows-angle-expand"></i></button>
   </div>
 </div>

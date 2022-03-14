@@ -36,6 +36,11 @@
           "icon": "list"
         }
       ]
+    },{
+      "id": "grouping",
+      "label": "Grouping",
+      "url": "content/grouping",
+      "icon": "people-fill"
     }
   ]
 }

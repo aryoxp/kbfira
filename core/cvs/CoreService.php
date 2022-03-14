@@ -8,7 +8,10 @@ class CoreService {
   private static $connections      = [];
   private static $dbConfigFilename = 'db.ini';
 
-  protected static function instance($configKey, $queryBuilder = null) {
+  protected static function instance($configKey = null, $queryBuilder = null) {
+
+    if ($configKey === null) 
+      $configKey = Core::lib(Core::CONFIG)->get('default_db_key');
 
     $appDbConfigFile = CORE_APP_PATH . CORE_APP_CONFIG . CoreService::$dbConfigFilename;
     $sharedDbConfigFile = CORE_SHARED_PATH . CORE_SHARED_CONFIG . CoreService::$dbConfigFilename;

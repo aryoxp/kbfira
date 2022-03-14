@@ -114,6 +114,30 @@ class ContentApiController extends CoreApi {
     }
   }
 
+  function assignTopicToGroup() {
+    try {
+      $gid = $this->postv('gid');
+      $tid = $this->postv('tid');
+      $topicService = new TopicService();
+      $result = $topicService->assignTopicToGroup($tid, $gid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function deassignTopicFromGroup() {
+    try {
+      $gid = $this->postv('gid');
+      $tid = $this->postv('tid');
+      $topicService = new TopicService();
+      $result = $topicService->deassignTopicFromGroup($tid, $gid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
   function assignTextToTopic() {
     try {
       $tid = $this->postv('tid');
@@ -340,6 +364,62 @@ class ContentApiController extends CoreApi {
       $kid = $this->postv('kid');
       $kitService = new KitMapService();
       $result = $kitService->delete($kid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function getKit($kid = null) {
+    try {
+      $kitService = new KitMapService();
+      $result = $kitService->getKit($kid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function getKits($page = 1, $perpage = 10) {
+    try {
+      $keyword = $this->postv('keyword', '');
+      $kitService = new KitMapService();
+      $kits = $kitService->getKits($keyword, $page, $perpage);
+      CoreResult::instance($kits)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function getKitsCount() {
+    try {
+      $keyword = $this->postv('keyword', '');
+      $kitService = new KitMapService();
+      $count = $kitService->getKitsCount($keyword);
+      CoreResult::instance($count)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function assignKitToGroup() {
+    try {
+      $gid = $this->postv('gid');
+      $kid = $this->postv('kid');
+      $kitService = new KitMapService();
+      $result = $kitService->assignKitToGroup($kid, $gid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function deassignKitFromGroup() {
+    try {
+      $gid = $this->postv('gid');
+      $kid = $this->postv('kid');
+      $kitService = new KitMapService();
+      $result = $kitService->deassignKitFromGroup($kid, $gid);
       CoreResult::instance($result)->show();
     } catch (Exception $ex) {
       CoreError::instance($ex->getMessage())->show();

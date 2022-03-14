@@ -333,7 +333,7 @@ KitBuildApp.handleEvent = (kbui) => {
   
   $('#concept-map-open-dialog .bt-refresh-topic-list').on('click', () => {
     if (!KitBuildApp.inst || !KitBuildApp.inst.user || !KitBuildApp.inst.user.groups) return;
-    this.ajax.post(`kitBuildApi/getTopicListOfGroup`, {
+    this.ajax.post(`kitBuildApi/getTopicListOfGroups`, {
       gids: KitBuildApp.inst.user.groups.split(",")
     }).then(topics => { // console.log(topics)
       let topicsHtml = '';

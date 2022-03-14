@@ -228,7 +228,7 @@ class ModuleApp {
       Core.instance().ajax().post(url, {
         key: $(e.currentTarget).data('key'),
         order: order
-      }).then(result => { console.log(result);
+      }).then(result => { // console.log(result);
         let checked = $(e.currentTarget).is(':checked')
         $(e.currentTarget).prop('checked', checked)
         if (!result) $(e.currentTarget).prop('checked', !checked)

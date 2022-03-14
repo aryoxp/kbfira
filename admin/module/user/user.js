@@ -41,7 +41,25 @@ class UserApp {
       return userDialog
     }
 
-    let nlpDialog = UI.modal('#nlp-dialog', {
+    let userDetailDialog = UI.modal('#user-detail-dialog', {
+      hideElement: '.bt-close',
+      backdrop: false,
+      draggable: true,
+      dragHandle: '.drag-handle',
+      resizable: true,
+      resizeHandle: '.resize-handle',
+      width: '450px',
+      minHeight: 100,
+      minWidth: 300,
+      height: 500,
+      onShow: () => {}
+    })
+    userDetailDialog.setUser = (user) => {
+      userDetailDialog.user = user;
+      return userDetailDialog;
+    }
+
+    let batchHelpDialog = UI.modal('#batch-create-help', {
       hideElement: '.bt-close',
       backdrop: false,
       draggable: true,
@@ -54,12 +72,6 @@ class UserApp {
       height: 500,
       onShow: () => {}
     })
-    nlpDialog.setUser = (user) => {
-      nlpDialog.user = user;
-      $('#nlp-dialog .dialog-title').html('NLP Data');
-      $('#input-nlp').val(user.nlp);
-      return nlpDialog
-    }
 
 
     $('.bt-list-user').on('click', () => {
@@ -209,6 +221,7 @@ class UserApp {
       let username = $(e.currentTarget).parents('.user-item').attr('data-username')
       this.ajax.get(`RBACApi/getUserDetail/${username}`).then(user => {
         UserApp.populateUserDetail(user)
+        userDetailDialog.setUser(user).show();
       })
     })
 
@@ -365,30 +378,66 @@ class UserApp {
 
 
 
+    $('form[name="form-upload-csv"]').on('submit', e => {
+      e.preventDefault();
+      var filename = $('input[type=file]#csv-file').val().replace(/C:\\fakepath\\/i, '')
+      if (filename.trim().length == 0) {
+        UI.dialog('Please select a CSV file containing list of user to create.').show();
+        return;
+      }
+      let confirm = UI.confirm('Upload file and insert user data?').positive(() => {
+        confirm.hide();
+        var form = $('form[name="form-upload-csv"]')[0];
+        var data = new FormData(form);
+        var btUpload = $('form[name="form-upload-csv"] .bt-upload-file');
+        var uploadLabel = btUpload.html();
+        btUpload.prop("disabled", true).html(`Processing... ${UI.spinner()}`);
+        var baseurl = Core.inst.config().get('baseurl');
+        $.ajax({
+          type: "POST",
+          enctype: 'multipart/form-data',
+          url: `${baseurl}m/x/user/api/uploadUserCSV`,
+          data: data,
+          processData: false,
+          contentType: false,
+          cache: false,
+          timeout: 600000,
+          success: function (data) {
+            btUpload.html(uploadLabel).prop("disabled", false);
+            console.log(data);
+            if (typeof data == 'object') {
+              if (data.error) UI.error(data.error).show();
+              else {
+                let results = data.coreResult;
+                UserApp.populateBatchResult(results);
+              }
+            } else UI.info(data).show();
+          },
+          error: function (e) {
+            btUpload.html(uploadLabel).prop("disabled", false);
+            let error = e.responseText ? e.responseText : "Error occured.";
+            UI.error(error).show();
+            if (e.statusText == "error") 
+              UI.dialog("CSV file has been modified. Please reselect the CSV file and try to upload again.").show();
+            $("#result").text();
+          }
+        });
+      }).show();
+    });
 
-    // $('#list-user').on('click', '.bt-nlp', (e) => {
-    //   let username = $(e.currentTarget).parents('.user-item').attr('data-username')
-    //   this.ajax.get(`RBACApi/getUser/${username}`).then(user => {
-    //     nlpDialog.setUser(user).show()
-    //   })
-    // })
-    // $('#nlp-dialog form.form-nlp').on('submit', (e) => {
-    //   e.preventDefault()
-    //   e.stopPropagation()
-    //   $('#nlp-dialog form.form-nlp').addClass('was-validated')
-    //   let nlp = $('#input-nlp').val().trim();
-    //   if (!nlpDialog.user) return
-    //   this.ajax.post('RBACApi/updateUserNlp', {
-    //     username: nlpDialog.user.username,
-    //     nlp: nlp,
-    //   }).then(nlp => { // console.warn(user)
-    //     nlpDialog.hide();
-    //     UI.success('NLP data has been updated.').show()
-    //   }).catch(error => UI.error(error).show())
-    // })
-    // $('#nlp-dialog').on('click', '.bt-ok', (e) => {
-    //   $('#nlp-dialog form.form-nlp').trigger('submit')
-    // })
+    $('#upload-csv .bt-help-csv').on('click', e => {
+      batchHelpDialog.show();
+    });
+    
+
+
+
+
+
+
+
+
+
 
     this.ajax.get('RBACApi/getRoles').then(roles => UserApp.populateRoles(roles))
     this.ajax.get('RBACApi/getGroups').then(groups => UserApp.populateGroups(groups))
@@ -406,6 +455,26 @@ class UserApp {
 
     $('.bt-search').trigger('click')
 
+  }
+
+  static populateBatchResult(results) {
+    let resHtml = "";
+    for (let res of results) {
+      // console.log(res);
+      if (res.status == "OK")
+        resHtml += `<div class="my-2">${res.data.name} (<code>${res.username}</code>) <i class="bi bi-check-square-fill text-success"></i></div>`;
+      else {
+        resHtml += `<div class="my-2">${res.data.name} (<code>${res.username}</code>) <i class="bi bi-exclamation-triangle-fill text-warning"></i>`
+        resHtml += `<div class="errors my-2 alert alert-danger">`;
+        for (let e of res.errors) {
+          resHtml += `<div class="error pb-2">${e}</div>`
+        }
+        resHtml += `</div>`;
+        resHtml += `</div>`;
+      }
+    }
+    if (!results.length) resHtml = "No users to create in the uploaded CSV file.";
+    $('#upload-csv .batch-result').html(resHtml);
   }
 }
 
@@ -471,7 +540,7 @@ UserApp.populateUserDetail = user => { console.log(user)
 
   userDetailHtml += `<span class="user-name h4 user-primary">${user.name}</span>`
   userDetailHtml += `<div class="align-middle"><span class="badge rounded-pill bg-warning user-dark px-3">${user.username}</span>`
-  userDetailHtml += ` <span class="badge rounded-pill bg-secondary mx-1 px-3">${user.created}</span>`
+  userDetailHtml += ` <span class="badge rounded-pill bg-secondary mx-1 px-3">Created on: ${user.created}</span>`
   userDetailHtml += ` <code class="mx-1">${user.password}</code>`
   userDetailHtml += `</div>`
   userDetailHtml += `<hr>`
@@ -489,7 +558,7 @@ UserApp.populateUserDetail = user => { console.log(user)
   })
   userDetailHtml += `</div>`
 
-  $('#detail-user').html(userDetailHtml)
+  $('#user-detail-dialog .detail-content').html(userDetailHtml);
 
 }
 

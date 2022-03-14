@@ -8,10 +8,10 @@
     <button class="bt-save-as btn btn-primary"><i class="bi bi-front"></i> Save As...</button>
     <button class="bt-export btn btn-primary"><i class="bi bi-send"></i> Export</button>
   </div>
-  <!-- <div class="btn-group btn-group-sm ms-2">
-    <button class="bt-copy btn btn-primary"><i class="bi bi-files"></i> Copy</button>
-    <button class="bt-paste btn btn-primary"><i class="bi bi-clipboard"></i> Paste</button>
-  </div> -->
+  <div class="btn-group btn-group-sm ms-2">
+    <button class="bt-assign-topic btn btn-primary"><i class="bi bi-lightbulb"></i> Assign Topic</button>
+    <button class="bt-assign-text btn btn-primary"><i class="bi bi-file-earmark-font"></i> Assign Text</button>
+  </div>
 </div>
 <div class="d-flex flex-fill align-items-stretch">
   <?php $this->pluginView('kitbuild-ui', ["id" => "goalmap-canvas"], 0); ?>
@@ -154,6 +154,71 @@
   </div>
 </div>
 
+<div id="assign-topic-dialog" class="card d-none">
+  <h6 class="card-header d-flex">
+    <span class="drag-handle flex-fill"><i class="dialog-icon bi bi-eye-fill me-2"></i> <span class="dialog-title">Assign Topic</span></span>
+    <i class="bi bi-x-lg bt-close bt-x" role="button"></i>
+  </h6>
+  <div class="card-body">
+    <div class="border-bottom mb-2 pb-2">
+      <span class="h6">Concept Map Name: <span class="text-primary cmap-title"></span></span><br>
+      <span class="h6">Current assigned topic: <span class="text-primary cmap-topic"></span></span>
+    </div>
+    <form class="row form-assign-search-topic g-3 needs-validation" novalidate>
+      <div class="col">
+        <div class="input-group input-group-sm mb-3">
+          <input type="text" name="keyword" class="form-control w-50 input-keyword" placeholder="Search keyword" aria-label="Keyword">
+          <select name="perpage" class="form-select flex-shrink-1 input-perpage">
+            <option value="1">1</option>
+            <option value="5" selected>5</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+          </select>
+          <button class="btn btn-secondary bt-search"><i class="bi bi-search"></i></button>
+        </div>
+        <div class="list-topic"></div>
+        <div class="list-topic-pagination pagination text-center"></div>
+      </div>
+    </form>
+  </div>
+  <div class="card-footer text-end">
+    <button class="btn btn-sm btn-secondary bt-close px-4">Close</button>
+  </div>
+</div>
+
+<div id="assign-text-dialog" class="card d-none">
+  <h6 class="card-header d-flex">
+    <span class="drag-handle flex-fill"><i class="dialog-icon bi bi-file-text-fill me-2"></i> <span class="dialog-title">Assign Text</span></span>
+    <i class="bi bi-x-lg bt-close bt-x" role="button"></i>
+  </h6>
+  <div class="card-body">
+    <div class="py-2">
+        <span>Concept Map: <span class="cmap-title text-primary"></span></span>
+        <br>
+        <span>Assigned Text: <span class="assigned-text"></span></span>
+    </div>
+    <form class="row form-assign-search-text g-3 needs-validation" novalidate>
+      <div class="col">
+        <div class="input-group input-group-sm mb-3">
+          <input type="text" name="keyword" class="form-control w-50 input-keyword" placeholder="Search keyword" aria-label="Keyword">
+          <select name="perpage" class="form-select flex-shrink-1 input-perpage">
+            <option value="1">1</option>
+            <option value="5" selected>5</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+          </select>
+          <button class="btn btn-secondary bt-search"><i class="bi bi-search"></i></button>
+        </div>
+        <div class="list-text"></div>
+        <div class="list-text-pagination pagination text-center"></div>
+      </div>
+    </form>
+  </div>
+  <div class="card-footer text-end">
+    <button class="btn btn-sm btn-secondary bt-close px-4">Close</button>
+  </div>
+</div>
+
 <!-- <div id="concept-map-copy-paste-dialog" class="card d-none">
   <h6 class="card-header"><i class="dialog-icon bi"></i> <span class="dialog-title">Copy</span></h6>
   <div class="card-body">
@@ -165,3 +230,5 @@
     <button class="btn btn-sm btn-primary ms-1 bt-copy-paste px-3"><i class="dialog-icon bi"></i> <span class="dialog-action">Copy</span></button>
   </div>
 </div> -->
+
+

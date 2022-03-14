@@ -338,7 +338,7 @@ MixedApp.handleEvent = (kbui) => {
   $('#concept-map-open-dialog .bt-refresh-topic-list').on('click', () => {
     console.log(MixedApp.inst.user, this);
     if (!MixedApp.inst || !MixedApp.inst.user || !MixedApp.inst.user.groups) return;
-    this.ajax.post(`kitBuildApi/getTopicListOfGroup`, {
+    this.ajax.post(`kitBuildApi/getTopicListOfGroups`, {
       gids: MixedApp.inst.user.groups.split(",")
     }).then(topics => { // console.log(topics)
       let topicsHtml = '';

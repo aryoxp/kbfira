@@ -3,13 +3,13 @@
 class GroupService extends CoreService {
 
   function getGroupList() {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $qb = QB::instance('grup')->select();
     return $db->query($qb->get());
   }
 
   function insertGroup($gid, $name, $description = null) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $insert['gid']         = QB::esc($gid);
     $insert['name']        = QB::esc($name);
     $insert['description'] = QB::esc($description);
@@ -19,7 +19,7 @@ class GroupService extends CoreService {
   }
 
   function updateGroup($gid, $ngid, $name, $description = null) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $update['gid']         = QB::esc($ngid);
     $update['name']        = QB::esc($name);
     $update['description'] = QB::esc($description);
@@ -29,14 +29,14 @@ class GroupService extends CoreService {
   }
 
   function selectGroup($gid) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $qb = QB::instance('grup')->select()
       ->where('gid', QB::esc($gid));
     return $db->getRow($qb->get());
   }
 
   function getGroups($keyword = '', $page = 1, $perpage = 10) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $qb = QB::instance('grup')->select()
       ->where('name', 'LIKE', "%$keyword%")
       ->where('description', 'LIKE', "%$keyword%", QB::OR)
@@ -45,7 +45,7 @@ class GroupService extends CoreService {
   }
 
   function getGroupsCount($keyword = '') {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $qb = QB::instance('grup')->select(QB::raw('COUNT(*) AS count'))
       ->where('name', 'LIKE', "%$keyword%")
       ->where('description', 'LIKE', "%$keyword%", QB::OR);
@@ -53,14 +53,14 @@ class GroupService extends CoreService {
   }
 
   function deleteGroup($gid) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $qb = QB::instance('grup')->delete()
       ->where('gid', QB::esc($gid));
     return $db->query($qb->get());
   }
 
   function getGroupsOfUser($username) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $qb = QB::instance('grup g')->select()
       ->leftJoin('grup_user gu', 'gu.gid', 'g.gid')
       ->where('gu.username', QB::esc($username));

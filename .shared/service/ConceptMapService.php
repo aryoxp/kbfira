@@ -242,7 +242,7 @@ class ConceptMapService extends CoreService {
 
   function getConceptMapListByTopic($topicId = null) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('conceptmap');
       $qb->select()->where('topic', $topicId);
       $result = $db->query($qb->get());
@@ -254,7 +254,7 @@ class ConceptMapService extends CoreService {
 
   function getConceptMap($cmid) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       
       $result = new stdClass;
       
@@ -280,7 +280,7 @@ class ConceptMapService extends CoreService {
   function searchConceptMaps($keyword, $page = 1, $perpage = 10) {
     try {
       $keyword = "%" . QB::esc($keyword) . "%";
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('conceptmap cm');
       $qb->select(QB::raw('cm.*'), 't.title AS topictitle')
         ->leftJoin('topic t', 'cm.topic', 't.tid')
@@ -298,7 +298,7 @@ class ConceptMapService extends CoreService {
   function searchConceptMapsCount($keyword, $page = 1, $perpage = 10) {
     try {
       $keyword = "%" . QB::esc($keyword) . "%";
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('conceptmap');
       $qb->select(QB::raw('COUNT(*) AS `count`'))->where('cmfid', 'LIKE', $keyword)
         ->where('title', 'LIKE', $keyword, QB::OR)
@@ -312,7 +312,7 @@ class ConceptMapService extends CoreService {
 
   function assignTopicToConceptMap($cmid, $tid) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('conceptmap')
         ->update('topic', QB::esc($tid))
         ->where('cmid', QB::esc($cmid));
@@ -325,7 +325,7 @@ class ConceptMapService extends CoreService {
 
   function deassignTopicFromConceptMap($cmid) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('conceptmap')
         ->update('topic', null)
         ->where('cmid', QB::esc($cmid));
@@ -338,7 +338,7 @@ class ConceptMapService extends CoreService {
 
   function assignTextToConceptMap($cmid, $tid) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('conceptmap')
         ->update('text', QB::esc($tid))
         ->where('cmid', QB::esc($cmid));
@@ -351,7 +351,7 @@ class ConceptMapService extends CoreService {
 
   function deassignTextFromConceptMap($cmid) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('conceptmap')
         ->update('text', null)
         ->where('cmid', QB::esc($cmid));

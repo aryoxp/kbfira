@@ -249,5 +249,24 @@ class Core {
     })), {to: 'string'}))
   }
 
+  /**
+   * Convert string value to boolean
+   *
+   * @static
+   * @param {string} [value="true"]
+   * @return {Boolean} 
+   * @memberof Core
+   */
+  static isTrue(value = "true") {
+    switch(value.toLowerCase().trim()) {
+      case "false": case "no": case "0": case "": return false; 
+      default: return true;
+    }
+  }
+
+  static location(path) {
+    return Core.instance().config('baseurl') + path;
+  }
+
 
 }

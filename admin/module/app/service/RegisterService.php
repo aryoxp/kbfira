@@ -4,7 +4,7 @@ class RegisterService extends CoreService {
 
   function registerApp($app, $name, $shortdesc, $description) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $insert['app'] = $app;
       $insert['name'] = $name;
       $insert['shortdesc'] = $shortdesc;
@@ -19,7 +19,7 @@ class RegisterService extends CoreService {
 
   function deregisterApp($app) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('app')->delete()->where('app', QB::esc($app));
       $result = $db->query($qb->get());
       return $result;
@@ -30,7 +30,7 @@ class RegisterService extends CoreService {
 
   function getRegisteredApp($app) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('app')->select()->where('app', QB::esc($app));
       $result = $db->query($qb->get());
       return $result;
@@ -41,7 +41,7 @@ class RegisterService extends CoreService {
 
   function getRegisteredApps() {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('app')->select();
       $result = $db->query($qb->get());
       return $result;
@@ -52,7 +52,7 @@ class RegisterService extends CoreService {
 
   function registerModule($module, $name = null, $shortdesc = null, $description = null) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $insert['app']         = QB::esc($module);
       // $insert['name']        = QB::esc($name);
       // $insert['shortdesc']   = QB::esc($shortdesc);
@@ -66,7 +66,7 @@ class RegisterService extends CoreService {
   }
 
   function registerAuthMenu($app, $menus) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     array_map(function($m) use ($app) { $m->app = $app; }, $menus);
     $qb = QB::instance('menu')
       ->insert($menus)
@@ -76,7 +76,7 @@ class RegisterService extends CoreService {
   }
 
   function registerAuthFunction($app, $fns) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     array_map(function($f) use ($app) { $f->app = $app; }, $fns);
     $qb = QB::instance('function')
       ->insert($fns)
@@ -86,7 +86,7 @@ class RegisterService extends CoreService {
   }
 
   function deregisterAuthMenu($app) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $qb = QB::instance('menu')
       ->delete('app', $app);
     $result = $db->query($qb->get());
@@ -94,7 +94,7 @@ class RegisterService extends CoreService {
   }
 
   function deregisterAuthFunction($app) {
-    $db = self::instance('kbv2');
+    $db = self::instance();
     $qb = QB::instance('function')
       ->delete('app', $app);
     $result = $db->query($qb->get());
@@ -103,7 +103,7 @@ class RegisterService extends CoreService {
 
   function getRegisteredAuthMenu($app) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('menu')->select()->where('app', QB::esc($app));
       $result = $db->query($qb->get());
       return $result;
@@ -114,7 +114,7 @@ class RegisterService extends CoreService {
 
   function getRegisteredAuthFunction($app) {
     try {
-      $db = self::instance('kbv2');
+      $db = self::instance();
       $qb = QB::instance('function')->select()
         ->select('fid AS id')
         ->where('app', QB::esc($app));

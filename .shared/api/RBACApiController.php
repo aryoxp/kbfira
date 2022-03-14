@@ -435,6 +435,42 @@ class RBACApiController extends CoreApi {
     }
   }
 
+  function getUserListOfGroups($groupIds = null) {
+    try {
+      $gids = $this->postv('gids', []);
+      $gids = array_merge($gids, $groupIds ? explode(',', $groupIds) : []);
+      $userService = new UserService();
+      $result = $userService->getUserListOfGroups($gids);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function assignUserToGroup() {
+    try {
+      $gid = $this->postv('gid');
+      $username = $this->postv('username');
+      $rbac = new RBACService();
+      $result = $rbac->assignUserToGroup($username, $gid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function deassignUserFromGroup() {
+    try {
+      $gid = $this->postv('gid');
+      $username = $this->postv('username');
+      $kitService = new RBACService();
+      $result = $kitService->unassignUserFromGroup($username, $gid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
 
 
 
@@ -626,12 +662,30 @@ class RBACApiController extends CoreApi {
       $userService = new UserService();
       $username = $this->postv('username');
       $password = $this->postv('password');
+      $rids     = $this->postv('rids');
+      $gids     = $this->postv('gids');
+      $apps     = $this->postv('apps');
       $user = $userService->getRBACUser($username, $password);
       if ($user) {
         $rbacService = new RBACService();
         $user->auth = $rbacService->getUserAuth(explode(",", $user->rids));
-      }
-      CoreResult::instance($user)->show();
+        if ($gids) {
+          $gids = explode(",", strtoupper($gids));
+          $ugids = explode(",", $user->gids);
+          if(!count(array_intersect($gids, $ugids))) throw CoreError::instance("Group authentication failed. Invalid group.");
+        }
+        if ($rids) {
+          $rids = explode(",", strtoupper($rids));
+          $urids = explode(",", $user->rids);
+          if(!count(array_intersect($rids, $urids))) throw CoreError::instance("Role authentication failed. Invalid role.");
+        }
+        if ($apps) {
+          $apps = explode(",", strtoupper($apps));
+          $uapps = $user->auth->app;
+          if(!count(array_intersect($apps, $uapps))) throw CoreError::instance("Application access is not authorized.");
+        }
+        CoreResult::instance($user)->show();
+      } else throw CoreError::instance("Invalid username and/or password.");
     } catch (Exception $ex) {
       CoreError::instance($ex->getMessage())->show();
     }
