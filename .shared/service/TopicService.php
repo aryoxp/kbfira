@@ -14,7 +14,7 @@ class TopicService extends CoreService {
       return "'" . QB::esc($v) . "'";
     };
     $db = self::instance();
-    $qb = QB::instance('topic t')->select()
+    $qb = QB::instance('topic t')->select()->distinct()
       ->leftJoin('grup_topic gt', 'gt.tid', 't.tid')
       ->where('gt.gid', QB::IN, QB::raw(QB::OG . implode(",", array_map($quote, $gids)) . QB::EG));
     return $db->query($qb->get());

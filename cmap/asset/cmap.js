@@ -87,7 +87,6 @@ class CmapApp {
       onShow: () => { 
         $('#concept-map-save-as-dialog .input-title').focus() 
         KitBuild.getTopicListOfGroups(this.user.gids.split(",")).then(topics => {
-          console.log(topics);
           let list = '<option>No topic associated</option>'
           topics.forEach(topic => {
             let selected = (this.conceptMap.map.topic == topic.tid) ? ' selected' : '';
