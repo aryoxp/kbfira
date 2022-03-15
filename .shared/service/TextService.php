@@ -87,10 +87,11 @@ class TextService extends CoreService {
     $db = self::instance();
     $sqb = QB::instance('kit k')->select('c.topic')
       ->leftJoin('conceptmap c', 'c.cmid', 'k.cmid')
-      ->where('k.kid', QB::esc($kid));
-    // SELECT c.topic FROM kit k LEFT JOIN conceptmap c ON c.cmid = k.cmid LEFT WHERE k.kid = '".QB::esc($kid)."'
-    $qb = QB::instance('text')->select()
+      ->where('k.kid', QB::esc($kid))->limit(1);
+    $tqb = QB::instance('topic')->select('text')
       ->where('tid', QB::raw(QB::OG . $sqb->get() . QB::EG));
+    $qb = QB::instance('text')->select()
+    ->where('tid', QB::raw(QB::OG . $tqb->get() . QB::EG));
     return $db->getRow($qb->get());
   }
 
