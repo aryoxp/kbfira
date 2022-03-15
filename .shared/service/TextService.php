@@ -79,7 +79,7 @@ class TextService extends CoreService {
   function getTextOfKit($kid) {
     $db = self::instance();
     $qb = QB::instance('text')->select()
-      ->where('tid', QB::raw("(SELECT tid FROM kit WHERE kid = '".QB::esc($kid)."')"));
+      ->where('tid', QB::raw("(SELECT text FROM kit WHERE kid = '".QB::esc($kid)."')"));
     return $db->getRow($qb->get());
   }
 
