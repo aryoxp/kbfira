@@ -499,7 +499,7 @@ class NodeCreationTool extends KitBuildToolbarTool {
       nodeDef.data.color = this.textColor(nodeDef.data['background-color']);
     }
     if (nodeData.type == "link") {
-      nodeData.limit = canvas.direction == KitBuildCanvas.MULTIDIRECTIONAL ? 9 : 1;
+      nodeData.limit = this.canvas.direction == KitBuildCanvas.MULTIDIRECTIONAL ? 9 : 1;
       nodeData["background-color"] = this.settings.defaultLinkColor
     }
 

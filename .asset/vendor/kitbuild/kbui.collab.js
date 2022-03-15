@@ -46,7 +46,7 @@ class KitBuildCollab {
     this.handleUIEvent()
     this.on('event', this.onCollabEvent.bind(this))
     
-    KitBuildCollab.isOnline(this.namespace, this.settings)
+    KitBuildCollab.isOnline(this.namespace, this.settings).then(result => {}, error => {});
     KitBuildCollab.handleRefresh(this)
 
   }
@@ -63,14 +63,18 @@ class KitBuildCollab {
       const checkSocket = io(`${settings.host}:${settings.port}/${namespace}`, {
         reconnection: false
       });
-      // checkSocket.on("disconnect", () => 
-      //   console.warn("Check socket has been disconnected"))
+      checkSocket.on("disconnect", () => 
+        console.warn("Check socket has been disconnected"))
       checkSocket.on("connect", () => {
-        // console.warn("Server is ONLINE", checkSocket.id);
-        checkSocket.disconnect()
-        resolve(true)
-      })
-      checkSocket.io.on("error", (error) => reject(error));
+        console.warn("Server is ONLINE", checkSocket.id);
+        checkSocket.disconnect();
+        resolve(true);
+      });
+      checkSocket.io.on("error", (error) => { //console.warn("ERR", error);
+        $('#connection-status-reason').html(error);
+        if(error == "Error: xhr poll error") checkSocket.io.disconnect();
+        reject(error);
+      });
     })
   }
 
@@ -84,6 +88,12 @@ class KitBuildCollab {
       return
     }
     const socket = io(`${this.settings.host}:${this.settings.port}/${this.namespace}`);
+    if (!this.socket) {
+      socket.io.on("error", (error) => { // console.warn(error);
+        $('#connection-status-reason').html(error);
+        if(error == "Error: xhr poll error") socket.io.disconnect();
+      });
+    }
     this.socket = socket; // console.warn(socket, this.namespace);
     localStorage.debug = '*';
     this.handleSocketEvent(socket);
@@ -92,6 +102,7 @@ class KitBuildCollab {
 
   disconnect() {
     if (this.socket && this.socket.connected) {
+
       this.socket.disconnect()
       this.broadcastEvent('disconnect')
     }
@@ -124,7 +135,7 @@ class KitBuildCollab {
     });
 
     socket.on("disconnect", (reason) => {
-      console.log("DISCONNECTED", socket.id, reason); // undefined
+      console.warn("DISCONNECTED Socket ID:", socket.id, "Reason:", reason); // undefined
       KitBuildCollab.updateSocketConnectionStatus(socket);
       this.isReconnect = false;
       switch(reason) {
@@ -283,7 +294,10 @@ class KitBuildCollab {
           <span id="notification-connection" class="p-2 badge rounded-pill bg-danger me-2">
             <span class="visually-hidden">New alerts</span>
           </span>
-          <span id="connection-status-text">Server is online</span></a></li>
+          <span id="connection-status-text">Server is online</span>
+          </a>
+          <div class="text-center text-danger"><em id="connection-status-reason"></em></div>
+          </li>
         <li><hr class="dropdown-divider"></li>
         <li><a class="dropdown-item d-flex align-items-center" href="#">
           <span id="notification-app-connection" class="p-2 badge rounded-pill bg-danger me-2">
