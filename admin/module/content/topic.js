@@ -63,47 +63,33 @@ class TopicApp {
     $('#form-search-topic').on('submit', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      let perpage = $('#form-search-topic .input-perpage').val()
-      let keyword = $('#form-search-topic .input-keyword').val()
-      if (keyword != this.pagination.keyword) this.pagination.page = 1
-      // perpage = 1
-      this.ajax.post(`contentApi/getTopics/${this.pagination.page}/${perpage}`, {
-        keyword: keyword
-      }).then(topics => {
-        this.ajax.post(`contentApi/getTopicsCount`, {
+
+      let perpage = $('#form-search-topic .input-perpage').val();
+      let keyword = $('#form-search-topic .input-keyword').val();
+
+      if (!this.topicPagination) {
+        this.topicPagination = 
+          Pagination.instance('#pagination-topic', 1, perpage).listen('#form-search-topic').update();
+        this.topicPagination.keyword = keyword;
+      }
+
+      this.topicPagination.perpage = perpage;
+      if (keyword != this.topicPagination.keyword) this.topicPagination.page = 1;
+
+      Promise.all([
+        this.ajax.post(`contentApi/getTopics/${this.topicPagination.page}/${this.topicPagination.perpage}`, {
           keyword: keyword
-        }).then(count => {
-        this.pagination.perpage = perpage
-        this.pagination.count = count
-        this.pagination.maxpage = Math.ceil(count/perpage)
-        this.pagination.keyword = keyword
+        }),
+        this.ajax.post(`contentApi/getTopicsCount`, {keyword: keyword})
+      ]).then(result => {
+        let [topics, count] = result;
+        this.topicPagination.count = count
+        this.topicPagination.keyword = keyword;
+        this.topicPagination.update(count, perpage);
         TopicApp.populateTopics(topics)
-        TopicApp.populatePagination(count, this.pagination.page, perpage)
-        });
       });
     })
     $('.bt-search').on('click', () => $('#form-search-topic').trigger('submit'))
-
-
-    $('#pagination-topic').on('click', '.pagination-next', (e) => {
-      if (this.pagination.page < this.pagination.maxpage) {
-        this.pagination.page++
-        $('#form-search-topic').trigger('submit')
-      }
-    })
-
-    $('#pagination-topic').on('click', '.pagination-prev', (e) => {
-      if (this.pagination.page > 1) {
-        this.pagination.page--
-        $('#form-search-topic').trigger('submit')
-      }
-    })
-
-    $('#pagination-topic').on('click', '.pagination-page', (e) => {
-      this.pagination.page = $(e.currentTarget).attr('data-page')
-      $('#form-search-topic').trigger('submit')
-    })
-
 
     $('#topic-dialog form.form-topic').on('submit', (e) => {
       e.preventDefault()
@@ -246,8 +232,9 @@ TopicApp.populateTopics = topics => {
     topicsHtml += `<div class="topic-item d-flex align-items-center py-1 border-bottom" role="button"`
     topicsHtml += `  data-tid="${topic.tid}" data-title="${topic.title}">`
     topicsHtml += `  <span class="flex-fill ps-2">`
-    topicsHtml += `  <span class="text-truncate text-nowrap">${topic.title}</span>`
+    topicsHtml += `    <span class="text-truncate text-nowrap">${topic.title}</span>`
     if (topic.text) topicsHtml += `    <span class="badge rounded-pill bg-success ms-2">Text: ${topic.texttitle}</span>`
+    topicsHtml += `    <span class="badge rounded-pill bg-warning text-dark ms-2">${topic.ncmap} CMaps</span>`
     topicsHtml += `  </span>`
     topicsHtml += `  <span class="text-end text-nowrap ms-3">`
     topicsHtml += `    <button class="btn btn-sm btn-secondary bt-detail"><i class="bi bi-journal-text"></i></button>`

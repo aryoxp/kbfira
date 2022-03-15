@@ -86,6 +86,19 @@
           </div>
         </li>
         <button class="nav-link" id="nav-kit-tab" data-bs-toggle="tab" data-bs-target="#nav-kit" type="button" role="tab" aria-controls="nav-kit" aria-selected="false">Kit Map</button>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown" data-bs-auto-close="outside" href="#" role="button" aria-expanded="false" id="tab-lmap">Learner Map</a>
+          <div class="dropdown-menu">
+            <form class="px-3 ps-0">
+              <select class="list-lmap form-select form-select-sm mx-2"></select>
+              <div class="text-end mt-1">
+                <span class="badge rounded-pill bg-danger ms-2 bt-delete-lmap" role="button">Delete</span>
+              </div>
+            </form>
+            <!-- <small class="text-muted px-3 text-nowrap text-truncate"><em>Select and view a kit...</em></small> -->
+          </div>
+        </li>
+        <button class="nav-link d-flex align-items-center" id="nav-lmap-tab" data-bs-toggle="tab" data-bs-target="#nav-lmap" type="button" role="tab" aria-controls="nav-lmap" aria-selected="false">Learner Map</button>
       </div>
     </div>
     <!-- <div class="d-flex flex-fill"> -->
@@ -98,6 +111,11 @@
         <div class="tab-pane fade flex-fill position-absolute w-100 h-100" id="nav-kit" role="tabpanel" aria-labelledby="nav-kit-tab" style="display:flex; position:absolute; top:0; left: 0">
           <div class="d-flex flex-fill p-2">
             <?php $this->pluginView('kitbuild-ui', ["id" => "kitmap-canvas"], 0); ?>
+          </div>
+        </div>
+        <div class="tab-pane fade flex-fill position-absolute w-100 h-100" id="nav-lmap" role="tabpanel" aria-labelledby="nav-lmap-tab" style="display:flex; position:absolute; top:0; left: 0">
+          <div class="d-flex flex-fill p-2">
+            <?php $this->pluginView('kitbuild-ui', ["id" => "learnermap-canvas"], 0); ?>
           </div>
         </div>
       </div>

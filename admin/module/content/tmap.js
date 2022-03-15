@@ -48,7 +48,7 @@ class TeachermapApp {
     let topicDialog = UI.modal("#assign-topic-dialog", {
       hideElement: ".bt-close",
       onShow: () => {
-        console.warn(topicDialog.cmapTitle)
+        // console.warn(topicDialog.cmapTitle)
         $("#assign-topic-dialog .cmap-title").html(topicDialog.cmapTitle);
       }
     });
@@ -79,45 +79,55 @@ class TeachermapApp {
       $("#assign-text-dialog .assigned-text").html(text ? `<span class="text-primary">${text.title}</span> <span class="badge rounded-pill bt-deassign-text-from-cmap ms-2 bg-danger" role="button" data-cmid="${textDialog.cmap.map.cmid}">Remove</span>` : `<em class="text-muted">Not specified.</em>`);
     }
 
+    let cmapDialog = UI.modal('#teacher-map-detail-dialog', {
+      hideElement: '.bt-close',
+      width: "400px",
+      onShow: () => { // console.log(cmapDialog.topic)
+        if (!cmapDialog.cmap) {
+          UI.error("Invalid concept map.").show();
+          return;
+        }
+      }
+    })
+    cmapDialog.setCmap = (cmap) => {
+      cmapDialog.cmap = cmap;
+      let html = "";
+      html += `<h3 class="text-primary border-bottom">${cmapDialog.cmap.map.title}</h3>`;
+      html += `<div class="mx-3">`
+      for(let attr in cmapDialog.cmap.map) {
+        html += `<div class="d-flex justify-content-between my-1 border-bottom">`
+        html += `  <span class="text-primary">${attr}</span>`
+        html += `  <span>${cmapDialog.cmap.map[attr]}</span>`
+        html += `</div>`
+      }
+      html += `<span></span>`
+      html += `</div>`
+      $("#teacher-map-detail-dialog .card-body").html(html);
+      return cmapDialog;
+    }
+
     $('#form-search-cmap').on('submit', (e) => { // console.log(e);
       e.preventDefault();
       e.stopPropagation();
-      let perpage = $('#form-search-cmap .input-perpage').val()
-      let keyword = $('#form-search-cmap .input-keyword').val()
-      let page = (!TeachermapApp.cmapPagination || keyword != TeachermapApp.cmapPagination.keyword) ?
-        1 : TeachermapApp.cmapPagination.pagination.page
-      this.ajax.post(`contentApi/searchConceptMap/${page}/${perpage}`, {
+      let perpage = $('#form-search-cmap .input-perpage').val();
+      let keyword = $('#form-search-cmap .input-keyword').val();
+      if (!TeachermapApp.cmapPagination) {
+        TeachermapApp.cmapPagination = Pagination.instance('#pagination-cmap', 1, perpage).listen('#form-search-cmap').update();
+        TeachermapApp.cmapPagination.keyword = keyword;
+      }
+      TeachermapApp.cmapPagination.perpage = perpage;
+      if (keyword != TeachermapApp.cmapPagination.keyword)
+        TeachermapApp.cmapPagination.page = 1;
+      this.ajax.post(`contentApi/searchConceptMap/${TeachermapApp.cmapPagination.page}/${TeachermapApp.cmapPagination.perpage}`, {
         keyword: keyword
       }).then(result => {
         let cmaps = result.cmaps;
         TeachermapApp.populateCmaps(cmaps);
-        if (TeachermapApp.cmapPagination) {
-          TeachermapApp.cmapPagination.keyword = keyword;
-          TeachermapApp.cmapPagination.update(result.count, perpage);  
-        } else TeachermapApp.cmapPagination = 
-          Pagination.instance('#pagination-cmap', result.count, perpage).listen('#form-search-cmap').update();
+        TeachermapApp.cmapPagination.keyword = keyword;
+        TeachermapApp.cmapPagination.update(result.count, perpage);
         $('.dropdown-menu-teacher-map-list').addClass('show');
       });
     });
-
-    $('#pagination-cmap').on('click', '.pagination-next', (e) => {
-      if (this.cmapPagination.page < this.cmapPagination.maxpage) {
-        this.cmapPagination.page++
-        $('#form-search-cmap').trigger('submit')
-      }
-    })
-
-    $('#pagination-cmap').on('click', '.pagination-prev', (e) => {
-      if (this.cmapPagination.page > 1) {
-        this.cmapPagination.page--
-        $('#form-search-cmap').trigger('submit')
-      }
-    })
-
-    $('#pagination-cmap').on('click', '.pagination-page', (e) => {
-      this.cmapPagination.page = $(e.currentTarget).attr('data-page')
-      $('#form-search-cmap').trigger('submit')
-    })
 
     $('#list-cmap').on('click', '.bt-show-cmap', (e) => {
       let cmid = $(e.currentTarget).parents('.item-cmap').attr('data-cmid');
@@ -134,6 +144,13 @@ class TeachermapApp {
         this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0});
         this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
         UI.success('Concept map loaded.').show()
+
+        let cmapStatus = `<span class="status-cmap d-flex align-items-center ms-2">`;
+        cmapStatus += `<span class="badge rounded-pill bg-primary">${conceptMap.map.title} [ID: ${conceptMap.map.cmid}]</span>`;
+        cmapStatus += `</span>`;
+
+        StatusBar.instance().remove('.status-cmap').append(cmapStatus);
+
       }).catch(error => {
         console.error(error); 
         UI.dialog("The concept map data is invalid.", {
@@ -152,7 +169,7 @@ class TeachermapApp {
         topicDialog.show();
         if (cmap.map.topic) {
           this.ajax.get(`contentApi/getTopic/${cmap.map.topic}`).then(topic => {
-            console.log(topic)
+            // console.log(topic)
             topicDialog.setTopic(topic)
           })
         } else topicDialog.setTopic()
@@ -162,28 +179,31 @@ class TeachermapApp {
     $('form.form-assign-search-topic').on('submit', e => {
       e.preventDefault();
       e.stopPropagation();
-      let perpage = parseInt($('form.form-assign-search-topic .input-perpage').val())
-      let keyword = $('form.form-assign-search-topic .input-keyword').val()
-      let page = (!TeachermapApp.assignTopicPagination || 
-        keyword != TeachermapApp.assignTopicPagination.keyword) ?
-        1 : TeachermapApp.assignTopicPagination.page
+      let perpage = parseInt($('form.form-assign-search-topic .input-perpage').val());
+      let keyword = $('form.form-assign-search-topic .input-keyword').val();
+
+      if (!TeachermapApp.assignTopicPagination) {
+        TeachermapApp.assignTopicPagination = 
+          Pagination.instance('form.form-assign-search-topic .list-topic-pagination', 1, perpage).listen('form.form-assign-search-topic').update();
+        TeachermapApp.assignTopicPagination.keyword = keyword;
+      }
+      
+      TeachermapApp.assignTopicPagination.perpage = perpage;
+      if (keyword != TeachermapApp.assignTopicPagination.keyword) 
+        TeachermapApp.assignTopicPagination.page = 1;
 
       Promise.all([
-        this.ajax.post(`contentApi/getTopics/${page}/${perpage}`, {
+        this.ajax.post(`contentApi/getTopics/${TeachermapApp.assignTopicPagination.page}/${TeachermapApp.assignTopicPagination.perpage}`, {
           keyword: keyword
         }), 
         this.ajax.post(`contentApi/getTopicsCount`, {
           keyword: keyword
         })])
       .then(results => {
-        let topics = results[0];
-        let count = parseInt(results[1]);
+        let [topics, count] = results;
         TeachermapApp.populateAssignTopics(topics, topicDialog.cmid)
-        if (TeachermapApp.assignTopicPagination) {
-          TeachermapApp.assignTopicPagination.keyword = keyword;
-          TeachermapApp.assignTopicPagination.update(count, perpage);  
-        } else TeachermapApp.assignTopicPagination = 
-          Pagination.instance('form.form-assign-search-topic .list-topic-pagination', count, perpage).listen('form.form-assign-search-topic').update(count, perpage);
+        TeachermapApp.assignTopicPagination.keyword = keyword;
+        TeachermapApp.assignTopicPagination.update(count, perpage);
         $('.dropdown-menu-teacher-map-list').addClass('show');
       });
 
@@ -192,7 +212,7 @@ class TeachermapApp {
     $('#assign-topic-dialog .list-topic').on('click', '.bt-assign-topic-to-cmap', (e) => {
       let cmid = $(e.currentTarget).parents('.item-topic').attr('data-cmid');
       let tid = $(e.currentTarget).parents('.item-topic').attr('data-tid');
-      console.warn(cmid, tid);
+      // console.warn(cmid, tid);
       this.ajax.post('contentApi/assignTopicToConceptMap', {
         cmid: cmid,
         tid: tid
@@ -208,7 +228,7 @@ class TeachermapApp {
       let cmid = $(e.currentTarget).attr('data-cmid');
       this.ajax.post('contentApi/deassignTopicFromConceptMap', {
         cmid: cmid
-      }).then(result => { console.log(result);
+      }).then(result => { // console.log(result);
         topicDialog.setTopic();
         UI.success('Topic deassigned succefully.').show();
       }).catch(error => UI.error(error).show());
@@ -227,32 +247,34 @@ class TeachermapApp {
       KitBuild.openConceptMap(cmid).then(cmap => {
         textDialog.setCmap(cmap).show();
       });
-    })
+    });
 
     $('form.form-assign-search-text').on('submit', e => {
       e.preventDefault();
       e.stopPropagation();
-      let perpage = parseInt($('form.form-assign-search-text .input-perpage').val())
-      let keyword = $('form.form-assign-search-text .input-keyword').val()
-      let page = (!TeachermapApp.assignTextPagination || 
-        keyword != TeachermapApp.assignTextPagination.keyword) ?
-        1 : TeachermapApp.assignTextPagination.page
+      let perpage = parseInt($('form.form-assign-search-text .input-perpage').val());
+      let keyword = $('form.form-assign-search-text .input-keyword').val();
+
+      if (!TeachermapApp.assignTextPagination) {
+        TeachermapApp.assignTextPagination = Pagination.instance('form.form-assign-search-text .list-text-pagination', 1, perpage).listen('form.form-assign-search-text').update();
+        TeachermapApp.assignTextPagination.keyword = keyword;
+      }
+      TeachermapApp.assignTextPagination.perpage = perpage;
+      if (keyword != TeachermapApp.assignTextPagination.keyword)
+        TeachermapApp.assignTextPagination.page = 1;
+
       Promise.all([
-        this.ajax.post(`contentApi/getTexts/${page}/${perpage}`, {
+        this.ajax.post(`contentApi/getTexts/${TeachermapApp.assignTextPagination.page}/${TeachermapApp.assignTextPagination.perpage}`, {
           keyword: keyword
         }), 
         this.ajax.post(`contentApi/getTextsCount`, {
           keyword: keyword
         })])
       .then(results => {
-        let texts = results[0];
-        let count = parseInt(results[1]);
+        let [texts, count] = results;
+        TeachermapApp.assignTextPagination.keyword = keyword;
+        TeachermapApp.assignTextPagination.update(count, perpage);  
         TeachermapApp.populateAssignTexts(texts, textDialog.cmap.map.cmid)
-        if (TeachermapApp.assignTextPagination) {
-          TeachermapApp.assignTextPagination.keyword = keyword;
-          TeachermapApp.assignTextPagination.update(count, perpage);  
-        } else TeachermapApp.assignTextPagination = 
-          Pagination.instance('form.form-assign-search-text .list-text-pagination', count, perpage).listen('form.form-assign-search-text').update(count, perpage);
         $('.dropdown-menu-teacher-map-list').addClass('show');
       });
 
@@ -261,7 +283,7 @@ class TeachermapApp {
     $('#assign-text-dialog .list-text').on('click', '.bt-assign-text-to-cmap', (e) => {
       let cmid = $(e.currentTarget).parents('.item-text').attr('data-cmid');
       let tid = $(e.currentTarget).parents('.item-text').attr('data-tid');
-      console.warn(cmid, tid);
+      // console.warn(cmid, tid);
       this.ajax.post('contentApi/assignTextToConceptMap', {
         cmid: cmid,
         tid: tid
@@ -277,12 +299,53 @@ class TeachermapApp {
       let cmid = $(e.currentTarget).attr('data-cmid');
       this.ajax.post('contentApi/deassignTextFromConceptMap', {
         cmid: cmid
-      }).then(result => { console.log(result);
+      }).then(result => { // console.log(result);
         textDialog.setText();
         UI.success('Text deassigned succefully.').show();
       }).catch(error => UI.error(error).show());
     })
 
+
+
+
+
+
+
+
+
+
+    $('#list-cmap').on('click', '.bt-detail', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      let cmid = $(e.currentTarget).parents('.item-cmap').attr('data-cmid');
+      KitBuild.openConceptMap(cmid).then(cmap => {
+        cmapDialog.setCmap(cmap).show();
+      });
+    });
+
+    $('#list-cmap').on('click', '.bt-delete', (e) => {
+      e.preventDefault();
+      let cmid = $(e.currentTarget).parents('.item-cmap').attr('data-cmid');
+      KitBuild.openConceptMap(cmid).then(cmap => {
+        let confirm = UI.confirm(`<span class="text-danger">DELETE</span> this concept map: <span class="text-primary">${cmap.map.title}</span>?<br>This action is <span class="text-danger">NOT UNDOABLE</span>.`, {
+          icon: 'exclamation-triangle-fill',
+          iconStyle: 'danger'
+        })
+          .positive(() => {
+            this.ajax.post('contentApi/deleteConceptMap', {
+              cmid: cmid
+            }).then(success => {
+              if (success == 1) {
+                UI.success("Concept map has been deleted successfully").show();
+                $(e.currentTarget).parents('.item-cmap').slideUp('fast', () => {
+                  $(e.currentTarget).parents('.item-cmap').remove();
+                });
+                confirm.hide()
+              } else UI.error('Failed to delete concept map.').show()
+            }).catch(error => UI.error(error).show());
+          }).show();
+      });
+    });
 
 
 
@@ -306,27 +369,28 @@ class TeachermapApp {
       e.stopPropagation();
       let perpage = parseInt($('#form-search-topic .input-perpage').val())
       let keyword = $('#form-search-topic .input-keyword').val()
-      let page = (!TeachermapApp.topicPagination || keyword != TeachermapApp.topicPagination.keyword) ? 
-        1 : TeachermapApp.topicPagination.page;
+
+      if (!TeachermapApp.topicPagination) {
+        TeachermapApp.topicPagination = Pagination.instance('#pagination-topic', 1, perpage).listen('#form-search-topic').update();
+        TeachermapApp.topicPagination.keyword = keyword;
+      }
+      TeachermapApp.topicPagination.perpage = perpage;
+      if (keyword != TeachermapApp.topicPagination.keyword)
+        TeachermapApp.topicPagination.page = 1;
+
       Promise.all([
-        this.ajax.post(`contentApi/getTopics/${page}/${perpage}`, {
+        this.ajax.post(`contentApi/getTopics/${TeachermapApp.topicPagination.page}/${TeachermapApp.topicPagination.perpage}`, {
           keyword: keyword
         }),
         this.ajax.post(`contentApi/getTopicsCount`, {
           keyword: keyword
         })
       ]).then(results => {
-        let topics = results[0];
-        let count = parseInt(results[1]);
-        if (TeachermapApp.topicPagination) {
-          TeachermapApp.topicPagination.perpage = perpage
-          TeachermapApp.topicPagination.count = count
-          TeachermapApp.topicPagination.keyword = keyword
-          TeachermapApp.topicPagination.update();
-        } else {
-          TeachermapApp.topicPagination = Pagination.instance('#pagination-topic', count, perpage).listen('#form-search-topic').update()
-        }
-        TeachermapApp.populateTopics(topics)
+        let [topics, count] = results;
+        TeachermapApp.topicPagination.keyword = keyword;
+        TeachermapApp.topicPagination.count = count;
+        TeachermapApp.topicPagination.update(count, perpage);
+        TeachermapApp.populateTopics(topics);
         $('.dropdown-menu-topic-list').addClass('show');
       });
     });
@@ -349,7 +413,7 @@ class TeachermapApp {
 
     $('#list-topic').on('click', '.bt-show-cmap', (e) => {
       let cmid = $(e.currentTarget).parents('.item-cmap').attr('data-cmid');
-      KitBuild.openConceptMap(cmid).then(conceptMap => { console.log(conceptMap)
+      KitBuild.openConceptMap(cmid).then(conceptMap => { // console.log(conceptMap)
         let proceed = () => {
           let cyData = KitBuildUI.composeConceptMap(conceptMap)
           this.canvas.cy.elements().remove()
@@ -381,19 +445,22 @@ TeachermapApp.populateCmaps = cmaps => {
     cmapsHtml += `<div class="item-cmap d-flex align-items-center py-1 border-bottom" role="button"`
     cmapsHtml += `  data-cmid="${cmap.cmid}" data-title="${cmap.title}">`
     cmapsHtml += `  <span class="d-flex flex-fill ps-2 align-items-center" style="min-width:0">`
-    cmapsHtml += `  <span class="text-truncate d-inline-block">${cmap.title}</span>`
-    if (cmap.text) cmapsHtml += `    <span class="badge rounded-pill bg-success ms-1"><i class="bi bi-file-text"></i>Text ID: ${cmap.text}</span>`
-    if (cmap.topictitle) cmapsHtml += `    <span class="badge rounded-pill bg-success ms-1 text-truncate" title="${cmap.topictitle}"><i class="bi bi-lightbulb-fill"></i> ${cmap.topictitle}</span>`
-    cmapsHtml += `    <span class="badge rounded-pill bg-warning text-dark ms-1" title="${cmap.create_time}"><i class="bi bi-clock-fill"></i></span>`
+    cmapsHtml += `    <span class="text-truncate d-inline-block">${cmap.title}</span>`
+    cmapsHtml += `    <span class="badge rounded-pill bg-warning ms-2 text-black">${cmap.nkit} Kits</span>`
+    cmapsHtml += `    <span class="badge rounded-pill bg-success ms-1 bt-detail"><i class="bi bi-search"></i> Detail</span>`
     cmapsHtml += `  </span>`
-    cmapsHtml += `  <span class="text-end text-nowrap ms-3">`
-    cmapsHtml += `    <span class="btn btn-sm btn-primary bt-show-cmap"><i class="bi bi-eye-fill"></i></span>`
-    cmapsHtml += `    <span class="btn btn-sm btn-primary bt-assign-topic"><i class="bi bi-lightbulb-fill"></i></span>`
-    cmapsHtml += `    <span class="btn btn-sm btn-primary bt-assign-text"><i class="bi bi-file-text"></i></span>`
+    cmapsHtml += `  <span class="text-end text-nowrap ms-3 d-flex align-items-center">`
+    if (cmap.text) cmapsHtml += `    <span class="badge rounded-pill bg-success ms-1"><i class="bi bi-file-text"></i></span>`
+    if (cmap.topictitle) cmapsHtml += `    <span class="badge rounded-pill bg-success ms-1 text-truncate" title="${cmap.topictitle}"><i class="bi bi-lightbulb-fill"></i></span>`
+    cmapsHtml += `    <span class="badge rounded-pill bg-warning text-dark ms-1" title="${cmap.create_time}"><i class="bi bi-clock-fill"></i></span>`
+    cmapsHtml += `    <span class="btn btn-sm btn-primary bt-show-cmap ms-2"><i class="bi bi-eye-fill"></i></span>`
+    cmapsHtml += `    <span class="btn btn-sm btn-primary bt-assign-topic ms-1"><i class="bi bi-lightbulb-fill"></i></span>`
+    cmapsHtml += `    <span class="btn btn-sm btn-primary bt-assign-text ms-1"><i class="bi bi-file-text"></i></span>`
+    cmapsHtml += `    <span class="btn btn-sm btn-danger bt-delete ms-1"><i class="bi bi-x-lg"></i></span>`
     cmapsHtml += `  </span>`
     cmapsHtml += `</div>`
   });
-  if (cmapsHtml.length == 0) cmapsHtml = '<em class="d-block m-3 text-muted">No cmaps found in current search.</em>';
+  if (cmapsHtml.length == 0) cmapsHtml = '<em class="d-block m-3 text-muted">No concept maps found in current search.</em>';
   $('#list-cmap').html(cmapsHtml)
 }
 
@@ -405,8 +472,8 @@ TeachermapApp.populateCmapListDropdown = (cmaps, containerId) => {
     cmapsHtml += `  <span class="d-flex flex-fill ps-2 align-items-center" style="min-width:0">`
     cmapsHtml += `  <span class="text-truncate d-inline-block">${cmap.title}</span>`
     if (cmap.text) cmapsHtml += `    <span class="badge rounded-pill bg-success ms-2">Text</span>`
-    if (cmap.topictitle) cmapsHtml += `    <span class="badge rounded-pill bg-primary ms-2">${cmap.topictitle}</span>`
-    cmapsHtml += `    <span class="badge rounded-pill bg-warning text-dark ms-2">${cmap.create_time}</span>`
+    if (cmap.topictitle) cmapsHtml += `    <span class="badge rounded-pill bg-primary ms-2"><i class="bi bi-lightbulb-fill"></i></span>`
+    cmapsHtml += `    <span class="badge rounded-pill bg-warning text-dark ms-2"><i class="bi bi-clock-fill"></i></span>`
     cmapsHtml += `  </span>`
     cmapsHtml += `  <span class="badge rounded-pull bg-primary bt-show-cmap ms-2" data-bs-auto-close="outside"><i class="bi bi-eye-fill"></i></span>`
     cmapsHtml += `</div>`
@@ -472,5 +539,5 @@ TeachermapApp.populateAssignTexts = (texts, cmid) => {
 }
 
 $(() => {
-  let app = TeachermapApp.instance()
+  let app = TeachermapApp.instance();
 })

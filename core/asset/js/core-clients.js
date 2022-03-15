@@ -36,6 +36,11 @@ class Ajax {
 
   send(method, url, data, options) {    
     let requestSettings = Object.assign({}, this.settings, options);
+    if (data instanceof FormData) requestSettings = Object.assign(requestSettings, {
+      processData: false,
+      contentType: false,
+      cache: false
+    });
     if (requestSettings.baseUrl.trim().substr(-1) != "/")
       requestSettings.baseUrl += "/";
     this._method = method;
@@ -44,10 +49,13 @@ class Ajax {
     this._rejectHandled = false;
     this.requestPromise = new Promise((resolve, reject) => {
       $.ajax({
-          url     : this._requestUrl,
-          method  : this._method,
-          data    : this._data,
-          timeout : requestSettings.timeout,
+          processData : requestSettings.processData,
+          contentType : requestSettings.contentType,
+          cache       : requestSettings.cache,
+          url         : this._requestUrl,
+          method      : this._method,
+          data        : this._data,
+          timeout     : requestSettings.timeout,
         })
         .done((response) => {
           this.response = response;

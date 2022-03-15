@@ -22,7 +22,7 @@ class KitBuildApiController extends CoreApi {
           $data->links, 
           $data->linktargets, 
           $data->topic, 
-          $data->text, 
+          (isset($data->text) ? $data->text : null), 
           $data->author, 
           $data->create_time);
       } else {
@@ -35,7 +35,7 @@ class KitBuildApiController extends CoreApi {
           $data->links, 
           $data->linktargets, 
           $data->topic, 
-          $data->text, 
+          (isset($data->text) ? $data->text : null),
           $data->author, 
           $data->create_time);
       }

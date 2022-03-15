@@ -10,6 +10,8 @@
         <div class="input-group mb-3">
           <input type="text" name="keyword" class="form-control w-50 input-keyword" placeholder="Search keyword" aria-label="Keyword">
           <select name="perpage" class="form-select flex-shrink-1 input-perpage">
+            <option value="1">1</option>
+            <option value="5" selected>5</option>
             <option value="10">10</option>
             <option value="25">25</option>
             <option value="50">50</option>

@@ -364,6 +364,10 @@ class StatusBar {
     $(".status-panel").find(selector).remove()
     return this;
   }
+  clear() {
+    $(".status-panel").html('')
+    return this;
+  }
 }
 
 class SignIn {

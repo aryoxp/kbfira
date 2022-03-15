@@ -153,3 +153,15 @@
     <button class="btn btn-sm btn-secondary bt-close px-4">Close</button>
   </div>
 </div>
+
+<div id="teacher-map-detail-dialog" class="card d-none">
+  <h6 class="card-header d-flex">
+    <span class="drag-handle flex-fill"><i class="dialog-icon bi bi-diagram-3 me-2"></i> 
+    <span class="dialog-title">Teacher Map Detail</span></span>
+    <i class="bi bi-x-lg bt-close bt-x" role="button"></i>
+  </h6>
+  <div class="card-body"></div>
+  <div class="card-footer text-center">
+    <button class="btn btn-sm btn-primary bt-close px-4">OK</button>
+  </div>
+</div>

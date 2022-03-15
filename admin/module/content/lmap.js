@@ -1,7 +1,8 @@
-class KitApp {
+class LearnermapApp {
 
   static canvasId = "teachermap-canvas";
   static kitCanvasId = "kitmap-canvas";
+  static lmapCanvasId = "learnermap-canvas";
 
   constructor(options) {
     this.settings = Object.assign({}, options);
@@ -9,12 +10,13 @@ class KitApp {
     this.ajax = Core.instance().ajax();
     this.canvas = this.initTeacherMapCanvas();
     this.kitCanvas = this.initKitCanvas();
+    this.lmapCanvas = this.initLmapCanvas();
     this.handleEvent();
     this.handleRefresh();
   }
   initTeacherMapCanvas() {
-    this.kbui = KitBuildUI.instance(KitApp.canvasId)
-    let canvas = this.kbui.canvases.get(KitApp.canvasId)
+    this.kbui = KitBuildUI.instance(LearnermapApp.canvasId)
+    let canvas = this.kbui.canvases.get(LearnermapApp.canvasId)
     canvas.addCanvasTool(KitBuildCanvasTool.FOCUS, { gridPos: { x: 0, y: -1}})
     canvas.addToolbarTool(KitBuildToolbar.CAMERA, { priority: 4 })
     canvas.addToolbarTool(KitBuildToolbar.UTILITY, { priority: 5, trash: false })
@@ -23,15 +25,15 @@ class KitApp {
     canvas.toolbar.render()
     // Hack for sidebar-panel show/hide
     // To auto-resize the canvas.
-    let observer = new MutationObserver((mutations) => $(`#${KitApp.canvasId} > div`).css('width', 0))
+    let observer = new MutationObserver((mutations) => $(`#${LearnermapApp.canvasId} > div`).css('width', 0))
     observer.observe(document.querySelector('#admin-sidebar-panel'), {attributes: true})
     // Enable tooltip
     $('[data-bs-toggle="tooltip"]').tooltip({ html: true }) 
     return canvas;
   }
   initKitCanvas() {
-    this.kbui = KitBuildUI.instance(KitApp.kitCanvasId)
-    let canvas = this.kbui.canvases.get(KitApp.kitCanvasId)
+    this.kitkbui = KitBuildUI.instance(LearnermapApp.kitCanvasId)
+    let canvas = this.kitkbui.canvases.get(LearnermapApp.kitCanvasId)
     canvas.addCanvasTool(KitBuildCanvasTool.FOCUS, { gridPos: { x: 0, y: -1}})
     canvas.addToolbarTool(KitBuildToolbar.CAMERA, { priority: 4 })
     canvas.addToolbarTool(KitBuildToolbar.UTILITY, { priority: 5, trash: false })
@@ -40,14 +42,32 @@ class KitApp {
     canvas.toolbar.render()
     // Hack for sidebar-panel show/hide
     // To auto-resize the canvas.
-    let observer = new MutationObserver((mutations) => $(`#${KitApp.kitCanvasId} > div`).css('width', 0))
+    let observer = new MutationObserver((mutations) => $(`#${LearnermapApp.kitCanvasId} > div`).css('width', 0))
+    observer.observe(document.querySelector('#admin-sidebar-panel'), {attributes: true})
+    // Enable tooltip
+    $('[data-bs-toggle="tooltip"]').tooltip({ html: true }) 
+    return canvas;
+  }
+  initLmapCanvas() {
+    console.log(LearnermapApp.lmapCanvasId)
+    this.lmapkbui = KitBuildUI.instance(LearnermapApp.lmapCanvasId)
+    let canvas = this.lmapkbui.canvases.get(LearnermapApp.lmapCanvasId)
+    canvas.addCanvasTool(KitBuildCanvasTool.FOCUS, { gridPos: { x: 0, y: -1}})
+    canvas.addToolbarTool(KitBuildToolbar.CAMERA, { priority: 4 })
+    canvas.addToolbarTool(KitBuildToolbar.UTILITY, { priority: 5, trash: false })
+    canvas.addToolbarTool(KitBuildToolbar.LAYOUT, { priority: 6 })
+    canvas.canvasTool.enableConnector(false).enableIndicator(false)
+    canvas.toolbar.render()
+    // Hack for sidebar-panel show/hide
+    // To auto-resize the canvas.
+    let observer = new MutationObserver((mutations) => $(`#${LearnermapApp.kitCanvasId} > div`).css('width', 0))
     observer.observe(document.querySelector('#admin-sidebar-panel'), {attributes: true})
     // Enable tooltip
     $('[data-bs-toggle="tooltip"]').tooltip({ html: true }) 
     return canvas;
   }
   static instance(options) {
-    return new KitApp(options)
+    return new LearnermapApp(options)
   }
   handleEvent() {
 
@@ -101,26 +121,26 @@ class KitApp {
       e.stopPropagation();
       let perpage = $('#form-search-cmap .input-perpage').val()
       let keyword = $('#form-search-cmap .input-keyword').val()
-      // console.log(">" + keyword + "<", KitApp.cmapPagination ? KitApp.cmapPagination.keyword : undefined)
-      let page = (!KitApp.cmapPagination) ? 1 : KitApp.cmapPagination.page;
-      if (KitApp.cmapPagination && keyword != KitApp.cmapPagination.keyword) {
+      // console.log(">" + keyword + "<", LearnermapApp.cmapPagination ? LearnermapApp.cmapPagination.keyword : undefined)
+      let page = (!LearnermapApp.cmapPagination) ? 1 : LearnermapApp.cmapPagination.page;
+      if (LearnermapApp.cmapPagination && keyword != LearnermapApp.cmapPagination.keyword) {
         page = 1;
       }
-      if (KitApp.cmapPagination)
-        console.log(KitApp.cmapPagination.keyword)
+      if (LearnermapApp.cmapPagination)
+        console.log(LearnermapApp.cmapPagination.keyword)
       this.ajax.post(`contentApi/searchConceptMap/${page}/${perpage}`, {
         keyword: keyword
       }).then(result => {
         let cmaps = result.cmaps;
-        KitApp.populateCmaps(cmaps);
-        if (KitApp.cmapPagination) {
-          KitApp.cmapPagination.keyword = keyword;
-          KitApp.cmapPagination.page = page;
-          KitApp.cmapPagination.update(result.count, perpage);  
+        LearnermapApp.populateCmaps(cmaps);
+        if (LearnermapApp.cmapPagination) {
+          LearnermapApp.cmapPagination.keyword = keyword;
+          LearnermapApp.cmapPagination.page = page;
+          LearnermapApp.cmapPagination.update(result.count, perpage);  
         } else {
-          KitApp.cmapPagination = 
+          LearnermapApp.cmapPagination = 
           Pagination.instance('#pagination-cmap', result.count, perpage).listen('#form-search-cmap').update();
-          KitApp.cmapPagination.keyword = keyword;
+          LearnermapApp.cmapPagination.keyword = keyword;
         }
         $('.dropdown-menu-teacher-map-list').addClass('show');
       });
@@ -201,6 +221,30 @@ class KitApp {
     })
 
 
+    $('#tabs-concept-map').on('click', '.bt-tab-delete-lmap', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      let lmid = $(e.currentTarget).attr('data-lmid');
+      let name = $(e.currentTarget).attr('data-lmid');
+      let confirm = UI.confirm(`Delete learner map ID: <span class="text-primary">${name}</span>?`).positive(() => {
+        this.ajax.post('contentApi/deleteLearnerMap', {
+          lmid: lmid
+        }).then(result => {
+          this.lmapCanvas.cy.elements().remove()
+          let tabLabel = `<span class="text-primary">Learner Map</span>`
+          $('#nav-lmap-tab').html(tabLabel);
+          $('#nav-kit-tab').trigger('click');
+          UI.success('Learner map is succesfully deleted.').show();
+        }).catch(error => {
+          UI.error(`Unable to delete learner map: ${error}`).show();
+        }).finally(() => {
+          confirm.hide();
+        })
+      }).show();
+      // this.loadKitMap(lmid);
+    })
+
+
 
 
 
@@ -228,9 +272,9 @@ class KitApp {
       e.stopPropagation();
       let perpage = parseInt($('form.form-assign-search-topic .input-perpage').val())
       let keyword = $('form.form-assign-search-topic .input-keyword').val()
-      let page = (!KitApp.assignTopicPagination || 
-        keyword != KitApp.assignTopicPagination.keyword) ?
-        1 : KitApp.assignTopicPagination.page
+      let page = (!LearnermapApp.assignTopicPagination || 
+        keyword != LearnermapApp.assignTopicPagination.keyword) ?
+        1 : LearnermapApp.assignTopicPagination.page
 
       Promise.all([
         this.ajax.post(`contentApi/getTopics/${page}/${perpage}`, {
@@ -242,11 +286,11 @@ class KitApp {
       .then(results => {
         let topics = results[0];
         let count = parseInt(results[1]);
-        KitApp.populateAssignTopics(topics, topicDialog.cmid)
-        if (KitApp.assignTopicPagination) {
-          KitApp.assignTopicPagination.keyword = keyword;
-          KitApp.assignTopicPagination.update(count, perpage);  
-        } else KitApp.assignTopicPagination = 
+        LearnermapApp.populateAssignTopics(topics, topicDialog.cmid)
+        if (LearnermapApp.assignTopicPagination) {
+          LearnermapApp.assignTopicPagination.keyword = keyword;
+          LearnermapApp.assignTopicPagination.update(count, perpage);  
+        } else LearnermapApp.assignTopicPagination = 
           Pagination.instance('form.form-assign-search-topic .list-topic-pagination', count, perpage).listen('form.form-assign-search-topic').update(count, perpage);
         $('.dropdown-menu-teacher-map-list').addClass('show');
       });
@@ -298,9 +342,9 @@ class KitApp {
       e.stopPropagation();
       let perpage = parseInt($('form.form-assign-search-text .input-perpage').val())
       let keyword = $('form.form-assign-search-text .input-keyword').val()
-      let page = (!KitApp.assignTextPagination || 
-        keyword != KitApp.assignTextPagination.keyword) ?
-        1 : KitApp.assignTextPagination.page
+      let page = (!LearnermapApp.assignTextPagination || 
+        keyword != LearnermapApp.assignTextPagination.keyword) ?
+        1 : LearnermapApp.assignTextPagination.page
       Promise.all([
         this.ajax.post(`contentApi/getTexts/${page}/${perpage}`, {
           keyword: keyword
@@ -311,11 +355,11 @@ class KitApp {
       .then(results => {
         let texts = results[0];
         let count = parseInt(results[1]);
-        KitApp.populateAssignTexts(texts, textDialog.cmap.map.cmid)
-        if (KitApp.assignTextPagination) {
-          KitApp.assignTextPagination.keyword = keyword;
-          KitApp.assignTextPagination.update(count, perpage);  
-        } else KitApp.assignTextPagination = 
+        LearnermapApp.populateAssignTexts(texts, textDialog.cmap.map.cmid)
+        if (LearnermapApp.assignTextPagination) {
+          LearnermapApp.assignTextPagination.keyword = keyword;
+          LearnermapApp.assignTextPagination.update(count, perpage);  
+        } else LearnermapApp.assignTextPagination = 
           Pagination.instance('form.form-assign-search-text .list-text-pagination', count, perpage).listen('form.form-assign-search-text').update(count, perpage);
         $('.dropdown-menu-teacher-map-list').addClass('show');
       });
@@ -370,8 +414,8 @@ class KitApp {
       e.stopPropagation();
       let perpage = parseInt($('#form-search-topic .input-perpage').val())
       let keyword = $('#form-search-topic .input-keyword').val()
-      let page = (!KitApp.topicPagination || keyword != KitApp.topicPagination.keyword) ? 
-        1 : KitApp.topicPagination.page;
+      let page = (!LearnermapApp.topicPagination || keyword != LearnermapApp.topicPagination.keyword) ? 
+        1 : LearnermapApp.topicPagination.page;
       Promise.all([
         this.ajax.post(`contentApi/getTopics/${page}/${perpage}`, {
           keyword: keyword
@@ -382,15 +426,15 @@ class KitApp {
       ]).then(results => {
         let topics = results[0];
         let count = parseInt(results[1]);
-        if (KitApp.topicPagination) {
-          KitApp.topicPagination.perpage = perpage
-          KitApp.topicPagination.count = count
-          KitApp.topicPagination.keyword = keyword
-          KitApp.topicPagination.update();
+        if (LearnermapApp.topicPagination) {
+          LearnermapApp.topicPagination.perpage = perpage
+          LearnermapApp.topicPagination.count = count
+          LearnermapApp.topicPagination.keyword = keyword
+          LearnermapApp.topicPagination.update();
         } else {
-          KitApp.topicPagination = Pagination.instance('#pagination-topic', count, perpage).listen('#form-search-topic').update()
+          LearnermapApp.topicPagination = Pagination.instance('#pagination-topic', count, perpage).listen('#form-search-topic').update()
         }
-        KitApp.populateTopics(topics)
+        LearnermapApp.populateTopics(topics)
         $('.dropdown-menu-topic-list').addClass('show');
       });
     });
@@ -407,7 +451,7 @@ class KitApp {
         let containerId = `.dropdown-menu[data-tid="${tid}"]`;
         if (!cmaps.length) {
           $(containerId).html('<small><em>No concept maps.</em></small>')
-        } else KitApp.populateCmapListDropdown(cmaps, containerId);
+        } else LearnermapApp.populateCmapListDropdown(cmaps, containerId);
       });
     })
 
@@ -415,6 +459,7 @@ class KitApp {
       let cmid = $(e.currentTarget).parents('.item-cmap').attr('data-cmid');
       KitBuild.openConceptMap(cmid).then(conceptMap => { console.log(conceptMap)
         let proceed = () => {
+          this.conceptMap = conceptMap;
           let cyData = KitBuildUI.composeConceptMap(conceptMap)
           this.canvas.cy.elements().remove()
           this.canvas.cy.add(cyData)
@@ -432,6 +477,40 @@ class KitApp {
           iconStyle: 'danger'
         }).show()
       })
+    })
+
+
+
+
+
+
+
+    $('#tabs-concept-map .list-lmap').on('change', (e) => {
+      let lmid = $(e.currentTarget).val();
+      KitBuild.openLearnerMap(lmid).then(learnerMap => { // console.log(learnerMap)
+        let proceed = () => {
+
+          learnerMap.kitMap = this.kitMap;
+          learnerMap.conceptMap = this.kitMap.conceptMap;
+          this.lmapCanvas.cy.elements().remove()
+          this.lmapCanvas.cy.add(KitBuildUI.composeLearnerMap(learnerMap))
+          this.lmapCanvas.applyElementStyle()
+          this.lmapCanvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0}).then(() => {})
+
+          let tabLabel = `<span class="text-primary">Learner Map: ${learnerMap.map.author}</span>`
+          tabLabel += `<span class="badge rounded-pill bg-danger bt-tab-delete-lmap ms-2" data-lmid="${lmid}">Delete</span>`;
+
+          $('#nav-lmap-tab').html(tabLabel).trigger('click');
+
+        }
+        proceed();
+      }).catch(error => {
+        console.error(error); 
+        UI.dialog("The concept map data is invalid.", {
+          icon: 'exclamation-triangle',
+          iconStyle: 'danger'
+        }).show()
+      });
     })
 
 
@@ -462,7 +541,7 @@ class KitApp {
       this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0});
       this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
       UI.success('Concept map loaded.').show();
-      KitApp.populateKitList(kits);
+      LearnermapApp.populateKitList(kits);
       $('#nav-kit-tab').html(`Kit Map`);
       $('#tab-kit').html(`Kit <span class="badge rounded-pill bg-success ms-2">${kits.length}</span>`);
       $('#nav-cmap-tab').trigger('click');
@@ -482,9 +561,13 @@ class KitApp {
       UI.warning('Invalid kit map ID.').show();
       return
     }
-    KitBuild.openKitMap(kid).then(kitMap => {
-      console.log(kitMap);
+    Promise.all([
+      KitBuild.openKitMap(kid),
+      this.ajax.get(`contentApi/getLearnermapsOfKit/${kid}`)
+    ]).then(result => {
+      let [kitMap, learnermaps] = result;
       let cyData = KitBuildUI.composeKitMap(kitMap)
+      this.kitMap = kitMap;
       this.kitCanvas.cy.elements().remove()
       this.kitCanvas.cy.add(cyData)
       this.kitCanvas.applyElementStyle()
@@ -493,12 +576,14 @@ class KitApp {
       this.session.set('kid', kid);
       $('#nav-kit-tab').html(`Kit Map: <span class="text-primary">${kitMap.map.name}</span>
         <span class="badge rounded-pill bg-danger bt-tab-delete-kit" data-name="${kitMap.map.name}" data-kid="${kid}">Delete</span>`).trigger('click');
+      $('#tab-lmap').html(`Learner Map <span class="badge rounded-pill bg-success ms-2">${learnermaps.length}</span>`)
       UI.success('Kit map loaded.').show();
-    });
+      LearnermapApp.populateLearnermaps(learnermaps);
+    })
   }
 }
 
-KitApp.populateCmaps = cmaps => {
+LearnermapApp.populateCmaps = cmaps => {
   let cmapsHtml = '';
   cmaps.forEach(cmap => {
     cmapsHtml += `<div class="item-cmap d-flex align-items-center py-1 border-bottom" role="button"`
@@ -523,7 +608,7 @@ KitApp.populateCmaps = cmaps => {
   $('#list-cmap').html(cmapsHtml)
 }
 
-KitApp.populateCmapListDropdown = (cmaps, containerId) => {
+LearnermapApp.populateCmapListDropdown = (cmaps, containerId) => {
   let cmapsHtml = '';
   cmaps.forEach(cmap => {
     cmapsHtml += `<div class="item-cmap d-flex align-items-center py-1 border-bottom" role="button"`
@@ -540,7 +625,7 @@ KitApp.populateCmapListDropdown = (cmaps, containerId) => {
   $(containerId).html(cmapsHtml)
 }
 
-KitApp.populateTopics = topics => {
+LearnermapApp.populateTopics = topics => {
   let topicsHtml = '';
   topics.forEach(topic => {
     topicsHtml += `<div class="item-topic d-flex align-items-center py-1 border-bottom" role="button"`
@@ -562,7 +647,7 @@ KitApp.populateTopics = topics => {
   $('#list-topic').html(topicsHtml)
 }
 
-KitApp.populateAssignTopics = (topics, cmid) => {
+LearnermapApp.populateAssignTopics = (topics, cmid) => {
   let topicsHtml = '';
   topics.forEach(topic => {
     topicsHtml += `<div class="item-topic d-flex align-items-center py-1 border-bottom" role="button"`
@@ -580,7 +665,7 @@ KitApp.populateAssignTopics = (topics, cmid) => {
   $('form.form-assign-search-topic .list-topic').html(topicsHtml)
 }
 
-KitApp.populateAssignTexts = (texts, cmid) => {
+LearnermapApp.populateAssignTexts = (texts, cmid) => {
   let textsHtml = '';
   texts.forEach(text => {
     textsHtml += `<div class="item-text d-flex align-items-center py-1 border-bottom" role="button"`
@@ -597,7 +682,7 @@ KitApp.populateAssignTexts = (texts, cmid) => {
   $('form.form-assign-search-text .list-text').html(textsHtml)
 }
 
-KitApp.populateKitList = (kits) => {
+LearnermapApp.populateKitList = (kits) => {
   if (!kits) {
     UI.error("Invalid kit").show();
     return;
@@ -608,7 +693,7 @@ KitApp.populateKitList = (kits) => {
     kitListHtml += `<span class="dropdown-item text-truncate text-nowrap item-kit d-flex justify-content-between align-items-center" role="button" `
     kitListHtml += `data-kid="${kit.kid}"/>`
     kitListHtml += `  <span class="kit-name flex-fill">${kit.name}</span>`
-    kitListHtml += `  <span class="badge rounded-pill bg-danger ms-2 bt-delete-kit" role="button">Delete</span>`
+    // kitListHtml += `  <span class="badge rounded-pill bg-danger ms-2 bt-delete-kit" role="button">Delete</span>`
     kitListHtml += `</span></div>`
   }
   if (kits.length == 0)
@@ -616,6 +701,22 @@ KitApp.populateKitList = (kits) => {
   $('#nav-tab-maps .list-kit').html(kitListHtml);
 }
 
+LearnermapApp.populateLearnermaps = (lmaps) => {
+  if (!lmaps) {
+    UI.error("Invalid lmap").show();
+    return;
+  }
+  let lmapListHtml = '';
+  for(let lmap of lmaps) { console.log(lmap);
+    lmapListHtml += `<option value="${lmap.lmid}"/>`
+    lmapListHtml += `  <span class="lmap-name flex-fill">${lmap.creator}</span>`
+    lmapListHtml += `</option>`
+  }
+  if (lmaps.length == 0)
+    lmapListHtml += `<small class="mx-3"><em class="text-muted">No learner map data</em></small>`
+  $('#nav-tab-maps .list-lmap').html(lmapListHtml);
+}
+
 $(() => {
-  let app = KitApp.instance()
+  let app = LearnermapApp.instance()
 })

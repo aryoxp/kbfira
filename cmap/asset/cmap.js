@@ -49,9 +49,9 @@ class CmapApp {
 
     // console.log(typeof Logger)
     if (typeof CmapLogger != 'undefined') {
-      this.logger = CmapLogger.instance(null, 0, null, canvas).enable();
-      CmapApp.loggerListener = 
-        this.logger.onCanvasEvent.bind(this.logger)
+      let sessid = Core.instance().config().get('sessid');
+      this.logger = CmapLogger.instance(null, 0, sessid, canvas).enable();
+      CmapApp.loggerListener = this.logger.onCanvasEvent.bind(this.logger)
       canvas.on("event", CmapApp.loggerListener)
     }
 
@@ -86,7 +86,7 @@ class CmapApp {
     let saveAsDialog = UI.modal('#concept-map-save-as-dialog', {
       onShow: () => { 
         $('#concept-map-save-as-dialog .input-title').focus();
-        console.log(this)
+        // console.log(this)
         KitBuild.getTopicListOfGroups(this.user.gids.split(",")).then(topics => {
           let list = '<option value="">No topic associated</option>'
           topics.forEach(topic => {
@@ -240,14 +240,14 @@ class CmapApp {
   
     $('#concept-map-save-as-dialog').on('submit', (e) => {
       e.preventDefault()
-      console.log($('#select-topic').val(), $('#select-topic').val().match(/^ *$/));
+      // console.log($('#select-topic').val(), $('#select-topic').val().match(/^ *$/));
       let data = Object.assign({
         cmid: saveAsDialog.cmid ? saveAsDialog.cmid : null,
         cmfid: $('#input-fid').val().match(/^ *$/) ? null : $('#input-fid').val().trim().toUpperCase(),
         title: $('#input-title').val(),
         direction: this.canvas.direction,
         topic: $('#select-topic').val().match(/^ *$/) ? null : $('#select-topic').val().trim(),
-        text: $('#select-text').val().match(/^ *$/) ? null : $('#select-text').val().trim(),
+        // text: $('#select-text').val().match(/^ *$/) ? null : $('#select-text').val().trim(),
         author: this.user ? this.user.username : null,
         create_time: null
       }, KitBuildUI.buildConceptMapData(this.canvas)); // console.log(data); return
@@ -605,8 +605,10 @@ class CmapApp {
           this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
           this.canvas.toolbar.tools.get(KitBuildToolbar.UNDO_REDO).clearStacks().updateStacksStateButton();
           UI.success("You have signed out.").show();
+          StatusBar.instance().clear();
           confirm.hide()
         });
+        Core.instance().session().destroy();
         // TODO: redirect to home/login page
       }).show()
     })
@@ -646,6 +648,25 @@ class CmapApp {
           + `<small class="text-dark fw-bold">${user.name}</small>`
           + `</span>`
           StatusBar.instance().remove('.status-user').prepend(status);
+
+          // Save initial map!
+          let data = Object.assign({
+            cmid: null,
+            cmfid: null,
+            title: 'Untitled',
+            direction: this.canvas.direction,
+            topic: null,
+            text: null,
+            author: this.user.username,
+            create_time: null
+          }, KitBuildUI.buildConceptMapData(this.canvas)); // console.log(data); return
+          this.ajax.post("kitBuildApi/saveConceptMap", { data: Core.compress(data) })
+            .then(conceptMap => { 
+              this.setConceptMap(conceptMap);
+              this.logger.setConceptMapId(conceptMap.map.cmid);
+              UI.success("Concept map has been initialized.").show();
+            })
+            .catch(error => { UI.error("Error saving concept map: " + error).show(); })
         }
       }).show();
     })
@@ -677,7 +698,7 @@ class CmapApp {
     session.getAll().then(sessions => {
       let cmid = sessions.cmid
       if (cmid) KitBuild.openConceptMap(cmid).then(conceptmap => {
-        CmapApp.inst.setConceptMap(conceptmap)
+        this.setConceptMap(conceptmap)
         if (stateData && stateData.map) { // console.log(stateData.direction)
           this.canvas.cy.elements().remove()
           this.canvas.cy.add(Core.decompress(stateData.map))
@@ -688,8 +709,8 @@ class CmapApp {
           this.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(conceptmap.map.direction)
         }
         this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
-        this.canvas.cy.elements(':selected').unselect()
-        
+        this.canvas.cy.elements(':selected').unselect();
+        this.logger.setConceptMapId(this.conceptMap.map.cmid);
       })
       let tid  = sessions.tid;
       let txid = sessions.txid;
@@ -697,10 +718,17 @@ class CmapApp {
       if (txid) this.ajax.get(`kitBuildApi/getTextOfTopic/${txid}`).then(text => this.setText(text));
       try { 
         if (stateData.logger) {
-          CmapApp.inst.logger = CmapLogger.instance(stateData.logger.username, stateData.logger.seq, stateData.logger.sessid, this.canvas).enable();
-          if (CmapApp.loggerListener)
-            this.canvas.off("event", CmapApp.loggerListener)
-          CmapApp.loggerListener = CmapApp.inst.logger.onCanvasEvent.bind(CmapApp.inst.logger)
+
+          // restore previous logger data and sequence
+          this.logger.username = sessions.user ? sessions.user.username : null;
+          this.logger.seq = stateData.logger.seq;
+          this.logger.sessid = Core.instance().config().get('sessid');
+          this.logger.canvas = this.canvas;
+          this.logger.enable();
+
+          // re-bind logger as canvas event listener
+          if (CmapApp.loggerListener) this.canvas.off("event", CmapApp.loggerListener)
+          CmapApp.loggerListener = this.logger.onCanvasEvent.bind(this.logger)
           this.canvas.on("event", CmapApp.loggerListener)
         }
       } catch (error) { console.warn(error) }

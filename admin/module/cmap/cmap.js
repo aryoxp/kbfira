@@ -82,7 +82,24 @@ class CmapApp {
     this.session = Core.instance().session()
   
     let saveAsDialog = UI.modal('#concept-map-save-as-dialog', {
-      onShow: () => { $('#concept-map-save-as-dialog .input-title').focus() },
+      onShow: () => { 
+        $('#concept-map-save-as-dialog .input-title').focus();
+        console.log(this.session)
+        let sessions = this.session ? this.session.sessionData : null;
+        if (sessions.user) {
+          KitBuild.getTopicListOfGroups(sessions.user.gids.split(",")).then(topics => {
+            console.log(topics,sessions.user.gids)
+            let list = '<option value="">No topic associated</option>'
+            topics.forEach(topic => {
+              let selected = (this.conceptMap.map.topic == topic.tid) ? ' selected' : '';
+              if(selected == '' && CmapApp.topic && CmapApp.topic.tid == topic.tid)
+                selected = ' selected';
+              list += `<option value="${topic.tid}"${selected}>${topic.title}</option>`;
+            })
+            $('#select-topic').html(list);
+          });
+        }
+      },
       hideElement: '.bt-cancel'
     })
     saveAsDialog.setConceptMap = (conceptMap) => {
@@ -226,7 +243,7 @@ class CmapApp {
         title: $('#input-title').val(),
         direction: this.canvas.direction,
         topic: $('#select-topic').val().match(/^ *$/) ? null : $('#select-topic').val().trim(),
-        text: $('#select-text').val().match(/^ *$/) ? null : $('#select-text').val().trim(),
+        text: undefined,
         author: this.user ? this.user.username : null,
         create_time: null
       }, KitBuildUI.buildConceptMapData(this.canvas)); // console.log(data); return

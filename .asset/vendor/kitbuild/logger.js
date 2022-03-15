@@ -16,17 +16,23 @@ class Logger {
     if (username || seq || sessid) console.log("LOGGER RESTORED", inst)
     return inst
   }
+  static shouldSkip(action) {
+    switch(action) {
+      case 'select-nodes':
+      case 'unselect-nodes':
+        return true;
+      default: return false;
+    }
+  }
   enable(enabled = true) {
     this.enabled = !["false", "0", 0, null, "", false].includes(enabled)
     console.warn(`Log is ${this.enabled ? 'enabled' : 'disabled'}`)
     return this
   }
-  composeBaseData() {
-    
-  }
   log(action, data, extra, options) { // console.log(arguments, this)
     // console.warn("logger is enabled: ", this.enabled)
     if (!this.enabled) return
+    if (Logger.shouldSkip(action)) return
 
     let settings = Object.assign({ compress: false }, options)
     
@@ -42,25 +48,14 @@ class Logger {
     if (this.sessid !== null) lData.append('sessid', this.sessid);
     if (extra instanceof Map) extra.forEach((v, k) => lData.append(k, v))
 
-    // if(this.mid) lData.append('mid', this.mid);
-    // if(this.gmid) lData.append('gmid', this.gmid);
-    // if(this.rid) lData.append('rid', this.rid);
-    
+    // console.log(...lData);
+
     let url = Core.instance().config('baseurl') + "logApi/log";
     let status = navigator.sendBeacon(url, lData);
-    console.warn(this.seq, action, Array.from(lData.entries()))
-    // if(this.verbosity == KBLogger.MINIMAL || this.verbosity == KBLogger.VERBOSE)
-    //   console.log(action, this.uid, this.seq, status);
-    return status;
+    // let status = Core.instance().ajax().post(url, lData).then(result => console.warn(result))
 
-    
-    if (this.verbosity == KBLogger.VERBOSE) {
-      for(var pair of lData.entries()) {
-        console.log(pair[0]+ ', '+ pair[1]); 
-      }
-    }
-
-    return Logger.inst
+    console.warn(this.seq, action, Array.from(lData.entries()), status)
+    return this;
   }
   post() {
     
@@ -71,14 +66,23 @@ class CmapLogger extends Logger {  // TODO: SET cmid
   constructor(username, seq, sessid, canvas) {
     super(username, seq, sessid)
     this.canvas = canvas
+    this.cmid = null;
   }
   static instance(username, seq, sessid, canvas) {
     return new CmapLogger(username, seq, sessid, canvas)
   }
-  onCanvasEvent(canvasId, evt, data, options) { console.warn("LOGGER RECEIVE: ", evt, data)
+  setConceptMapId(cmid) {
+    this.cmid = cmid;
+  }
+  log(action, data, extra, options) {
+    if (extra) extra.set('cmid', this.cmid);
+    else extra = new Map();
+    super.log(action, data, extra, options);
+  }
+  onCanvasEvent(canvasId, evt, data, options) { console.warn("LOGGER RECEIVE from Canvas: ", evt, data)
     let settings = Object.assign({ includeMapData: false }, options)
     let extra = new Map()
-    extra.set('canvasid', canvasId)
+    extra.set('canvasid', canvasId);
     switch(evt) {
       case 'undo-connect-right':
       case 'undo-connect-left':
@@ -144,12 +148,23 @@ class KitBuildLogger extends Logger { // TODO: SET lmid
     super(username, seq, sessid)
     this.canvas = canvas
     this.conceptMap = conceptMap
+    this.lmid = null;
+  }
+  setLearnerMapId(lmid) {
+    this.lmid = lmid;
+  }
+  setConceptMap(conceptMap) {
+    this.conceptMap = conceptMap;
+  }
+  log(action, data, extra, options) {
+    if (extra) extra.set('lmid', this.lmid);
+    else extra = new Map();
+    super.log(action, data, extra, options);
   }
   static instance(username, seq, sessid, canvas, conceptMap) {
     return new KitBuildLogger(username, seq, sessid, canvas, conceptMap)
   }
-  onCanvasEvent(canvasId, evt, data, options) { 
-    console.warn("LOGGER RECEIVE: ", evt, data)
+  onCanvasEvent(canvasId, evt, data, options) { console.log("LOGGER RECEIVE: ", evt, data)
     let settings = Object.assign({ includeMapData: false }, options)
     let extra = new Map()
     extra.set('canvasid', canvasId)

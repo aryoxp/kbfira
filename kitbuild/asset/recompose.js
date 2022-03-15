@@ -34,12 +34,13 @@ class KitBuildApp {
 
     // Logger
     if (typeof KitBuildLogger != 'undefined') {
-      this.logger = KitBuildLogger.instance(null, 0, null, canvas)
-        .enable();
-      KitBuildApp.loggerListener = 
-        this.logger.onCanvasEvent.bind(this.logger)
+      let sessid = Core.instance().config().get('sessid');
+      this.logger = KitBuildLogger.instance(null, 0, sessid, canvas, null).enable();
+      KitBuildApp.loggerListener = this.logger.onCanvasEvent.bind(this.logger)
       canvas.on("event", KitBuildApp.loggerListener)
     }
+
+    console.log(this, typeof KitBuildLogger);
 
     this.handleEvent();
     this.handleRefresh();
@@ -368,13 +369,32 @@ class KitBuildApp {
         try {
           KitBuildApp.parseKitMapOptions(kitMap)
           let proceed = () => {
-            KitBuildApp.inst.setKitMap(kitMap)
-            KitBuildApp.inst.setLearnerMap()
+            this.setKitMap(kitMap);
+            this.logger.setConceptMap(kitMap.conceptMap);
+            this.setLearnerMap();
             KitBuildApp.resetMapToKit(kitMap, this.canvas).then(() => {
               let cyData = this.canvas.cy.elements().jsons();
               KitBuildApp.collab("command", "set-kit-map", kitMap, cyData)
             })
             openDialog.hide();
+
+            let data = Object.assign({
+              lmid: null,
+              kid: kitMap.map.kid,
+              author: this.user.username,
+              type: 'draft',
+              cmid: kitMap.map.cmid,
+              create_time: null,
+              data: null,
+            }, KitBuildUI.buildConceptMapData(this.canvas)); // console.log(data); // return
+            this.ajax.post("kitBuildApi/saveLearnerMap", { data: Core.compress(data) })
+              .then(learnerMap => { // console.log(kitMap);
+                this.setLearnerMap(learnerMap);
+                this.logger.setLearnerMapId(learnerMap.map.lmid);
+                UI.success("Concept map has been initialized.").show(); 
+              })
+              .catch(error => { UI.error(error).show(); })
+
           }
           if (this.canvas.cy.elements().length) {
             let confirm = UI.confirm("Open the kit replacing the current kit on Canvas?").positive(() => {
@@ -723,8 +743,8 @@ class KitBuildApp {
           this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
           this.canvas.toolbar.tools.get(KitBuildToolbar.UNDO_REDO).clearStacks().updateStacksStateButton();
           UI.success("You have signed out.").show();
-  
           confirm.hide()
+          this.session.destroy();
         });
         // TODO: redirect to home/login page
       }).show()
@@ -765,6 +785,7 @@ class KitBuildApp {
           + `<small class="text-dark fw-bold">${user.name}</small>`
           + `</span>`
           StatusBar.instance().remove('.status-user').prepend(status);
+          this.logger.username = user.username;
         }
       }).show();
     })
@@ -786,25 +807,28 @@ class KitBuildApp {
       if (kid) promises.push(KitBuild.openKitMap(kid))
       if (lmid) promises.push(KitBuild.openLearnerMap(lmid))
       Promise.all(promises).then(maps => {
-        let kitMap = maps[0]
-        let learnerMap = maps[1]
+        let [kitMap, learnerMap] = maps
         KitBuildApp.parseKitMapOptions(kitMap)
         if (kitMap && !learnerMap) KitBuildApp.resetMapToKit(kitMap, this.canvas)
         if (kitMap) {
           try {
             if (stateData && stateData.logger) {
-              // reinstantiate and enable logger
-              KitBuildApp.inst.logger = 
-              KitBuildLogger.instance(stateData.logger.username, stateData.logger.seq, stateData.logger.sessid, this.canvas, kitMap.conceptMap).enable();
+
+              // restore previous logger data and sequence
+              this.logger.username = sessions.user ? sessions.user.username : null;
+              this.logger.seq = stateData.logger.seq;
+              this.logger.sessid = Core.instance().config().get('sessid');
+              this.logger.canvas = this.canvas;
+              this.logger.enable();
+
               // reattach logger
-              if (KitBuildApp.loggerListener)
-                this.canvas.off("event", KitBuildApp.loggerListener)
+              if (KitBuildApp.loggerListener) this.canvas.off("event", KitBuildApp.loggerListener)
               KitBuildApp.loggerListener = KitBuildApp.inst.logger.onCanvasEvent.bind(KitBuildApp.inst.logger)
               this.canvas.on("event", KitBuildApp.loggerListener)
             }
           } catch (error) { console.warn(error) }
         }
-        if (learnerMap) {
+        if (learnerMap) { console.log(learnerMap, this.logger)
           KitBuildApp.inst.setKitMap(kitMap)
           KitBuildApp.inst.setLearnerMap(learnerMap)
           learnerMap.kitMap = kitMap
@@ -813,6 +837,8 @@ class KitBuildApp {
           this.canvas.cy.add(KitBuildUI.composeLearnerMap(learnerMap))
           this.canvas.applyElementStyle()
           this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
+          this.logger.setLearnerMapId(learnerMap.map.lmid);
+          this.logger.setConceptMap(kitMap.conceptMap);
         } // else UI.warning('Unable to display kit.').show()
       })
 
@@ -826,6 +852,7 @@ class KitBuildApp {
         + `<small class="text-dark fw-bold">${sessions.user.name}</small>`
         + `</span>`
         StatusBar.instance().remove('.status-user').prepend(status);
+        this.logger.username = sessions.user.username;
       } else $('.app-navbar .bt-sign-in').trigger('click')
 
       // listen to events for broadcast to collaboration room as commands
@@ -837,7 +864,7 @@ class KitBuildApp {
 
 KitBuildApp.canvasId = "recompose-canvas"
 
-KitBuildApp.onBrowserStateChange = event => { console.warn(event)
+KitBuildApp.onBrowserStateChange = event => { // console.warn(event)
   if (event.newState == "terminated") {
     let stateData = {}
     console.log(KitBuildApp.inst.logger)
