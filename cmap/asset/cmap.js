@@ -639,6 +639,7 @@ class CmapApp {
         gids: "SCBASDAT2122",
         success: (user) => {
           this.session.set('user', user);
+          this.setUser(user);
           CmapApp.initCollab(user);
           CmapApp.enableNavbarButton();
           CmapApp.updateSignInOutButton();
@@ -671,6 +672,10 @@ class CmapApp {
       }).show();
     })
 
+  }
+
+  setUser(user = null) {
+    this.user = user;
   }
   
   setTopic(topic) {

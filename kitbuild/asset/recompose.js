@@ -51,6 +51,10 @@ class KitBuildApp {
     return KitBuildApp.inst;
   }
 
+  setUser(user = null) {
+    this.user = user;
+  }
+
   setConceptMap(conceptMap) { console.warn("CONCEPT MAP SET:", conceptMap)
     this.conceptMap = conceptMap
     if (conceptMap) {
@@ -381,7 +385,7 @@ class KitBuildApp {
             let data = Object.assign({
               lmid: null,
               kid: kitMap.map.kid,
-              author: this.user.username,
+              author: KitBuildApp.inst.user ? KitBuildApp.inst.user.username : null,
               type: 'draft',
               cmid: kitMap.map.cmid,
               create_time: null,
@@ -847,7 +851,7 @@ class KitBuildApp {
         KitBuildApp.initCollab(sessions.user)
         KitBuildApp.enableNavbarButton(true)
         KitBuildCollab.enableControl()
-
+        this.setUser(sessions.user);
         let status = `<span class="mx-2 d-flex align-items-center status-user">`
         + `<small class="text-dark fw-bold">${sessions.user.name}</small>`
         + `</span>`

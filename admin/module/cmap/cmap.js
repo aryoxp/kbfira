@@ -75,6 +75,10 @@ class CmapApp {
     }
   }
 
+  setUser(user = null) {
+    this.user = user;
+  }
+
   handleEvent() {
 
     this.canvas = this.kbui.canvases.get(CmapApp.canvasId)
@@ -661,7 +665,8 @@ class CmapApp {
       if (sessions.user) {
         CmapApp.collabInst = KitBuildCollab.instance('cmap', sessions.user, this.canvas)
         CmapApp.collabInst.on('event', CmapApp.onCollabEvent)
-        KitBuildCollab.enableControl()
+        KitBuildCollab.enableControl();
+        this.setUser(sessions.user);
       }
   
       // listen to events for broadcast to collaboration room as commands
