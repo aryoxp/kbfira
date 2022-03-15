@@ -42,8 +42,14 @@ class UserApiController extends ModuleApiController {
       try {
         $user = $userService->insertUser($username, $name, $password);
       } catch (Exception $ex) {
-        $entry->errors[] = $ex->getMessage();
+        try {
+          $user = $userService->updateUser($username, $username, $name, $password);
+        } catch (Exception $ex) {
+          $entry->errors[] = $ex->getMessage();
+        }
       }
+      
+      $rbacService->unassignRoleFromUser($username);
       foreach ($roles as $role) {
         try {
           $rbacService->assignRoleToUser($username, $role);
@@ -51,6 +57,8 @@ class UserApiController extends ModuleApiController {
           $entry->errors[] = "Role: $role, Error: " . $ex->getMessage();
         }
       }
+      
+      $rbacService->unassignUserFromGroup($username);
       foreach ($groups as $group) {
         try {
           $rbacService->assignUserToGroup($username, $group);
