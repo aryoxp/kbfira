@@ -125,6 +125,7 @@ abstract class QBBase {
   public const NOTIN = 'NOT IN';
   public const EQ    = '=';
   public const NEQ   = '<>';
+  public const LIKE  = 'LIKE';
 
   public const INNER = 'INNER JOIN';
   public const LEFT  = 'LEFT JOIN';

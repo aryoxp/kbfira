@@ -11,7 +11,10 @@
       <div class="btn-group btn-group-sm ms-2">
         <button class="bt-save btn btn-primary"><i class="bi bi-save"></i> Save</button>
         <button class="bt-save-as btn btn-primary"><i class="bi bi-front"></i> Save As...</button>
-        <button class="bt-export btn btn-primary d-none"><i class="bi bi-send"></i> Export</button>
+      </div>
+      <button class="bt-export btn btn-primary d-none"><i class="bi bi-send"></i> Export</button>
+      <div class="btn-group btn-group-sm ms-2">
+        <button class="bt-content btn btn-secondary"><i class="bi bi-file-earmark-text"></i> Content</button>
       </div>
     </span>
     <div class="flex-fill">&nbsp;</div>
@@ -146,6 +149,9 @@
   </div>
   <div class="card-footer">
     <div class="row">
+      <div class="col text-start">
+        <span class="bt-open-topic btn btn-sm btn-success ms-1" role="button" style="min-width: 6rem;">Open Topic</span>
+      </div>
       <div class="col text-end">
         <button class="bt-cancel btn btn-sm btn-secondary" style="min-width: 6rem;">Cancel</button>
         <button class="bt-open btn btn-sm btn-primary ms-1" style="min-width: 6rem;">Open</button>
@@ -153,6 +159,40 @@
     </div>
   </div>
 </form>
+
+<div id="content-dialog" class="card d-none">
+    <h6 class="card-header d-flex">
+      <span class="drag-handle flex-fill"><i class="dialog-icon bi bi-file-text"></i> <span class="dialog-title">Content</span></span>
+      <i class="bi bi-x-lg bt-close bt-x" role="button"></i>
+    </h6>
+    <div class="card-body position-relative overflow-hidden overflow-scroll d-flex flex-fill mb-3">
+      <div class="content text-secondary">
+        <!-- <p>Est ex sunt exercitation exercitation voluptate veniam ad minim et magna ea sint. Sint Lorem consequat ex ullamco sint irure labore nisi nulla pariatur culpa quis excepteur officia. Exercitation qui consequat ipsum labore nostrud cillum incididunt eiusmod aliquip.</p>
+  
+        <p>
+        Labore reprehenderit laborum excepteur eiusmod et. Culpa laborum excepteur irure mollit adipisicing ut anim sunt veniam. Quis laborum cupidatat id id ea do dolor velit. Aliqua aliquip exercitation proident consequat ullamco anim aute occaecat deserunt cillum deserunt. Esse magna labore dolor anim amet.</p>
+  
+        <p>
+        Et enim irure excepteur enim est proident est tempor tempor velit. Laborum ex exercitation nulla anim incididunt nisi fugiat cillum officia fugiat dolor ad proident. Ad laborum eiusmod fugiat laboris sunt labore. Enim consectetur tempor minim nisi proident nulla ex pariatur et eu Lorem do sint non. Minim adipisicing do fugiat magna fugiat veniam do veniam.</p>
+  
+        <p>
+        Dolore ipsum reprehenderit sint anim. Minim non reprehenderit quis amet est exercitation incididunt ad dolore do proident. Reprehenderit ullamco aute irure consequat sunt nulla sunt exercitation. In ullamco occaecat ipsum Lorem elit labore consectetur cillum sunt velit.</p>
+  
+        <p>
+        Non nulla exercitation consequat minim anim qui eiusmod deserunt aliquip proident ea laborum consequat amet. Nisi aliqua sit commodo commodo aliquip sunt sint qui do laboris nisi cupidatat. Occaecat proident et reprehenderit esse dolor.</p> -->
+      </div>
+    </div>
+    <div class="card-footer d-flex justify-content-between align-items-center">
+      <span>
+        <span class="bt-scroll-top btn btn-sm ms-1 btn-primary px-3"><i class="bi bi-chevron-bar-up"></i> Back to Top</span>
+        <span class="bt-scroll-more btn btn-sm ms-1 btn-primary px-3"><i class="bi bi-chevron-down"></i> More</span>
+      </span>
+      <span>
+        <button class="btn btn-sm btn-secondary bt-close px-3">Close</button>
+        <button class="btn btn-sm resize-handle pe-0 ps-3"><i class="bi bi-textarea-resize"></i></button>
+      </span>
+    </div>
+  </div>
 
 <div id="concept-map-export-dialog" class="card d-none">
   <h6 class="card-header"><i class="bi bi-send"></i> Export</h6>

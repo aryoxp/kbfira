@@ -259,7 +259,7 @@ class KitBuildApp {
       $(e.currentTarget).find('.bi-check-lg').removeClass('d-none');
       $(e.currentTarget).addClass('active');
   
-      this.ajax.get(`kitBuildApi/getConceptMapListByTopic/${openDialog.tid}`).then(cmaps => { console.log(cmaps)
+      this.ajax.get(`kitBuildApi/getConceptMapListByTopic/${openDialog.tid}`).then(cmaps => { // console.log(cmaps)
         let cmapsHtml = '';
         cmaps.forEach(cm => {
           cmapsHtml += `<span class="concept-map list-item" data-cmid="${cm.cmid}" data-cmfid="${cm.cmfid}">`
@@ -340,7 +340,7 @@ class KitBuildApp {
       // console.log(KitBuildApp.inst.user.gids);
       this.ajax.post(`kitBuildApi/getTopicListOfGroups`, {
         gids: KitBuildApp.inst.user.gids.split(",")
-      }).then(topics => { console.log(topics)
+      }).then(topics => { // console.log(topics)
         let topicsHtml = '';
         topics.forEach(t => { // console.log(t);
           topicsHtml += `<span class="topic list-item" data-tid="${t.tid}">`

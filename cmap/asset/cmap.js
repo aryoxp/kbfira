@@ -85,11 +85,14 @@ class CmapApp {
 
     let saveAsDialog = UI.modal('#concept-map-save-as-dialog', {
       onShow: () => { 
-        $('#concept-map-save-as-dialog .input-title').focus() 
+        $('#concept-map-save-as-dialog .input-title').focus();
+        console.log(this)
         KitBuild.getTopicListOfGroups(this.user.gids.split(",")).then(topics => {
-          let list = '<option>No topic associated</option>'
+          let list = '<option value="">No topic associated</option>'
           topics.forEach(topic => {
             let selected = (this.conceptMap.map.topic == topic.tid) ? ' selected' : '';
+            if(selected == '' && CmapApp.topic && CmapApp.topic.tid == topic.tid)
+              selected = ' selected';
             list += `<option value="${topic.tid}"${selected}>${topic.title}</option>`;
           })
           $('#select-topic').html(list);
@@ -125,8 +128,39 @@ class CmapApp {
     }
   
     let openDialog = UI.modal('#concept-map-open-dialog', {
-      hideElement: '.bt-cancel'
+      hideElement: '.bt-cancel',
+      width: "650px"
     })
+
+    let contentDialog = UI.modal('#content-dialog', {
+      hideElement: '.bt-close',
+      backdrop: false,
+      get height() { return $('body').height() * .7 | 0 },
+      get offset() { return { left: ($('body').width() * .1 | 0) } },
+      draggable: true,
+      dragHandle: '.drag-handle',
+      resizable: true,
+      resizeHandle: '.resize-handle',
+      minWidth: 375,
+      minHeight: 200,
+      onShow: () => {
+        let sdown = new showdown.Converter({
+          strikethrough: true,
+          tables: true,
+          simplifiedAutoLink: true
+        });
+        sdown.setFlavor('github');
+        let htmlText = contentDialog.text.content ? 
+          sdown.makeHtml(contentDialog.text.content) : 
+          "<em>Content text unavailable.</em>";
+        $('#content-dialog .content').html(htmlText);
+        hljs.highlightAll();
+      }
+    })
+    contentDialog.setContent = (text, type = 'md') => {
+      contentDialog.text = text
+      return contentDialog
+    }
   
     let exportDialog = UI.modal('#concept-map-export-dialog', {
       hideElement: '.bt-cancel'
@@ -187,11 +221,11 @@ class CmapApp {
     });
 
     $('#concept-map-save-as-dialog .input-title').on('focusout', (e) => {
-      if ($('#input-fid').val().match(/^ *$/) && !saveAsDialog.cmid) {
+      if ($('#input-fid').val().match(/^ *$/) && !saveAsDialog.cmid && $(e.currentTarget).val().trim() != "") {
         $('#concept-map-save-as-dialog .bt-generate-fid').trigger('click');
         let fid = $('#input-fid').val();
         $('#input-fid').val(fid + parseInt(Math.random() * 100));
-      }
+      } else $('#input-fid').val('')
     })
   
     $('#concept-map-save-as-dialog').on('click', '.bt-generate-fid', (e) => { // console.log(e)
@@ -206,6 +240,7 @@ class CmapApp {
   
     $('#concept-map-save-as-dialog').on('submit', (e) => {
       e.preventDefault()
+      console.log($('#select-topic').val(), $('#select-topic').val().match(/^ *$/));
       let data = Object.assign({
         cmid: saveAsDialog.cmid ? saveAsDialog.cmid : null,
         cmfid: $('#input-fid').val().match(/^ *$/) ? null : $('#input-fid').val().trim().toUpperCase(),
@@ -265,7 +300,7 @@ class CmapApp {
   
       this.ajax.post(`kitBuildApi/getUserConceptMapListByTopic`, {
         username: this.user.username,
-        tid: openDialog.tid
+        tid: openDialog.tid == "" ? undefined : openDialog.tid
       }).then(cmaps => { // console.log(cmaps)
         let cmapsHtml = '';
         cmaps.forEach(cm => {
@@ -307,8 +342,10 @@ class CmapApp {
       this.ajax.get('kitBuildApi/getTopicList').then(topics => { // console.log(topics)
         let topicsHtml = '';
         topics.forEach(t => { // console.log(t);
-          topicsHtml += `<span class="topic list-item" data-tid="${t.tid}">`
-           + `${t.title}`
+          topicsHtml += `<span class="topic list-item align-items-center" data-tid="${t.tid}">`
+           + `<span class="d-flex align-items-center">${t.title}`
+           + (t.text ? `<span class="badge rounded-pill bg-success ms-2">Text</span>` : "")
+           + `</span>`
            + `<bi class="bi bi-check-lg text-primary d-none"></bi></span>`
         });
         $('#concept-map-open-dialog .list-topic').slideUp({
@@ -321,6 +358,69 @@ class CmapApp {
         })
       })
     })
+
+    $('#concept-map-open-dialog').on('click', '.bt-open-topic', (e) => {
+      e.preventDefault();
+      if (!openDialog.tid) {
+        UI.dialog('Please select a topic.').show();
+        return
+      }
+
+      this.ajax.get(`contentApi/getTopic/${openDialog.tid}`).then(topic => {
+        // console.log(topic);
+        this.setTopic(topic)
+        this.session.set('tid', openDialog.tid);
+        openDialog.hide();
+      })
+
+
+      // openPromise.push(new Promise((resolve, reject) => {
+      //   KitBuild.openConceptMap(openDialog.cmid).then(conceptMap => {
+      //     resolve(Object.assign(conceptMap, {
+      //       cyData: KitBuildUI.composeConceptMap(conceptMap)
+      //     }))
+      //   }).catch((error) => { reject(error) })
+      // }));
+      // } else { // #decode
+      //   openPromise.push(new Promise((resolve, reject) => {
+      //     try {
+      //       let data = $('#decode-textarea').val().trim();
+      //       let conceptMap = Core.decompress(data)
+      //       resolve(Object.assign(conceptMap, {
+      //         cyData: KitBuildUI.composeConceptMap(conceptMap)
+      //       }))
+      //     } catch (error) { reject(error) }
+      //   }))
+      // }
+      // if (openPromise.length) 
+      //   Promise.any(openPromise).then(conceptMap => { console.log(conceptMap)
+      //     let proceed = () => {
+      //       CmapApp.inst.setConceptMap(conceptMap)
+      //       this.canvas.cy.elements().remove()
+      //       this.canvas.cy.add(conceptMap.cyData)
+      //       this.canvas.applyElementStyle()
+      //       this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0});
+      //       this.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(conceptMap.map.direction)
+      //       this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
+      //       UI.success('Concept map loaded.').show()
+      //       openDialog.hide()
+      //       CmapApp.collab("command", "set-concept-map", conceptMap, conceptMap.cyData)
+      //     }
+      //     if (this.canvas.cy.elements().length) {
+      //       let confirm = UI.confirm('Do you want to open and replace current concept map on canvas?').positive(() => {            
+      //         confirm.hide()
+      //         proceed()
+      //       }).show()
+      //     } else proceed()
+  
+      //   }).catch(error => {
+      //     console.error(error.errors); 
+      //     UI.dialog("The concept map data is invalid.", {
+      //       icon: 'exclamation-triangle',
+      //       iconStyle: 'danger'
+      //     }).show()
+      //   })
+    });
   
     $('#concept-map-open-dialog').on('click', '.bt-open', (e) => {
       e.preventDefault()
@@ -422,6 +522,53 @@ class CmapApp {
       setTimeout(() => {
         $(e.currentTarget).html('<i class="bi bi-clipboard"></i> Copy to Clipboard')
       }, 3000)
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /** 
+     * Content
+     * */
+  
+    $('.app-navbar').on('click', '.bt-content', () => { // console.log(KitBuildApp.inst)
+      if (!CmapApp.topic) {
+        UI.dialog('Please open a topic to see its content.').show();
+        return;
+      }
+      if (!CmapApp.topic.text) {
+        UI.dialog('This topic does not have any content.').show();
+        return;
+      }
+      if (!contentDialog.text || contentDialog.text.tid != CmapApp.topic.text) 
+        this.ajax.get(`kitBuildApi/getTextOfTopic/${CmapApp.topic.text}`).then(text => {
+          this.setText(text);
+          this.session.set('txid', text.tid);
+          contentDialog.setContent(text).show()
+        })
+      else contentDialog.show();
+    })
+  
+    $('#kit-content-dialog .bt-scroll-top').on('click', (e) => {
+      $('#kit-content-dialog .content').parent().animate({scrollTop: 0}, 200)
+    })
+  
+    $('#kit-content-dialog .bt-scroll-more').on('click', (e) => {
+      let height = $('#kit-content-dialog .content').parent().height()
+      let scrollTop = $('#kit-content-dialog .content').parent().scrollTop()
+      $('#kit-content-dialog .content').parent().animate({scrollTop: scrollTop + height - 16}, 200)
     })
   
   
@@ -505,6 +652,24 @@ class CmapApp {
 
   }
   
+  setTopic(topic) {
+    CmapApp.topic = topic
+    let statusTopic = ''
+      + `<span class="status-topic d-flex align-items-center">`
+      + `  <span class="badge rounded-pill bg-primary ms-2">${topic.title}</span>`
+      + `</span>`
+    StatusBar.instance().remove('.status-topic').append(statusTopic)
+  }
+
+  setText(text) {
+    CmapApp.text = text
+    let statusText = ''
+      + `<span class="status-text d-flex align-items-center">`
+      + `  <span class="badge rounded-pill bg-success ms-2">${text.title}</span>`
+      + `</span>`
+    StatusBar.instance().remove('.status-text').append(statusText)
+  }
+
   handleRefresh() {
     let session = Core.instance().session()
     let stateData = JSON.parse(localStorage.getItem(CmapApp.name))
@@ -526,6 +691,10 @@ class CmapApp {
         this.canvas.cy.elements(':selected').unselect()
         
       })
+      let tid  = sessions.tid;
+      let txid = sessions.txid;
+      if (tid)  this.ajax.get(`contentApi/getTopic/${tid}`).then(topic => this.setTopic(topic));
+      if (txid) this.ajax.get(`kitBuildApi/getTextOfTopic/${txid}`).then(text => this.setText(text));
       try { 
         if (stateData.logger) {
           CmapApp.inst.logger = CmapLogger.instance(stateData.logger.username, stateData.logger.seq, stateData.logger.sessid, this.canvas).enable();

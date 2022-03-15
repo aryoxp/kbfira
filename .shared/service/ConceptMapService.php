@@ -311,6 +311,7 @@ class ConceptMapService extends CoreService {
       $db = self::instance();
       $qb = QB::instance('conceptmap cm');
       $qb->select(QB::raw('cm.*'), 't.title AS topictitle')
+        ->select(QB::raw('(SELECT COUNT(*) FROM kit k WHERE k.cmid = cm.cmid) AS nkit'))
         ->leftJoin('topic t', 'cm.topic', 't.tid')
         ->where('cmfid', 'LIKE', $keyword)
         ->where('cm.title', 'LIKE', $keyword, QB::OR)
@@ -328,7 +329,8 @@ class ConceptMapService extends CoreService {
       $keyword = "%" . QB::esc($keyword) . "%";
       $db = self::instance();
       $qb = QB::instance('conceptmap');
-      $qb->select(QB::raw('COUNT(*) AS `count`'))->where('cmfid', 'LIKE', $keyword)
+      $qb->select(QB::raw('COUNT(*) AS `count`'))
+        ->where('cmfid', 'LIKE', $keyword)
         ->where('title', 'LIKE', $keyword, QB::OR)
         ->where('author', 'LIKE', $keyword, QB::OR);
       $result = $db->getVar($qb->get());
@@ -385,6 +387,19 @@ class ConceptMapService extends CoreService {
         ->where('cmid', QB::esc($cmid));
       $result = $db->query($qb->get());
       return $result;
+    } catch (Exception $ex) {
+      throw CoreError::instance($ex->getMessage());
+    }
+  }
+
+  function deleteConceptMap($cmid) {
+    try {
+      $db = self::instance();
+      $qb = QB::instance('conceptmap')
+        ->delete()
+        ->where('cmid', QB::esc($cmid));
+      $result = $db->query($qb->get());
+      return $db->getAffectedRows();
     } catch (Exception $ex) {
       throw CoreError::instance($ex->getMessage());
     }

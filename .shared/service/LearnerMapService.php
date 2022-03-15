@@ -457,6 +457,18 @@ class LearnerMapService extends CoreService {
 
   }
 
+  function delete($lmid) {
+    try {
+      $db = self::instance();
+      $qb = QB::instance('learnermap')
+        ->delete()->where('lmid', $lmid);
+      $result = $db->query($qb->get());
+      return $db->getAffectedRows();
+    } catch (Exception $ex) {
+      throw CoreError::instance($ex->getMessage());
+    }
+  }
+
   function getLearnerMap($lmid) {
     try {
       $db = self::instance();
@@ -519,8 +531,11 @@ class LearnerMapService extends CoreService {
   function getLearnerMapListByKit($kid) { // var_dump($cmid);
     try {
       $db = self::instance();
-      $qb = QB::instance('learnermap');
-      $qb->select()->where('kid', QB::esc($kid));
+      $qb = QB::instance('learnermap l')
+        ->select(QB::raw('l.*'), 'u.name AS creator', 'k.name AS kit')
+        ->leftJoin('user u', 'u.username', 'l.author')
+        ->leftJoin('kit k', 'k.kid', 'l.kid');
+      $qb->where('l.kid', QB::esc($kid));
       return $db->query($qb->get());
     } catch (Exception $ex) {
       throw CoreError::instance($ex->getMessage());
@@ -573,6 +588,40 @@ class LearnerMapService extends CoreService {
         $learnerMaps[] = $this->getLearnerMap($lmid);
       }
       return $learnerMaps;
+    } catch (Exception $ex) {
+      throw CoreError::instance($ex->getMessage());
+    }
+  }
+
+  function searchLearnermaps($keyword, $page = 1, $perpage = 10) {
+    try {
+      $db = self::instance();
+      $qb = QB::instance('learnermap l')
+        ->select(QB::raw('l.*'), 'u.name AS creator', 'k.name AS kit')
+        ->leftJoin('user u', 'u.username', 'l.author')
+        ->leftJoin('kit k', 'k.kid', 'l.kid')
+        ->where('u.username', QB::LIKE, "%$keyword%")
+        ->where('u.name', QB::LIKE, "%$keyword%", QB::OR)
+        ->where('k.name', QB::LIKE, "%$keyword%", QB::OR)
+        ->orderBy('l.author')
+        ->orderBy('l.create_time', QB::DESC)
+        ->limit(($page-1)*$perpage, $perpage);
+      $learnerMaps = $db->query($qb->get());
+      return $learnerMaps;
+    } catch (Exception $ex) {
+      throw CoreError::instance($ex->getMessage());
+    }
+  }
+
+  function searchLearnermapsCount($keyword) {
+    try {
+      $db = self::instance();
+      $qb = QB::instance('learnermap l')
+        ->select(QB::raw('COUNT(*) AS count'))
+        ->where('u.username', QB::LIKE, "%$keyword%")
+        ->where('u.name', QB::LIKE, "%$keyword%", QB::OR)
+        ->where('k.name', QB::LIKE, "%$keyword%", QB::OR);
+      return $db->getVar($qb->get());
     } catch (Exception $ex) {
       throw CoreError::instance($ex->getMessage());
     }

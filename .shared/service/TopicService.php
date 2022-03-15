@@ -14,7 +14,7 @@ class TopicService extends CoreService {
       return "'" . QB::esc($v) . "'";
     };
     $db = self::instance();
-    $qb = QB::instance('topic t')->select()->distinct()
+    $qb = QB::instance('topic t')->select(QB::raw('t.*'))->distinct()
       ->leftJoin('grup_topic gt', 'gt.tid', 't.tid')
       ->where('gt.gid', QB::IN, QB::raw(QB::OG . implode(",", array_map($quote, $gids)) . QB::EG));
     return $db->query($qb->get());
@@ -55,6 +55,7 @@ class TopicService extends CoreService {
     $db = self::instance();
     $qb = QB::instance('topic t')->select(QB::raw('t.*'))
       ->select('x.title as texttitle')
+      ->select(QB::raw('(SELECT COUNT(*) FROM conceptmap cm WHERE cm.topic = t.tid) AS ncmap'))
       ->leftJoin('text x', 'x.tid', 't.text')
       ->where('t.title', 'LIKE', "%$keyword%")
       ->orderBy('t.created', QB::DESC)
@@ -65,9 +66,7 @@ class TopicService extends CoreService {
   function getTopicsCount($keyword = '') {
     $db = self::instance();
     $qb = QB::instance('topic t')->select(QB::raw('COUNT(*) AS count'))
-      ->leftJoin('text x', 'x.tid', 't.text')
-      ->where('t.title', 'LIKE', "%$keyword%")
-      ->orderBy('t.created', QB::DESC);
+      ->where('t.title', 'LIKE', "%$keyword%");
     return $db->getVar($qb->get());
   }
 

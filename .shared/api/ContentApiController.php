@@ -321,6 +321,17 @@ class ContentApiController extends CoreApi {
     }
   }
 
+  function deleteConceptMap() {
+    try {
+      $cmid = $this->postv('cmid');
+      $cmService = new ConceptMapService();
+      $result = $cmService->deleteConceptMap($cmid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
 
 
 
@@ -421,6 +432,68 @@ class ContentApiController extends CoreApi {
       $kitService = new KitMapService();
       $result = $kitService->deassignKitFromGroup($kid, $gid);
       CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+
+
+
+
+
+
+
+  /* Learnermap */
+
+  function deleteLearnermap() {
+    try {
+      $lmid = $this->postv('lmid');
+      $learnermapService = new LearnermapService();
+      $result = $learnermapService->delete($lmid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function getLearnermap($lmid = null) {
+    try {
+      $learnermapService = new LearnermapService();
+      $result = $learnermapService->getLearnermap($lmid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function getLearnermapsOfKit($kid) {
+    try {
+      $learnermapService = new LearnermapService();
+      $result = $learnermapService->getLearnerMapListByKit($kid);
+      CoreResult::instance($result)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function getLearnermaps($page = 1, $perpage = 10) {
+    try {
+      $keyword = $this->postv('keyword', '');
+      $learnermapService = new LearnermapService();
+      $learnermaps = $learnermapService->searchLearnermaps($keyword, $page, $perpage);
+      CoreResult::instance($learnermaps)->show();
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function getLearnermapsCount() {
+    try {
+      $keyword = $this->postv('keyword', '');
+      $learnermapService = new LearnermapService();
+      $count = $learnermapService->searchLearnermapsCount($keyword);
+      CoreResult::instance($count)->show();
     } catch (Exception $ex) {
       CoreError::instance($ex->getMessage())->show();
     }

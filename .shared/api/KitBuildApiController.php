@@ -265,6 +265,19 @@ class KitBuildApiController extends CoreApi {
         return;
       }
       $text = $textService->getTextOfKitConceptMapTopic($kid);
+      CoreResult::instance($text)->show();
+      return;
+    } catch (Exception $ex) {
+      CoreError::instance($ex->getMessage())->show();
+    }
+  }
+
+  function getTextOfTopic($tid) {
+    try {
+      $textService = new TextService();
+      $text = $textService->selectText($tid);
+      CoreResult::instance($text)->show();
+      return;
     } catch (Exception $ex) {
       CoreError::instance($ex->getMessage())->show();
     }
