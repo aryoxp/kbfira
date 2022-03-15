@@ -1,14 +1,14 @@
 class UserApp {
   constructor(options) {
     this.settings = Object.assign({}, options)
-    UserApp.handleEvent(this)
+    this.ajax = Core.instance().ajax();
+    this.handleEvent();
   }
   static instance(options) {
     return new UserApp(options)
   }
-  static handleEvent(app) { // console.log('handle')
+  handleEvent() { // console.log('handle')
 
-    this.ajax = Core.instance().ajax();
     this.pagination = {
       page: 1,
       maxpage: 1,
@@ -236,6 +236,7 @@ class UserApp {
       $('#list-user input.cb-user:checked').each((index, item) => {
         selectedUsernames.push($(item).attr('data-username'))
       })
+      this.selectedUsernames = selectedUsernames;
       if (selectedUsernames.length > 0) {
         let confirm = UI.confirm(`Delete selected ${selectedUsernames.length} users?<br>This action is <span class="text-danger">NOT UNDOABLE</span>.`, {
           icon: 'exclamation-triangle-fill',
@@ -262,6 +263,7 @@ class UserApp {
       $('#list-user input.cb-user:checked').each((index, item) => {
         selectedUsernames.push($(item).attr('data-username'))
       })
+      this.selectedUsernames = selectedUsernames;
       let role = $('#apply-rid option:selected').attr('data-name');
       let rid = $('#apply-rid').val()
       let data = {
@@ -287,7 +289,8 @@ class UserApp {
       let selectedUsernames = []
       $('#list-user input.cb-user:checked').each((index, item) => {
         selectedUsernames.push($(item).attr('data-username'))
-      })
+      });
+      this.selectedUsernames = selectedUsernames;
       let role = $('#apply-rid option:selected').attr('data-name');
       let rid = $('#apply-rid').val()
       let data = {
@@ -316,7 +319,8 @@ class UserApp {
       let selectedUsernames = []
       $('#list-user input.cb-user:checked').each((index, item) => {
         selectedUsernames.push($(item).attr('data-username'))
-      })
+      });
+      this.selectedUsernames = selectedUsernames;
       let group = $('#apply-gid option:selected').attr('data-name');
       let gid = $('#apply-gid').val()
       let data = {
@@ -339,10 +343,11 @@ class UserApp {
       } else UI.dialog('No users to apply to. Please select user(s) to apply group from search list.').show();
     })
     $('#multi-action-user').on('click', '.bt-revoke-group', (e) => {
-      let selectedUsernames = []
+      let selectedUsernames = [];
       $('#list-user input.cb-user:checked').each((index, item) => {
         selectedUsernames.push($(item).attr('data-username'))
-      })
+      });
+      this.selectedUsernames = selectedUsernames;
       let group = $('#apply-gid option:selected').attr('data-name');
       let gid = $('#apply-gid').val()
       let data = {
@@ -480,10 +485,12 @@ class UserApp {
 
 UserApp.populateUsers = users => {
   let usersHtml = '';
-  users.forEach(user => { // console.log(user)
+  let selected = UserApp.inst.selectedUsernames;
+  users.forEach(user => { 
+    let checked = selected && selected.includes(user.username) ? 'checked' : '';
     usersHtml += `<div class="user-item d-flex align-items-center py-1 border-bottom" role="button"`
     usersHtml += `  data-username="${user.username}" data-name="${user.name}">`
-    usersHtml += `  <input type="checkbox" class="cb-user ms-1" data-username="${user.username}">`
+    usersHtml += `  <input type="checkbox" class="cb-user ms-1" data-username="${user.username}" ${checked}>`
     usersHtml += `  <span class="flex-fill ps-2 user-truncate user-nowrap">`
     usersHtml += `  <span>${user.name}</span>`
     usersHtml += `  <span class="px-2 ms-2 badge rounded-pill bg-warning text-dark">${user.username}</span>`
@@ -589,5 +596,5 @@ UserApp.populateGroups = groups => {
 }
 
 $(() => {
-  let app = UserApp.instance()
+  UserApp.inst = UserApp.instance()
 })

@@ -81,11 +81,21 @@ class RecomposeApp {
       let status = `<span class="mx-2 d-flex align-items-center status-kit">`
         + `<span class="badge rounded-pill bg-primary" role="button" data-bs-toggle="tooltip" data-bs-placement="top" title="${tooltipText}">ID: ${kitMap.map.kid}</span>`
         + `<span class="text-secondary ms-2 text-truncate"><small>${kitMap.map.name}</small></span>`
-        + `</span>`
+        + `</span>`;
+      KitBuild.getTextOfKit(kitMap.map.kid).then(text => {
+        this.text = text;
+        let statusText = `<span class="mx-2 d-flex align-items-center status-text">`
+        statusText += `<span class="badge rounded-pill bg-warning text-dark">Text: ${text.title}</span>`;
+        statusText += `</span>`;
+        StatusBar.instance().remove('.status-text').append(statusText);
+      });
       StatusBar.instance().remove('.status-kit').append(status);
     } else {
-      StatusBar.instance().remove('.status-kit');
+      this.setConceptMap();
+      this.text = null;
       this.session.unset('kid')
+      StatusBar.instance().remove('.status-kit');
+      StatusBar.instance().remove('.status-text');
     }
     $('[data-bs-toggle="tooltip"]').tooltip({ html: true })
   }
@@ -156,10 +166,22 @@ class RecomposeApp {
       resizeHandle: '.resize-handle',
       minWidth: 375,
       minHeight: 200,
-      onShow: () => {}
+      onShow: () => {
+        let sdown = new showdown.Converter({
+          strikethrough: true,
+          tables: true,
+          simplifiedAutoLink: true
+        });
+        sdown.setFlavor('github');
+        let htmlText = contentDialog.text.content ? 
+          sdown.makeHtml(contentDialog.text.content) : 
+          "<em>Content text unavailable.</em>";
+        $('#kit-content-dialog .content').html(htmlText);
+        hljs.highlightAll();
+      }
     })
-    contentDialog.setContent = (content, type = 'plain') => {
-      contentDialog.content = content
+    contentDialog.setContent = (text, type = 'md') => {
+      contentDialog.text = text
       return contentDialog
     }
   
@@ -380,8 +402,11 @@ class RecomposeApp {
      * */
   
     $('.app-navbar').on('click', '.bt-content', () => { // console.log(RecomposeApp.inst)
-      if (!RecomposeApp.inst.kitMap) return
-      else contentDialog.setContent().show()
+      if (!RecomposeApp.inst.kitMap) {
+        UI.dialog('Please open a kit to see its content.').show();
+        return;
+      }
+      contentDialog.setContent(this.text).show()
     })
   
     $('#kit-content-dialog .bt-scroll-top').on('click', (e) => {
