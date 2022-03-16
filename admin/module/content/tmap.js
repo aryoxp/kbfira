@@ -327,23 +327,23 @@ class TeachermapApp {
       e.preventDefault();
       let cmid = $(e.currentTarget).parents('.item-cmap').attr('data-cmid');
       KitBuild.openConceptMap(cmid).then(cmap => {
-        let confirm = UI.confirm(`<span class="text-danger">DELETE</span> this concept map: <span class="text-primary">${cmap.map.title}</span>?<br>This action is <span class="text-danger">NOT UNDOABLE</span>.`, {
+        let confirmText = `<span class="text-danger">DELETE</span> `
+          + `this concept map: <span class="text-primary">${cmap.map.title}</span>?`
+          + `<br>This action is <span class="text-danger">NOT UNDOABLE</span>.`;
+        let confirm = UI.confirm(confirmText, {
           icon: 'exclamation-triangle-fill',
           iconStyle: 'danger'
-        })
-          .positive(() => {
-            this.ajax.post('contentApi/deleteConceptMap', {
-              cmid: cmid
-            }).then(success => {
-              if (success == 1) {
-                UI.success("Concept map has been deleted successfully").show();
-                $(e.currentTarget).parents('.item-cmap').slideUp('fast', () => {
-                  $(e.currentTarget).parents('.item-cmap').remove();
-                });
-                confirm.hide()
-              } else UI.error('Failed to delete concept map.').show()
-            }).catch(error => UI.error(error).show());
-          }).show();
+        }).positive(() => {
+          this.ajax.post('contentApi/deleteConceptMap', { cmid: cmid }).then(success => {
+            if (success == 1) {
+              UI.success("Concept map has been deleted successfully").show();
+              $(e.currentTarget).parents('.item-cmap').slideUp('fast', () => {
+                $(e.currentTarget).parents('.item-cmap').remove();
+              });
+              confirm.hide()
+            } else UI.error('Failed to delete concept map.').show()
+          }).catch(error => UI.error(error).show());
+        }).show();
       });
     });
 
@@ -414,28 +414,20 @@ class TeachermapApp {
     $('#list-topic').on('click', '.bt-show-cmap', (e) => {
       let cmid = $(e.currentTarget).parents('.item-cmap').attr('data-cmid');
       KitBuild.openConceptMap(cmid).then(conceptMap => { // console.log(conceptMap)
-        let proceed = () => {
-          let cyData = KitBuildUI.composeConceptMap(conceptMap)
-          this.canvas.cy.elements().remove()
-          this.canvas.cy.add(cyData)
-          this.canvas.applyElementStyle()
-          this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0});
-          this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
-          UI.success('Concept map loaded.').show()
-        }
-        proceed();
-      }).catch(error => {
-        console.error(error); 
+        let cyData = KitBuildUI.composeConceptMap(conceptMap)
+        this.canvas.cy.elements().remove();
+        this.canvas.cy.add(cyData);
+        this.canvas.applyElementStyle();
+        this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0});
+        this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
+        UI.success('Concept map loaded.').show();
+      }).catch(error => { console.error(error); 
         UI.dialog("The concept map data is invalid.", {
           icon: 'exclamation-triangle',
           iconStyle: 'danger'
-        }).show()
+        }).show();
       })
     })
-
-
-
-
   }
 }
 

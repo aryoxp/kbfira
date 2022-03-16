@@ -248,45 +248,19 @@ TopicApp.populateTopics = topics => {
   $('#list-topic').html(topicsHtml)
 }
 
-TopicApp.populatePagination = (count, page, perpage) => {
-  let paginationHtml = ''
-  let maxpage = Math.ceil(count/perpage); // console.log(count, page, maxpage)
-  if (count) {
-    paginationHtml += `<li class="page-item${page == 1 ? ' disabled': ''}">`
-    paginationHtml += `  <a class="page-link pagination-prev" href="#" tabindex="-1" aria-disabled="true">Previous</a>`
-    paginationHtml += `</li>`
-
-    let min = page - 2 < 1 ? 1 : page - 2
-    let max = page + 2 > maxpage ? maxpage : page + 2
-
-    for(let p = min; p <= max; p++) {
-      paginationHtml += `<li class="page-item${page == p ? ' disabled': ''}"><a class="page-link pagination-page" data-page="${p}" href="#">${p}</a></li>`
-    }
-
-    // paginationHtml += `<li class="page-item"><a class="page-link" href="#">2</a></li>`
-    // paginationHtml += `<li class="page-item"><a class="page-link" href="#">3</a></li>`
-    paginationHtml += `<li class="page-item${page == maxpage ? ' disabled': ''}">`
-    paginationHtml += `  <a class="page-link pagination-next" href="#">Next</a>`
-    paginationHtml += `</li>`
-  }
-  $('#pagination-topic').html(paginationHtml)
-}
-
 TopicApp.populateTopicDetail = topic => {
   let topicDetailHtml = '';
-
 
   topicDetailHtml += `<span class="topic-title h4 text-primary">${topic.title}</span>`
   topicDetailHtml += `<div class="align-middle"><span class="badge rounded-pill bg-warning text-dark px-3">${topic.tid}</span>`
   topicDetailHtml += ` <span class="badge rounded-pill bg-secondary mx-1 px-3">${topic.created}</span></div>`
   topicDetailHtml += `<hr>`
-  topicDetailHtml += `<span class="d-block"><span class="text-primary">3 concept maps</span> were associated to this topic.</span>`
-  topicDetailHtml += `<span class="d-block">This topic has text: <span class="text-primary">This is the title of the text.</span></span>`
+  // topicDetailHtml += `<span class="d-block"><span class="text-primary">3 concept maps</span> were associated to this topic.</span>`
+  // topicDetailHtml += `<span class="d-block">This topic has text: <span class="text-primary">This is the title of the text.</span></span>`
   topicDetailHtml += `<div class="mt-4">Attached data: <span class="badge rounded-pill bg-primary mx-2" role="button">Attach</span></div>`
   topicDetailHtml += `<div class="border rounded p-2 my-2 bg-light">`
   topicDetailHtml += `  <code>${topic.data ? topic.data : 'This topic has no attached data.'}</code>`
   topicDetailHtml += `</div>`
-
 
   $('#detail-topic').html(topicDetailHtml)
 }

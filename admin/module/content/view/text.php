@@ -10,12 +10,14 @@
         <div class="input-group mb-3">
           <input type="text" name="keyword" class="form-control w-50 input-keyword" placeholder="Search keyword" aria-label="Keyword">
           <select name="perpage" class="form-select flex-shrink-1 input-perpage">
+            <option value="1">1</option>
+            <option value="5" selected>5</option>
             <option value="10">10</option>
             <option value="25">25</option>
             <option value="50">50</option>
             <option value="100">100</option>
           </select>
-          <span class="btn btn-secondary bt-search"><i class="bi bi-search"></i></span>
+          <button class="btn btn-secondary bt-search"><i class="bi bi-search"></i></button>
         </div>
       </form>
       <div class="px-2">
@@ -27,9 +29,7 @@
           <div id="list-text"></div>
         </div>
       </div>
-      <nav aria-label="" class="mt-3">
-        <ul id="pagination-text" class="pagination justify-content-center"></ul>
-      </nav>
+      <ul aria-label="" class="mt-3" id="pagination-text"></ul>
     </div>    
   </div>
   <div class="col-6">

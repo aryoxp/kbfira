@@ -1153,6 +1153,11 @@ class KitBuildUI {
       || !learnerMapData.links || !learnerMapData.linktargets)
       throw "Invalid kit data.";
     try {
+      let cids = new Set();
+      let lids = new Set();
+      for(let c of learnerMapData.conceptMap.concepts) cids.add(c.cid);
+      for(let l of learnerMapData.conceptMap.links) lids.add(l.lid);
+
       let kitMap = []
       let getConceptPosition = (cid) => {
         for(let c of learnerMapData.concepts) {
@@ -1210,7 +1215,8 @@ class KitBuildUI {
       })
       if (learnerMapData.concepts_ext) {
         learnerMapData.concepts_ext.forEach(c => {
-          let position = getConceptPosition(c.cid)
+          let position = getConceptPosition(c.cid);
+          cids.add(c.cid);
           kitMap.push({
             group: 'nodes',
             position: position === false ? {x: parseInt(c.x), y: parseInt(c.y)} : position,
@@ -1237,10 +1243,10 @@ class KitBuildUI {
           invalid: position === false ? true : undefined
         })
       });
-
       if (learnerMapData.links_ext) {
         learnerMapData.links_ext.forEach(l => {
-          let position = getLinkPosition(l.lid)
+          let position = getLinkPosition(l.lid);
+          lids.add(l.lid);
           kitMap.push({
             group: 'nodes',
             position: position === false ? {x: parseInt(l.x), y: parseInt(l.y)} : position,
@@ -1258,6 +1264,7 @@ class KitBuildUI {
       learnerMapData.conceptMap.links.forEach(l => {
         let link = getLink(l.lid)
         if (link && link.source_cid) {
+          if (lids.has(link.lid) && cids.has(link.source_cid))
           kitMap.push({
             group: 'edges',
             data: Object.assign(link.source_data ? JSON.parse(link.source_data) : {}, { 
@@ -1272,6 +1279,7 @@ class KitBuildUI {
         learnerMapData.links_ext.forEach(l => {
           let link = getLink(l.lid)
           if (link && link.source_cid) {
+            if (lids.has(link.lid) && cids.has(link.source_cid))
             kitMap.push({
               group: 'edges',
               data: Object.assign(link.source_data ? JSON.parse(link.source_data) : {}, { 
@@ -1284,6 +1292,7 @@ class KitBuildUI {
       }
 
       learnerMapData.linktargets.forEach(lt => {
+        if (lids.has(lt.lid) && cids.has(lt.target_cid))
         kitMap.push({
           group: 'edges',
           data: Object.assign(JSON.parse(lt.target_data), { 
@@ -1295,6 +1304,7 @@ class KitBuildUI {
 
       if (learnerMapData.linktargets_ext) {
         learnerMapData.linktargets_ext.forEach(lt => {
+          if (lids.has(lt.lid) && cids.has(lt.target_cid))
           kitMap.push({
             group: 'edges',
             data: Object.assign(JSON.parse(lt.target_data), { 

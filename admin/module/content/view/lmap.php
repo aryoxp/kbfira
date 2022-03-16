@@ -78,24 +78,29 @@
   <div id="tabs-concept-map" class="row gx-0 flex-fill p-2 pt-0 d-flex flex-column">
     <div style="min-height:0">
       <div class="nav nav-tabs" id="nav-tab-maps" role="tablist">
-        <button class="nav-link active" id="nav-cmap-tab" data-bs-toggle="tab" data-bs-target="#nav-cmap" type="button" role="tab" aria-controls="nav-home" aria-selected="true">Teacher Map</button>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown" data-bs-auto-close="outside" href="#" role="button" aria-expanded="false" id="tab-kit">Kit</a>
-          <div class="dropdown-menu list-kit">
+        <li class="nav-link d-flex align-items-center active" id="nav-cmap-tab" data-bs-toggle="tab" data-bs-target="#nav-cmap" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
+          <span>Teacher Map</span>
+          <span class="badge rounded-pill bg-primary ms-2 bt-detail" role="button">Detail</span>
+        </li>
+        <span class="dropdown">
+          <a class="nav-link dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown" data-bs-auto-close="outside" href="#" role="button" aria-expanded="false" id="tab-kit">
+            Kit <span class="badge rounded-pill bg-success ms-2">0</span>
+          </a>
+          <div class="dropdown-menu list-kit scroll-y" style="max-height:250px;">
             <small class="text-muted px-3 text-nowrap text-truncate"><em>Select and view a teacher map...</em></small>
           </div>
-        </li>
-        <button class="nav-link" id="nav-kit-tab" data-bs-toggle="tab" data-bs-target="#nav-kit" type="button" role="tab" aria-controls="nav-kit" aria-selected="false">Kit Map</button>
+        </span>
+        <!-- <li class="nav-item dropdown">
+          <!-- <a class="nav-link dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown" data-bs-auto-close="outside" href="#" role="button" aria-expanded="false" id="tab-kit">Kit</a>
+          <div class="dropdown-menu list-kit scroll-y" style="max-height:250px;">
+            <small class="text-muted px-3 text-nowrap text-truncate"><em>Select and view a teacher map...</em></small>
+          </div> -->
+        <!-- </li> -->
+        <button class="nav-link d-flex align-items-center" id="nav-kit-tab" data-bs-toggle="tab" data-bs-target="#nav-kit" type="button" role="tab" aria-controls="nav-kit" aria-selected="false">Kit Map</button>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown" data-bs-auto-close="outside" href="#" role="button" aria-expanded="false" id="tab-lmap">Learner Map</a>
-          <div class="dropdown-menu">
-            <form class="px-3 ps-0">
-              <select class="list-lmap form-select form-select-sm mx-2"></select>
-              <div class="text-end mt-1">
-                <span class="badge rounded-pill bg-danger ms-2 bt-delete-lmap" role="button">Delete</span>
-              </div>
-            </form>
-            <!-- <small class="text-muted px-3 text-nowrap text-truncate"><em>Select and view a kit...</em></small> -->
+          <div class="dropdown-menu px-2">
+            <div class="list-lmap scroll-y" style="max-height: 250px; min-width: 200px;"></div>
           </div>
         </li>
         <button class="nav-link d-flex align-items-center" id="nav-lmap-tab" data-bs-toggle="tab" data-bs-target="#nav-lmap" type="button" role="tab" aria-controls="nav-lmap" aria-selected="false">Learner Map</button>

@@ -39,18 +39,21 @@
           </div>
         </div>
       </div>
+      <div class="row mb-1 align-items-center border-bottom">
+        <div class="form-check form-switch col-sm-9 m-3">
+          <input class="form-check-input" type="checkbox" role="switch" id="input-type" checked>
+          <label class="form-check-label" for="input-type">Teacher Map</label>
+        </div>
+      </div>
       <div class="row my-2"><small class="col-sm-12 text-center text-secondary fst-italic"><strong class="fs-bold text-primary">optionally</strong> associate with a topic:</small></div>
       <div class="row mb-1 align-items-center">
         <!-- <label for="select-topic" class="col-sm-3 col-form-label">Topic (Optional)</label> -->
         <div class="col-sm-12">
           <div class="input-group input-group-sm">
-            <select class="form-select form-control-sm" id="select-topic" name="topic">
+            <select class="form-select form-control-sm" id="select-topic" name="topic" disabled>
               <option value="" selected>No topic associated</option>
-              <!-- <option value="1">One</option>
-              <option value="2">Two</option>
-              <option value="3">Three</option> -->
             </select>
-            <button class="btn btn-secondary bt-new-topic-form bt-sm"><i class="bi bi-plus-lg"></i></button>
+            <button class="btn btn-secondary bt-new-topic-form bt-sm" disabled><i class="bi bi-plus-lg"></i></button>
           </div>
         </div>
       </div>
@@ -59,9 +62,6 @@
         <div class="col-sm-12">
           <select class="form-select form-select-sm" id="select-text" name="text" disabled>
             <option value="" selected>No text associated</option>
-            <!-- <option value="1">One</option>
-            <option value="2">Two</option>
-            <option value="3">Three</option> -->
           </select>
         </div>
       </div>

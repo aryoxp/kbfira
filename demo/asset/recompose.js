@@ -14,9 +14,9 @@ class KitBuildApp {
 
     canvas.addCanvasTool(KitBuildCanvasTool.CENTROID)
     
-    this.canvas = canvas
-
-    this.session = Core.instance().session()
+    this.canvas = canvas;
+    this.ajax = Core.instance().ajax();
+    this.session = Core.instance().session();
     // Hack for sidebar-panel show/hide
     // To auto-resize the canvas.
     // AA
@@ -39,12 +39,14 @@ class KitBuildApp {
         this.logger.onCanvasEvent.bind(this.logger)
       canvas.on("event", KitBuildApp.loggerListener)
     }
+
+    this.handleEvent();
+    this.handleRefresh();
   }
 
   static instance() {
     KitBuildApp.inst = new KitBuildApp()
-    KitBuildApp.handleEvent(KitBuildApp.inst.kbui)
-    KitBuildApp.handleRefresh(KitBuildApp.inst.kbui)
+    return KitBuildApp.inst;
   }
 
   setConceptMap(conceptMap) { console.warn("CONCEPT MAP SET:", conceptMap)
@@ -105,754 +107,736 @@ class KitBuildApp {
       this.session.unset('lmid')
     }
   }
-}
 
-KitBuildApp.canvasId = "recompose-canvas"
-
-KitBuildApp.handleEvent = (kbui) => {
-
-  let canvas = kbui.canvases.get(KitBuildApp.canvasId)
-  let ajax = Core.instance().ajax()
-  let session = Core.instance().session()
-
-  this.canvas = canvas
-  this.ajax = ajax
-  this.session = session
-
-  let saveAsDialog = UI.modal('#kit-save-as-dialog', {
-    onShow: () => { 
-      if (saveAsDialog.kitMap) { // means save existing kit...
-        $('#kit-save-as-dialog .input-title').val(saveAsDialog.kitMap.map.name)
-        $('#kit-save-as-dialog .input-title').focus().select()
-        $('#input-fid').val(saveAsDialog.kitMap.map.kfid)
-        $('#input-title').val(saveAsDialog.kitMap.map.name)
-        $(`#input-layout-${saveAsDialog.kitMap.map.layout}`).prop('checked', true)
-        $('#input-enabled').prop('checked', saveAsDialog.kitMap.map.enabled == "1" ? true : false)
-      } else {
-        $('#kit-save-as-dialog .input-title').val('Kit of ' + KitBuildApp.inst.conceptMap.map.title)
-        $('#kit-save-as-dialog .input-title').focus().select()
-        $('#kit-save-as-dialog .bt-generate-fid').trigger('click')
-        $('#input-layout-preset').prop('checked', true)
-        $('#input-enabled').prop('checked', true)
-      }
-    },
-    hideElement: '.bt-cancel'
-  })
-  saveAsDialog.setKitMap = (kitMap) => { // console.log(kitMap)
-    if (kitMap) saveAsDialog.kitMap = kitMap
-    else saveAsDialog.kitMap = null
-    return saveAsDialog;
-  }
-  saveAsDialog.setTitle = (title) => {
-    $('#kit-save-as-dialog .dialog-title').html(title)
-    return saveAsDialog
-  }
-  saveAsDialog.setIcon = (icon) => {
-    $('#kit-save-as-dialog .dialog-icon').removeClass()
-      .addClass(`dialog-icon bi bi-${icon} me-2`)
-    return saveAsDialog
-  }
-
-  let openDialog = UI.modal('#concept-map-open-dialog', {
-    hideElement: '.bt-cancel',
-    width: '700px',
-  })
-
-  let contentDialog = UI.modal('#kit-content-dialog', {
-    hideElement: '.bt-close',
-    backdrop: false,
-    get height() { return $('body').height() * .7 | 0 },
-    get offset() { return { left: ($('body').width() * .1 | 0) } },
-    draggable: true,
-    dragHandle: '.drag-handle',
-    resizable: true,
-    resizeHandle: '.resize-handle',
-    minWidth: 375,
-    minHeight: 200,
-    onShow: () => {}
-  })
-  contentDialog.setContent = (content, type = 'plain') => {
-    contentDialog.content = content
-    return contentDialog
-  }
-
-  let feedbackDialog = UI.modal('#feedback-dialog', {
-    hideElement: '.bt-close',
-    backdrop: false,
-    draggable: true,
-    dragHandle: '.drag-handle',
-    width: 375,
-    onShow: () => {
-      $('#feedback-dialog').off('click').on('click', '.bt-modify', (e) => {
-        $('.app-navbar .bt-clear-feedback').trigger('click')
-        feedbackDialog.hide()
-      })
-    }
-  })
-  feedbackDialog.setCompare = (compare, level = Analyzer.MATCH | Analyzer.EXCESS) => {
-    feedbackDialog.compare = compare
-    console.log(compare, level)
-    let content = ''
-    if (compare.match.length && (level & Analyzer.MATCH)) {
-      content += `<div class="d-flex align-items-center"><i class="bi bi-check-circle-fill text-success fs-1 mx-3"></i> `
-      content += `<span>You have <strong class="text-success fs-bold">${compare.match.length} matching</strong> propositions.</span></div>`
-    }
-    if (compare.excess.length && (level & Analyzer.EXCESS)) {
-      content += `<div class="d-flex align-items-center"><i class="bi bi-exclamation-triangle-fill text-primary fs-1 mx-3"></i> `
-      content += `<span>You have <strong class="text-primary fs-bold">${compare.excess.length} excessive</strong> propositions.</span></div>`
-    }
-    if (compare.miss.length && level != Analyzer.NONE) {
-      content += `<div class="d-flex align-items-center"><i class="bi bi-exclamation-triangle-fill text-danger fs-1 mx-3"></i> `
-      content += `<span>You have <strong class="text-danger fs-bold">${compare.miss.length} missing</strong> propositions.</span></div>`
-    }
-
-    if (compare.excess.length == 0 && compare.miss.length == 0) {
-      content = `<div class="d-flex align-items-center"><i class="bi bi-check-circle-fill text-success fs-1 mx-3"></i> `
-      content += `<span><span class="text-success">Great!</span><br>All the propositions are <strong class="text-success fs-bold">matching</strong>.</span></div>`
-    }
-
-    $('#feedback-dialog .feedback-content').html(content)
-    return feedbackDialog
-  }
-
-
-
-
-
-
-
-
-
-  /** 
-   * Open or Create New Kit
-   * */
-
-  $('.app-navbar').on('click', '.bt-open-kit', () => {
-    if (feedbackDialog.learnerMapEdgesData) 
-      $('.app-navbar .bt-clear-feedback').trigger('click')
-    let tid = openDialog.tid;
-    if (!tid) $('#concept-map-open-dialog .list-topic .list-item.default').trigger('click');
-    else $(`#concept-map-open-dialog .list-topic .list-item[data-tid="${tid}"]`).trigger('click');
-    $('#concept-map-open-dialog .bt-refresh-topic-list').trigger('click');
-    openDialog.show()
-  })
-
-  $('#concept-map-open-dialog .list-topic').on('click', '.list-item', (e) => {
-    if (openDialog.tid != $(e.currentTarget).attr('data-tid')) // different concept map?
-      openDialog.cmid = null; // reset selected concept map id.
-    openDialog.tid = $(e.currentTarget).attr('data-tid');
-    $('#concept-map-open-dialog .list-topic .bi-check-lg').addClass('d-none');
-    $('#concept-map-open-dialog .list-topic .list-item').removeClass('active');
-    $(e.currentTarget).find('.bi-check-lg').removeClass('d-none');
-    $(e.currentTarget).addClass('active');
-
-    this.ajax.get(`kitBuildApi/getConceptMapListByTopic/${openDialog.tid}`).then(cmaps => { console.log(cmaps)
-      let cmapsHtml = '';
-      cmaps.forEach(cm => {
-        cmapsHtml += `<span class="concept-map list-item" data-cmid="${cm.cmid}" data-cmfid="${cm.cmfid}">`
-          + `<span class="text-truncate">${cm.title}</span>`
-          + `<bi class="bi bi-check-lg text-primary d-none"></bi></span>`
-      })
-      $('#concept-map-open-dialog .list-concept-map').slideUp({
-        duration: 100,
-        complete: () => {
-          $('#concept-map-open-dialog .list-concept-map')
-            .html(cmapsHtml).slideDown({
-              duration: 100,
-              complete: () => {
-                if(openDialog.cmid) {
-                  $(`#concept-map-open-dialog .list-concept-map .list-item[data-cmid="${openDialog.cmid}"]`)
-                    .trigger('click')[0]
-                    .scrollIntoView({
-                      behavior: "smooth",
-                      block: "center"
-                    });
-                } else $('#concept-map-open-dialog .list-concept-map').scrollTop(0)
-              }
-            })
-        }
-      })
-    })
-  })
-
-  $('#concept-map-open-dialog .list-concept-map').on('click', '.list-item', (e) => {
-    if (openDialog.cmid != $(e.currentTarget).attr('data-cmid')) // different concept map?
-      openDialog.kid = null; // reset selected kit id.
-    openDialog.cmid = $(e.currentTarget).attr('data-cmid');
-    $('#concept-map-open-dialog .list-concept-map .bi-check-lg').addClass('d-none');
-    $('#concept-map-open-dialog .list-concept-map .list-item').removeClass('active');
-    $(e.currentTarget).find('.bi-check-lg').removeClass('d-none');
-    $(e.currentTarget).addClass('active');
-
-    this.ajax.get(`kitBuildApi/getKitListByConceptMap/${openDialog.cmid}`).then(kits => { // console.log(kits)
-      let kitsHtml = '';
-      kits.forEach(k => {
-        kitsHtml += `<span class="kit list-item" data-kid="${k.kid}" data-kfid="${k.kfid}">`
-          + `<span class="text-truncate">${k.name}</span>`
-          + `<bi class="bi bi-check-lg text-primary d-none"></bi></span>`
-      })
-      $('#concept-map-open-dialog .list-kit').slideUp({
-        duration: 100,
-        complete: () => {
-          $('#concept-map-open-dialog .list-kit')
-            .html(kitsHtml).slideDown({
-              duration: 100,
-              complete: () => {
-                let item = $(`#concept-map-open-dialog .list-kit .list-item[data-kid="${openDialog.kid}"]`)
-                if(openDialog.kid && item.length) {
-                  item.trigger('click')[0]
-                    .scrollIntoView({
-                      behavior: "smooth",
-                      block: "center"
-                    });
-                } else $('#concept-map-open-dialog .list-kit').scrollTop(0)
-              }
-            })
-        }
-      })
-    })
-  })
-
-  $('#concept-map-open-dialog .list-kit').on('click', '.list-item', (e) => {
-    openDialog.kid = $(e.currentTarget).attr('data-kid');
-    $('#concept-map-open-dialog .list-kit .bi-check-lg').addClass('d-none');
-    $('#concept-map-open-dialog .list-kit .list-item').removeClass('active');
-    $(e.currentTarget).find('.bi-check-lg').removeClass('d-none');
-    $(e.currentTarget).addClass('active');
-  })
-  
-  $('#concept-map-open-dialog .bt-refresh-topic-list').on('click', () => {
-    console.log(KitBuildApp.inst.user, this);
-    if (!KitBuildApp.inst || !KitBuildApp.inst.user || !KitBuildApp.inst.user.groups) return;
-    this.ajax.post(`kitBuildApi/getTopicListOfGroups`, {
-      gids: KitBuildApp.inst.user.groups.split(",")
-    }).then(topics => { // console.log(topics)
-      let topicsHtml = '';
-      topics.forEach(t => { // console.log(t);
-        topicsHtml += `<span class="topic list-item" data-tid="${t.tid}">`
-         + `<span>${t.title}</span>`
-         + `<bi class="bi bi-check-lg text-primary d-none"></bi></span>`
-      });
-      $('#concept-map-open-dialog .list-topic').slideUp({
-        duration: 100,
-        complete: () => {
-          $('#concept-map-open-dialog .list-topic .list-item').not('.default').remove()
-          $('#concept-map-open-dialog .list-topic').append(topicsHtml).slideDown(100)
-          $(`#concept-map-open-dialog .list-topic .list-item[data-tid="${openDialog.tid}"]`).trigger('click')
-        }
-      })
-    })
-  })
-
-  $('#concept-map-open-dialog').on('click', '.bt-open', (e) => {
-    e.preventDefault()
-    if (!openDialog.kid) {
-      UI.dialog('Please select a concept map and a kit.').show();
-      return
-    }
-    KitBuild.openKitMap(openDialog.kid).then(kitMap => {
-      try {
-        KitBuildApp.parseKitMapOptions(kitMap)
-        let proceed = () => {
-          KitBuildApp.inst.setKitMap(kitMap)
-          KitBuildApp.inst.setLearnerMap()
-          KitBuildApp.resetMapToKit(kitMap, this.canvas).then(() => {
-            let cyData = this.canvas.cy.elements().jsons();
-            KitBuildApp.collab("command", "set-kit-map", kitMap, cyData)
-          })
-          openDialog.hide()
-        }
-        if (this.canvas.cy.elements().length) {
-          let confirm = UI.confirm("Open the kit replacing the current kit on Canvas?").positive(() => {
-            confirm.hide()
-            proceed()
-          }).show()
-          return
-        }
-        proceed()
-
-        // TODO: update logger state
-
-      } catch (error) { console.error(error)
-        UI.error("Unable to open selected kit.").show(); 
-      }
-    }).catch((error) => { console.error(error)
-      UI.error("Unable to open selected kit.").show(); 
-    })
-  });
-
-
-
-
-
-
-
-
-
-
-
-  /** 
-   * Content
-   * */
-
-  $('.app-navbar').on('click', '.bt-content', () => { // console.log(KitBuildApp.inst)
-    if (!KitBuildApp.inst.kitMap) return
-    else contentDialog.setContent().show()
-  })
-
-  $('#kit-content-dialog .bt-scroll-top').on('click', (e) => {
-    $('#kit-content-dialog .content').parent().animate({scrollTop: 0}, 200)
-  })
-
-  $('#kit-content-dialog .bt-scroll-more').on('click', (e) => {
-    let height = $('#kit-content-dialog .content').parent().height()
-    let scrollTop = $('#kit-content-dialog .content').parent().scrollTop()
-    $('#kit-content-dialog .content').parent().animate({scrollTop: scrollTop + height - 16}, 200)
-  })
-
-
-
-
-
-
-
-
-
-
-
-
-  /** 
-   * Save Load Learner Map
-   * */
-
-  $('.app-navbar').on('click', '.bt-save', () => { // console.log(KitBuildApp.inst)
-    let learnerMap = KitBuildApp.inst.learnerMap
-    let kitMap = KitBuildApp.inst.kitMap
-    if (!kitMap) {
-      UI.warning('Please open a kit.').show()
-      return
-    }
-    if (feedbackDialog.learnerMapEdgesData) 
-      $('.app-navbar .bt-clear-feedback').trigger('click')
-    // console.log(learnerMap)
-    let data = Object.assign({
-      lmid: learnerMap ? learnerMap.map.lmid : null,
-      kid: kitMap.map.kid,
-      author: KitBuildApp.inst.user ? KitBuildApp.inst.user.username : null,
-      type: 'draft',
-      cmid: kitMap.map.cmid,
-      create_time: null,
-      data: null,
-    }, KitBuildUI.buildConceptMapData(this.canvas)); // console.log(data); // return
-    this.ajax.post("kitBuildApi/saveLearnerMap", { data: Core.compress(data) })
-      .then(learnerMap => { // console.log(kitMap);
-        KitBuildApp.inst.setLearnerMap(learnerMap);
-        UI.success("Concept map has been saved successfully.").show(); 
-      })
-      .catch(error => { UI.error(error).show(); })
-  })
-
-  $('.app-navbar').on('click', '.bt-load', () => {
-    let kitMap = KitBuildApp.inst.kitMap
-    if (!kitMap) {
-      UI.warning('Please open a kit.').show()
-      return
-    }
-    if (feedbackDialog.learnerMapEdgesData) 
-      $('.app-navbar .bt-clear-feedback').trigger('click')
+  handleEvent() {
     
-    let data = {
-      kid: kitMap.map.kid,
-      username: KitBuildApp.inst.user.username
+    let saveAsDialog = UI.modal('#kit-save-as-dialog', {
+      onShow: () => { 
+        if (saveAsDialog.kitMap) { // means save existing kit...
+          $('#kit-save-as-dialog .input-title').val(saveAsDialog.kitMap.map.name)
+          $('#kit-save-as-dialog .input-title').focus().select()
+          $('#input-fid').val(saveAsDialog.kitMap.map.kfid)
+          $('#input-title').val(saveAsDialog.kitMap.map.name)
+          $(`#input-layout-${saveAsDialog.kitMap.map.layout}`).prop('checked', true)
+          $('#input-enabled').prop('checked', saveAsDialog.kitMap.map.enabled == "1" ? true : false)
+        } else {
+          $('#kit-save-as-dialog .input-title').val('Kit of ' + KitBuildApp.inst.conceptMap.map.title)
+          $('#kit-save-as-dialog .input-title').focus().select()
+          $('#kit-save-as-dialog .bt-generate-fid').trigger('click')
+          $('#input-layout-preset').prop('checked', true)
+          $('#input-enabled').prop('checked', true)
+        }
+      },
+      hideElement: '.bt-cancel'
+    })
+    saveAsDialog.setKitMap = (kitMap) => { // console.log(kitMap)
+      if (kitMap) saveAsDialog.kitMap = kitMap
+      else saveAsDialog.kitMap = null
+      return saveAsDialog;
     }
-    if (!data.username) delete data.username
-    console.log(data);
-    this.ajax.post('kitBuildApi/getLastDraftLearnerMapOfUser', data).then(learnerMap => { console.log(learnerMap)
-      if (!learnerMap) {
-        UI.warning("No user saved map data for this kit.").show()
+    saveAsDialog.setTitle = (title) => {
+      $('#kit-save-as-dialog .dialog-title').html(title)
+      return saveAsDialog
+    }
+    saveAsDialog.setIcon = (icon) => {
+      $('#kit-save-as-dialog .dialog-icon').removeClass()
+        .addClass(`dialog-icon bi bi-${icon} me-2`)
+      return saveAsDialog
+    }
+  
+    let openDialog = UI.modal('#concept-map-open-dialog', {
+      hideElement: '.bt-cancel',
+      width: '700px',
+    })
+  
+    let contentDialog = UI.modal('#kit-content-dialog', {
+      hideElement: '.bt-close',
+      backdrop: false,
+      get height() { return $('body').height() * .7 | 0 },
+      get offset() { return { left: ($('body').width() * .1 | 0) } },
+      draggable: true,
+      dragHandle: '.drag-handle',
+      resizable: true,
+      resizeHandle: '.resize-handle',
+      minWidth: 375,
+      minHeight: 200,
+      onShow: () => {}
+    })
+    contentDialog.setContent = (content, type = 'plain') => {
+      contentDialog.content = content
+      return contentDialog
+    }
+  
+    let feedbackDialog = UI.modal('#feedback-dialog', {
+      hideElement: '.bt-close',
+      backdrop: false,
+      draggable: true,
+      dragHandle: '.drag-handle',
+      width: 375,
+      onShow: () => {
+        $('#feedback-dialog').off('click').on('click', '.bt-modify', (e) => {
+          $('.app-navbar .bt-clear-feedback').trigger('click')
+          feedbackDialog.hide()
+        })
+      }
+    })
+    feedbackDialog.setCompare = (compare, level = Analyzer.MATCH | Analyzer.EXCESS) => {
+      feedbackDialog.compare = compare
+      console.log(compare, level)
+      let content = ''
+      if (compare.match.length && (level & Analyzer.MATCH)) {
+        content += `<div class="d-flex align-items-center"><i class="bi bi-check-circle-fill text-success fs-1 mx-3"></i> `
+        content += `<span>You have <strong class="text-success fs-bold">${compare.match.length} matching</strong> propositions.</span></div>`
+      }
+      if (compare.excess.length && (level & Analyzer.EXCESS)) {
+        content += `<div class="d-flex align-items-center"><i class="bi bi-exclamation-triangle-fill text-primary fs-1 mx-3"></i> `
+        content += `<span>You have <strong class="text-primary fs-bold">${compare.excess.length} excessive</strong> propositions.</span></div>`
+      }
+      if (compare.miss.length && level != Analyzer.NONE) {
+        content += `<div class="d-flex align-items-center"><i class="bi bi-exclamation-triangle-fill text-danger fs-1 mx-3"></i> `
+        content += `<span>You have <strong class="text-danger fs-bold">${compare.miss.length} missing</strong> propositions.</span></div>`
+      }
+  
+      if (compare.excess.length == 0 && compare.miss.length == 0) {
+        content = `<div class="d-flex align-items-center"><i class="bi bi-check-circle-fill text-success fs-1 mx-3"></i> `
+        content += `<span><span class="text-success">Great!</span><br>All the propositions are <strong class="text-success fs-bold">matching</strong>.</span></div>`
+      }
+  
+      $('#feedback-dialog .feedback-content').html(content)
+      return feedbackDialog
+    }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    /** 
+     * Open or Create New Kit
+     * */
+  
+    $('.app-navbar').on('click', '.bt-open-kit', () => {
+      if (feedbackDialog.learnerMapEdgesData) 
+        $('.app-navbar .bt-clear-feedback').trigger('click')
+      let tid = openDialog.tid;
+      if (!tid) $('#concept-map-open-dialog .list-topic .list-item.default').trigger('click');
+      else $(`#concept-map-open-dialog .list-topic .list-item[data-tid="${tid}"]`).trigger('click');
+      $('#concept-map-open-dialog .bt-refresh-topic-list').trigger('click');
+      openDialog.show()
+    })
+  
+    $('#concept-map-open-dialog .list-topic').on('click', '.list-item', (e) => {
+      if (openDialog.tid != $(e.currentTarget).attr('data-tid')) // different concept map?
+        openDialog.cmid = null; // reset selected concept map id.
+      openDialog.tid = $(e.currentTarget).attr('data-tid');
+      $('#concept-map-open-dialog .list-topic .bi-check-lg').addClass('d-none');
+      $('#concept-map-open-dialog .list-topic .list-item').removeClass('active');
+      $(e.currentTarget).find('.bi-check-lg').removeClass('d-none');
+      $(e.currentTarget).addClass('active');
+  
+      this.ajax.get(`kitBuildApi/getConceptMapListByTopic/${openDialog.tid}`).then(cmaps => { console.log(cmaps)
+        let cmapsHtml = '';
+        cmaps.forEach(cm => {
+          cmapsHtml += `<span class="concept-map list-item" data-cmid="${cm.cmid}" data-cmfid="${cm.cmfid}">`
+            + `<span class="text-truncate">${cm.title}</span>`
+            + `<bi class="bi bi-check-lg text-primary d-none"></bi></span>`
+        })
+        $('#concept-map-open-dialog .list-concept-map').slideUp({
+          duration: 100,
+          complete: () => {
+            $('#concept-map-open-dialog .list-concept-map')
+              .html(cmapsHtml).slideDown({
+                duration: 100,
+                complete: () => {
+                  if(openDialog.cmid) {
+                    $(`#concept-map-open-dialog .list-concept-map .list-item[data-cmid="${openDialog.cmid}"]`)
+                      .trigger('click')[0]
+                      .scrollIntoView({
+                        behavior: "smooth",
+                        block: "center"
+                      });
+                  } else $('#concept-map-open-dialog .list-concept-map').scrollTop(0)
+                }
+              })
+          }
+        })
+      })
+    })
+  
+    $('#concept-map-open-dialog .list-concept-map').on('click', '.list-item', (e) => {
+      if (openDialog.cmid != $(e.currentTarget).attr('data-cmid')) // different concept map?
+        openDialog.kid = null; // reset selected kit id.
+      openDialog.cmid = $(e.currentTarget).attr('data-cmid');
+      $('#concept-map-open-dialog .list-concept-map .bi-check-lg').addClass('d-none');
+      $('#concept-map-open-dialog .list-concept-map .list-item').removeClass('active');
+      $(e.currentTarget).find('.bi-check-lg').removeClass('d-none');
+      $(e.currentTarget).addClass('active');
+  
+      this.ajax.get(`kitBuildApi/getKitListByConceptMap/${openDialog.cmid}`).then(kits => { // console.log(kits)
+        let kitsHtml = '';
+        kits.forEach(k => {
+          kitsHtml += `<span class="kit list-item" data-kid="${k.kid}" data-kfid="${k.kfid}">`
+            + `<span class="text-truncate">${k.name}</span>`
+            + `<bi class="bi bi-check-lg text-primary d-none"></bi></span>`
+        })
+        $('#concept-map-open-dialog .list-kit').slideUp({
+          duration: 100,
+          complete: () => {
+            $('#concept-map-open-dialog .list-kit')
+              .html(kitsHtml).slideDown({
+                duration: 100,
+                complete: () => {
+                  let item = $(`#concept-map-open-dialog .list-kit .list-item[data-kid="${openDialog.kid}"]`)
+                  if(openDialog.kid && item.length) {
+                    item.trigger('click')[0]
+                      .scrollIntoView({
+                        behavior: "smooth",
+                        block: "center"
+                      });
+                  } else $('#concept-map-open-dialog .list-kit').scrollTop(0)
+                }
+              })
+          }
+        })
+      })
+    })
+  
+    $('#concept-map-open-dialog .list-kit').on('click', '.list-item', (e) => {
+      openDialog.kid = $(e.currentTarget).attr('data-kid');
+      $('#concept-map-open-dialog .list-kit .bi-check-lg').addClass('d-none');
+      $('#concept-map-open-dialog .list-kit .list-item').removeClass('active');
+      $(e.currentTarget).find('.bi-check-lg').removeClass('d-none');
+      $(e.currentTarget).addClass('active');
+    })
+    
+    $('#concept-map-open-dialog .bt-refresh-topic-list').on('click', () => {
+      console.log(KitBuildApp.inst.user, this);
+      if (!KitBuildApp.inst || !KitBuildApp.inst.user || !KitBuildApp.inst.user.groups) return;
+      this.ajax.post(`kitBuildApi/getTopicListOfGroups`, {
+        gids: KitBuildApp.inst.user.groups.split(",")
+      }).then(topics => { // console.log(topics)
+        let topicsHtml = '';
+        topics.forEach(t => { // console.log(t);
+          topicsHtml += `<span class="topic list-item" data-tid="${t.tid}">`
+           + `<span>${t.title}</span>`
+           + `<bi class="bi bi-check-lg text-primary d-none"></bi></span>`
+        });
+        $('#concept-map-open-dialog .list-topic').slideUp({
+          duration: 100,
+          complete: () => {
+            $('#concept-map-open-dialog .list-topic .list-item').not('.default').remove()
+            $('#concept-map-open-dialog .list-topic').append(topicsHtml).slideDown(100)
+            $(`#concept-map-open-dialog .list-topic .list-item[data-tid="${openDialog.tid}"]`).trigger('click')
+          }
+        })
+      })
+    })
+  
+    $('#concept-map-open-dialog').on('click', '.bt-open', (e) => {
+      e.preventDefault()
+      if (!openDialog.kid) {
+        UI.dialog('Please select a concept map and a kit.').show();
         return
       }
-      if (canvas.cy.elements().length) {
-        let confirm = UI.confirm("Load saved concept map?")
-          .positive(() => {
-            learnerMap.kitMap = kitMap;
-            learnerMap.conceptMap = kitMap.conceptMap;
-            canvas.cy.elements().remove()
-            canvas.cy.add(KitBuildUI.composeLearnerMap(learnerMap))
-            canvas.applyElementStyle()
-            canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0}).then(() => {
-              KitBuildApp.collab("command", "set-kit-map", kitMap, 
-                canvas.cy.elements().jsons())
-            })
-            KitBuildApp.inst.setLearnerMap(learnerMap);
-            
-            UI.info("Concept map loaded.").show()
-            confirm.hide()
-          }).show()
-          return
-      }
-      KitBuildApp.openLearnerMap(learnerMap.map.lmid, this.canvas);
-    }).catch(error => {
-      console.error(error)
-      UI.error("Unable to load saved concept map.").show()
-    })
-  })
-  
-
-
-
-
-  
-
-
-  /**
-   * Reset concept map to kit 
-   * */
-
-  $('.app-navbar').on('click', '.bt-reset', e => {
-    if (!KitBuildApp.inst.kitMap) {
-      UI.info('Please open a kit.')
-      return
-    }
-    if (feedbackDialog.learnerMapEdgesData) 
-      $('.app-navbar .bt-clear-feedback').trigger('click')
-
-    let confirm = UI.confirm('Do you want to reset this concept map as defined in the kit?').positive(() => {
-      KitBuild.openKitMap(KitBuildApp.inst.kitMap.map.kid)
-        .then(kitMap => {
+      KitBuild.openKitMap(openDialog.kid).then(kitMap => {
+        try {
           KitBuildApp.parseKitMapOptions(kitMap)
-          KitBuildApp.resetMapToKit(kitMap, this.canvas).then(() => {
-            KitBuildApp.collab("command", "set-kit-map", kitMap, 
-              this.canvas.cy.elements().jsons())
-          })
-          let undoRedo = this.canvas.toolbar.tools.get(KitBuildToolbar.UNDO_REDO)
-          if (undoRedo) undoRedo.clearStacks().updateStacksStateButton()
-          confirm.hide()
-          UI.info('Concept map has been reset.').show()
-          return
+          let proceed = () => {
+            KitBuildApp.inst.setKitMap(kitMap)
+            KitBuildApp.inst.setLearnerMap()
+            KitBuildApp.resetMapToKit(kitMap, this.canvas).then(() => {
+              let cyData = this.canvas.cy.elements().jsons();
+              KitBuildApp.collab("command", "set-kit-map", kitMap, cyData)
+            })
+            openDialog.hide()
+          }
+          if (this.canvas.cy.elements().length) {
+            let confirm = UI.confirm("Open the kit replacing the current kit on Canvas?").positive(() => {
+              confirm.hide()
+              proceed()
+            }).show()
+            return
+          }
+          proceed()
+  
+          // TODO: update logger state
+  
+        } catch (error) { console.error(error)
+          UI.error("Unable to open selected kit.").show(); 
+        }
+      }).catch((error) => { console.error(error)
+        UI.error("Unable to open selected kit.").show(); 
       })
-    }).show()
-  })
-
-
-
-
-
-
-
-
-
-
-
-  /**
-   * 
-   * Feedback
-   */
-  $('.app-navbar').on('click', '.bt-feedback', () => {
-
-    if (!KitBuildApp.inst.kitMap) return
-    if (feedbackDialog.learnerMapEdgesData) 
-      $('.app-navbar .bt-clear-feedback').trigger('click')
-
-    let learnerMapData = KitBuildUI.buildConceptMapData(this.canvas)
-    feedbackDialog.learnerMapEdgesData = this.canvas.cy.edges().jsons()
-
-    let feedbacksave = KitBuildApp.inst.kitMap.parsedOptions.feedbacksave
-    if (feedbacksave) {
+    });
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    /** 
+     * Content
+     * */
+  
+    $('.app-navbar').on('click', '.bt-content', () => { // console.log(KitBuildApp.inst)
+      if (!KitBuildApp.inst.kitMap) return
+      else contentDialog.setContent().show()
+    })
+  
+    $('#kit-content-dialog .bt-scroll-top').on('click', (e) => {
+      $('#kit-content-dialog .content').parent().animate({scrollTop: 0}, 200)
+    })
+  
+    $('#kit-content-dialog .bt-scroll-more').on('click', (e) => {
+      let height = $('#kit-content-dialog .content').parent().height()
+      let scrollTop = $('#kit-content-dialog .content').parent().scrollTop()
+      $('#kit-content-dialog .content').parent().animate({scrollTop: scrollTop + height - 16}, 200)
+    })
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    /** 
+     * Save Load Learner Map
+     * */
+  
+    $('.app-navbar').on('click', '.bt-save', () => { // console.log(KitBuildApp.inst)
+      let learnerMap = KitBuildApp.inst.learnerMap
       let kitMap = KitBuildApp.inst.kitMap
+      if (!kitMap) {
+        UI.warning('Please open a kit.').show()
+        return
+      }
+      if (feedbackDialog.learnerMapEdgesData) 
+        $('.app-navbar .bt-clear-feedback').trigger('click')
+      // console.log(learnerMap)
       let data = Object.assign({
-        lmid: null, // so it will insert new rather than update
+        lmid: learnerMap ? learnerMap.map.lmid : null,
         kid: kitMap.map.kid,
-        author: this.user ? this.user.username : null,
-        type: 'feedback',
+        author: KitBuildApp.inst.user ? KitBuildApp.inst.user.username : null,
+        type: 'draft',
         cmid: kitMap.map.cmid,
         create_time: null,
         data: null,
-      }, learnerMapData); console.log(data); // return
+      }, KitBuildUI.buildConceptMapData(this.canvas)); // console.log(data); // return
       this.ajax.post("kitBuildApi/saveLearnerMap", { data: Core.compress(data) })
-        .then(learnerMap => {
-          console.warn("Concept map save-on-feedback has been saved successfully.");
-        }).catch(error => { console.error(error); })
-    }
-
-    learnerMapData.conceptMap = KitBuildApp.inst.conceptMap
-    Analyzer.composePropositions(learnerMapData)
-    let direction = learnerMapData.conceptMap.map.direction
-    let feedbacklevel = KitBuildApp.inst.kitMap.parsedOptions.feedbacklevel
-    let compare = Analyzer.compare(learnerMapData, direction)
-    let level = Analyzer.NONE
-    let dialogLevel = Analyzer.NONE;
-    switch(feedbacklevel) {
-      case 0: 
-      case 1: level = Analyzer.NONE; break;
-      case 2: level = Analyzer.MATCH | Analyzer.EXCESS; break;
-      case 3: level = Analyzer.MATCH | Analyzer.EXCESS | Analyzer.EXPECT; break;
-      case 4: level = Analyzer.MATCH | Analyzer.EXCESS | Analyzer.MISS; break
-    }
-    switch(feedbacklevel) {
-      case 0: dialogLevel = Analyzer.NONE; break;
-      case 1:
-      case 2:
-      case 3:
-      case 4: dialogLevel = Analyzer.MATCH | Analyzer.EXCESS; break;
-    }
-
-    Analyzer.showCompareMap(compare, this.canvas.cy, direction, level)
-    this.canvas.canvasTool.enableIndicator(false).enableConnector(false)
-      .clearCanvas().clearIndicatorCanvas()
-    console.log(compare, level)
-    feedbackDialog.setCompare(compare, dialogLevel).show()
-
+        .then(learnerMap => { // console.log(kitMap);
+          KitBuildApp.inst.setLearnerMap(learnerMap);
+          UI.success("Concept map has been saved successfully.").show(); 
+        })
+        .catch(error => { UI.error(error).show(); })
+    })
+  
+    $('.app-navbar').on('click', '.bt-load', () => {
+      let kitMap = KitBuildApp.inst.kitMap
+      if (!kitMap) {
+        UI.warning('Please open a kit.').show()
+        return
+      }
+      if (feedbackDialog.learnerMapEdgesData) 
+        $('.app-navbar .bt-clear-feedback').trigger('click')
+      
+      let data = {
+        kid: kitMap.map.kid,
+        username: KitBuildApp.inst.user.username
+      }
+      if (!data.username) delete data.username
+      console.log(data);
+      this.ajax.post('kitBuildApi/getLastDraftLearnerMapOfUser', data).then(learnerMap => { console.log(learnerMap)
+        if (!learnerMap) {
+          UI.warning("No user saved map data for this kit.").show()
+          return
+        }
+        if (this.canvas.cy.elements().length) {
+          let confirm = UI.confirm("Load saved concept map?")
+            .positive(() => {
+              learnerMap.kitMap = kitMap;
+              learnerMap.conceptMap = kitMap.conceptMap;
+              this.canvas.cy.elements().remove()
+              this.canvas.cy.add(KitBuildUI.composeLearnerMap(learnerMap))
+              this.canvas.applyElementStyle()
+              this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0}).then(() => {
+                KitBuildApp.collab("command", "set-kit-map", kitMap, 
+                  this.canvas.cy.elements().jsons())
+              })
+              KitBuildApp.inst.setLearnerMap(learnerMap);
+              
+              UI.info("Concept map loaded.").show()
+              confirm.hide()
+            }).show()
+            return
+        }
+        KitBuildApp.openLearnerMap(learnerMap.map.lmid, this.canvas);
+      }).catch(error => {
+        console.error(error)
+        UI.error("Unable to load saved concept map.").show()
+      })
+    })
     
-  })
-  $('.app-navbar').on('click', '.bt-clear-feedback', () => {
-    if (!feedbackDialog.learnerMapEdgesData) return
-    this.canvas.cy.edges().remove()
-    this.canvas.cy.add(feedbackDialog.learnerMapEdgesData)
-    this.canvas.applyElementStyle()
-    this.canvas.canvasTool.enableIndicator().enableConnector()
-      .clearCanvas().clearIndicatorCanvas()
-    feedbackDialog.learnerMapEdgesData = null
-  })
-
-
-
-
-
-
-
-
-
-
-
-
-
-  /** 
-   * 
-   * Submit
-  */
-  $('.app-navbar').on('click', '.bt-submit', () => {
-    if (feedbackDialog.learnerMapEdgesData) 
-      $('.app-navbar .bt-clear-feedback').trigger('click')
-
-    let learnerMapData = KitBuildUI.buildConceptMapData(this.canvas)
-    let confirm = UI.confirm("Do you want to submit your concept map?<br/>This will end your concept map recomposition session.")
-      .positive(() => {
+  
+  
+  
+  
+    
+  
+  
+    /**
+     * Reset concept map to kit 
+     * */
+  
+    $('.app-navbar').on('click', '.bt-reset', e => {
+      if (!KitBuildApp.inst.kitMap) {
+        UI.info('Please open a kit.')
+        return
+      }
+      if (feedbackDialog.learnerMapEdgesData) 
+        $('.app-navbar .bt-clear-feedback').trigger('click')
+  
+      let confirm = UI.confirm('Do you want to reset this concept map as defined in the kit?').positive(() => {
+        KitBuild.openKitMap(KitBuildApp.inst.kitMap.map.kid)
+          .then(kitMap => {
+            KitBuildApp.parseKitMapOptions(kitMap)
+            KitBuildApp.resetMapToKit(kitMap, this.canvas).then(() => {
+              KitBuildApp.collab("command", "set-kit-map", kitMap, 
+                this.canvas.cy.elements().jsons())
+            })
+            let undoRedo = this.canvas.toolbar.tools.get(KitBuildToolbar.UNDO_REDO)
+            if (undoRedo) undoRedo.clearStacks().updateStacksStateButton()
+            confirm.hide()
+            UI.info('Concept map has been reset.').show()
+            return
+        })
+      }).show()
+    })
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    /**
+     * 
+     * Feedback
+     */
+    $('.app-navbar').on('click', '.bt-feedback', () => {
+  
+      if (!KitBuildApp.inst.kitMap) return
+      if (feedbackDialog.learnerMapEdgesData) 
+        $('.app-navbar .bt-clear-feedback').trigger('click')
+  
+      let learnerMapData = KitBuildUI.buildConceptMapData(this.canvas)
+      feedbackDialog.learnerMapEdgesData = this.canvas.cy.edges().jsons()
+  
+      let feedbacksave = KitBuildApp.inst.kitMap.parsedOptions.feedbacksave
+      if (feedbacksave) {
         let kitMap = KitBuildApp.inst.kitMap
         let data = Object.assign({
           lmid: null, // so it will insert new rather than update
           kid: kitMap.map.kid,
-          author: KitBuildApp.inst.user ? KitBuildApp.inst.user.username : null,
-          type: 'fix',
+          author: this.user ? this.user.username : null,
+          type: 'feedback',
           cmid: kitMap.map.cmid,
           create_time: null,
           data: null,
         }, learnerMapData); console.log(data); // return
-        confirm.hide()
-        
         this.ajax.post("kitBuildApi/saveLearnerMap", { data: Core.compress(data) })
           .then(learnerMap => {
-            
-            // TODO: check if kit allow review to show full comparison?
-            // TODO: set session of submitted learner map for review
-            Core.instance().session().set('flmid', learnerMap.map.lmid).then((result) => {
-              UI.success("Concept map has been submitted.").show();
-              setTimeout(() => {
-                // TODO: and then change state to full feedback if set in kit options
-                let baseurl = Core.instance().config().get('baseurl')
-                window.location.href = baseurl + "review";
-              }, 3000)
-            }).catch(() => {
-              UI.error('Unable to proceed to review.').show()
-            });
-
-              
+            console.warn("Concept map save-on-feedback has been saved successfully.");
           }).catch(error => { console.error(error); })
-
-      }).show()
-  })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  /** 
-   * 
-   * Logout
-  */
-  $('.app-navbar .bt-logout').on('click', (e) => {
-    let confirm = UI.confirm('Do you want to logout?<br>This will <strong class="text-danger">END</strong> your concept mapping session.').positive(() => {
-      Core.instance().session().unset('user').then(() => {
-        KitBuildApp.inst.setKitMap(null);
-        KitBuildApp.inst.setLearnerMap(null);
-        KitBuildCollab.enableControl(false);
-        KitBuildApp.enableNavbarButton(false);
-        KitBuildApp.updateSignInOutButton();
-        StatusBar.instance().remove('.status-user');
-        if (KitBuildApp.collabInst) KitBuildApp.collabInst.disconnect();
-        this.canvas.cy.elements().remove();
-        this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
-        this.canvas.toolbar.tools.get(KitBuildToolbar.UNDO_REDO).clearStacks().updateStacksStateButton();
-        UI.success("You have signed out.").show();
-
-        confirm.hide()
-      });
-      // TODO: redirect to home/login page
-    }).show()
-  })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  /** 
-   * 
-   * Sign In
-  */
-  $('.app-navbar .bt-sign-in').on('click', (e) => {
-    KitBuildApp.inst.modalRegister = UI.modal('#register-dialog', {
-      width: 350,
-      onShow: () => {}
+      }
+  
+      learnerMapData.conceptMap = KitBuildApp.inst.conceptMap
+      Analyzer.composePropositions(learnerMapData)
+      let direction = learnerMapData.conceptMap.map.direction
+      let feedbacklevel = KitBuildApp.inst.kitMap.parsedOptions.feedbacklevel
+      let compare = Analyzer.compare(learnerMapData, direction)
+      let level = Analyzer.NONE
+      let dialogLevel = Analyzer.NONE;
+      switch(feedbacklevel) {
+        case 0: 
+        case 1: level = Analyzer.NONE; break;
+        case 2: level = Analyzer.MATCH | Analyzer.EXCESS; break;
+        case 3: level = Analyzer.MATCH | Analyzer.EXCESS | Analyzer.EXPECT; break;
+        case 4: level = Analyzer.MATCH | Analyzer.EXCESS | Analyzer.MISS; break
+      }
+      switch(feedbacklevel) {
+        case 0: dialogLevel = Analyzer.NONE; break;
+        case 1:
+        case 2:
+        case 3:
+        case 4: dialogLevel = Analyzer.MATCH | Analyzer.EXCESS; break;
+      }
+  
+      Analyzer.showCompareMap(compare, this.canvas.cy, direction, level)
+      this.canvas.canvasTool.enableIndicator(false).enableConnector(false)
+        .clearCanvas().clearIndicatorCanvas()
+      console.log(compare, level)
+      feedbackDialog.setCompare(compare, dialogLevel).show()
+  
+      
     })
-    KitBuildApp.inst.modalRegister.show()
-  })
-
-  $('#register-dialog').on('click', '.bt-register', (e) => {
-    e.preventDefault()
-    let name = $('#input-name').val();
-    let username = 'demo-' + Math.random().toString(36).slice(2);
-    let password = null;
-    let rid = 'DEMO-STUDENT';
-    let gid = 'DEMO';
-
-    if (name.trim().length == 0) {
-      UI.dialog('Please provide a name.', {
-        icon: 'exclamation-triangle-fill',
-        iconStyle: 'warning'
-      }).show();
-    }
-
-    console.log(name, username, password, rid, gid);
-
-    KitBuildRBAC.register(name, username, password, rid, gid).then(user => { console.log(user)
-      if (typeof user == 'object' && user) {
-        Core.instance().session().set('user', user).then(() => {
+    $('.app-navbar').on('click', '.bt-clear-feedback', () => {
+      if (!feedbackDialog.learnerMapEdgesData) return
+      this.canvas.cy.edges().remove()
+      this.canvas.cy.add(feedbackDialog.learnerMapEdgesData)
+      this.canvas.applyElementStyle()
+      this.canvas.canvasTool.enableIndicator().enableConnector()
+        .clearCanvas().clearIndicatorCanvas()
+      feedbackDialog.learnerMapEdgesData = null
+    })
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    /** 
+     * 
+     * Submit
+    */
+    $('.app-navbar').on('click', '.bt-submit', () => {
+      if (feedbackDialog.learnerMapEdgesData) 
+        $('.app-navbar .bt-clear-feedback').trigger('click')
+  
+      let learnerMapData = KitBuildUI.buildConceptMapData(this.canvas)
+      let confirm = UI.confirm("Do you want to submit your concept map?<br/>This will end your concept map recomposition session.")
+        .positive(() => {
+          let kitMap = KitBuildApp.inst.kitMap
+          let data = Object.assign({
+            lmid: null, // so it will insert new rather than update
+            kid: kitMap.map.kid,
+            author: KitBuildApp.inst.user ? KitBuildApp.inst.user.username : null,
+            type: 'fix',
+            cmid: kitMap.map.cmid,
+            create_time: null,
+            data: null,
+          }, learnerMapData); console.log(data); // return
+          confirm.hide()
+          
+          this.ajax.post("kitBuildApi/saveLearnerMap", { data: Core.compress(data) })
+            .then(learnerMap => {
+              
+              // TODO: check if kit allow review to show full comparison?
+              // TODO: set session of submitted learner map for review
+              this.session.set('flmid', learnerMap.map.lmid).then((result) => {
+                UI.success("Concept map has been submitted.").show();
+                setTimeout(() => {
+                  // TODO: and then change state to full feedback if set in kit options
+                  let baseurl = Core.instance().config().get('baseurl')
+                  window.location.href = baseurl + "review";
+                }, 3000)
+              }).catch(() => {
+                UI.error('Unable to proceed to review.').show()
+              });
+  
+                
+            }).catch(error => { console.error(error); })
+  
+        }).show()
+    })
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    /** 
+     * 
+     * Logout
+    */
+    $('.app-navbar .bt-logout').on('click', (e) => {
+      let confirm = UI.confirm('Do you want to logout?<br>This will <strong class="text-danger">END</strong> your concept mapping session.').positive(() => {
+        this.session.unset('user').then(() => {
+          KitBuildApp.inst.setKitMap(null);
+          KitBuildApp.inst.setLearnerMap(null);
+          KitBuildCollab.enableControl(false);
+          KitBuildApp.enableNavbarButton(false);
           KitBuildApp.updateSignInOutButton();
-          KitBuildApp.enableNavbarButton();
-          KitBuildApp.initCollab(user);
-        })
-        KitBuildApp.inst.modalRegister.hide()
-        KitBuildApp.inst.user = user;
-
+          StatusBar.instance().remove('.status-user');
+          if (KitBuildApp.collabInst) KitBuildApp.collabInst.disconnect();
+          this.canvas.cy.elements().remove();
+          this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
+          this.canvas.toolbar.tools.get(KitBuildToolbar.UNDO_REDO).clearStacks().updateStacksStateButton();
+          UI.success("You have signed out.").show();
+  
+          confirm.hide()
+        });
+        // TODO: redirect to home/login page
+      }).show()
+    })
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    /** 
+     * 
+     * Sign In
+    */
+    $('.app-navbar .bt-sign-in').on('click', (e) => {
+      KitBuildApp.inst.modalRegister = UI.modal('#register-dialog', {
+        width: 350,
+        onShow: () => {}
+      })
+      KitBuildApp.inst.modalRegister.show()
+    })
+  
+    $('#register-dialog').on('click', '.bt-register', (e) => {
+      e.preventDefault()
+      let name = $('#input-name').val();
+      let username = 'demo-' + Math.random().toString(36).slice(2);
+      let password = null;
+      let rid = 'DEMO-STUDENT';
+      let gid = 'DEMO';
+  
+      if (name.trim().length == 0) {
+        UI.dialog('Please provide a name.', {
+          icon: 'exclamation-triangle-fill',
+          iconStyle: 'warning'
+        }).show();
+      }
+  
+      console.log(name, username, password, rid, gid);
+  
+      KitBuildRBAC.register(name, username, password, rid, gid).then(user => { // console.log(user)
+        if (typeof user == 'object' && user) {
+          this.session.set('user', user).then(() => {
+            KitBuildApp.updateSignInOutButton();
+            KitBuildApp.enableNavbarButton();
+            KitBuildApp.initCollab(user);
+          })
+          KitBuildApp.inst.modalRegister.hide()
+          KitBuildApp.inst.user = user;
+  
+          let status = `<span class="mx-2 d-flex align-items-center status-user">`
+          + `<small class="text-dark fw-bold">${user.name}</small>`
+          + `</span>`
+          StatusBar.instance().remove('.status-user').prepend(status);
+        } else UI.error(`Error: ${user}`).show();
+      }).catch(error => UI.error(`Error: ${error}`).show());
+    })
+  
+  }
+  
+  /**
+   * 
+   * Handle refresh web browser
+   */
+  
+  handleRefresh() {
+    let stateData = JSON.parse(localStorage.getItem(KitBuildApp.name))
+    // console.warn("RESTORE STATE:", stateData)
+    this.session.getAll().then(sessions => { // console.log(sessions)
+      let kid  = sessions.kid
+      let lmid = sessions.lmid
+      let promises = []
+      if (kid) promises.push(KitBuild.openKitMap(kid))
+      if (lmid) promises.push(KitBuild.openLearnerMap(lmid))
+      Promise.all(promises).then(maps => {
+        let kitMap = maps[0]
+        let learnerMap = maps[1]
+        KitBuildApp.parseKitMapOptions(kitMap)
+        if (kitMap && !learnerMap) KitBuildApp.resetMapToKit(kitMap, this.canvas)
+        if (kitMap) {
+          try {
+            if (stateData && stateData.logger) {
+              // reinstantiate and enable logger
+              KitBuildApp.inst.logger = 
+              KitBuildLogger.instance(stateData.logger.username, stateData.logger.seq, stateData.logger.sessid, this.canvas, kitMap.conceptMap).enable();
+              // reattach logger
+              if (KitBuildApp.loggerListener)
+                this.canvas.off("event", KitBuildApp.loggerListener)
+              KitBuildApp.loggerListener = KitBuildApp.inst.logger.onCanvasEvent.bind(KitBuildApp.inst.logger)
+              this.canvas.on("event", KitBuildApp.loggerListener)
+            }
+          } catch (error) { console.warn(error) }
+        }
+        if (learnerMap) {
+          KitBuildApp.inst.setKitMap(kitMap)
+          KitBuildApp.inst.setLearnerMap(learnerMap)
+          learnerMap.kitMap = kitMap
+          learnerMap.conceptMap = kitMap.conceptMap
+          this.canvas.cy.elements().remove()
+          this.canvas.cy.add(KitBuildUI.composeLearnerMap(learnerMap))
+          this.canvas.applyElementStyle()
+          this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
+        } // else UI.warning('Unable to display kit.').show()
+      })
+  
+      KitBuildApp.enableNavbarButton(false)
+      if (sessions.user) {
+        KitBuildApp.initCollab(sessions.user)
+        KitBuildApp.enableNavbarButton()
+        KitBuildCollab.enableControl()
+  
         let status = `<span class="mx-2 d-flex align-items-center status-user">`
-        + `<small class="text-dark fw-bold">${user.name}</small>`
+        + `<small class="text-dark fw-bold">${sessions.user.name}</small>`
         + `</span>`
         StatusBar.instance().remove('.status-user').prepend(status);
-      } else UI.error(`Error: ${user}`).show();
-    }).catch(error => UI.error(`Error: ${error}`).show());
-  })
-
-}
-
-
-
-
-
-
-
-
-
-/**
- * 
- * Handle refresh web browser
- */
-
-KitBuildApp.handleRefresh = (kbui) => {
-  let session = Core.instance().session()
-  let canvas  = kbui.canvases.get(KitBuildApp.canvasId)
-  let stateData = JSON.parse(localStorage.getItem(KitBuildApp.name))
-  // console.warn("RESTORE STATE:", stateData)
-  session.getAll().then(sessions => { // console.log(sessions)
-    let kid  = sessions.kid
-    let lmid = sessions.lmid
-    let promises = []
-    if (kid) promises.push(KitBuild.openKitMap(kid))
-    if (lmid) promises.push(KitBuild.openLearnerMap(lmid))
-    Promise.all(promises).then(maps => {
-      let kitMap = maps[0]
-      let learnerMap = maps[1]
-      KitBuildApp.parseKitMapOptions(kitMap)
-      if (kitMap && !learnerMap) KitBuildApp.resetMapToKit(kitMap, canvas)
-      if (kitMap) {
-        try {
-          if (stateData && stateData.logger) {
-            // reinstantiate and enable logger
-            KitBuildApp.inst.logger = 
-            KitBuildLogger.instance(stateData.logger.username, stateData.logger.seq, stateData.logger.sessid, canvas, kitMap.conceptMap).enable();
-            // reattach logger
-            if (KitBuildApp.loggerListener)
-              canvas.off("event", KitBuildApp.loggerListener)
-            KitBuildApp.loggerListener = KitBuildApp.inst.logger.onCanvasEvent.bind(KitBuildApp.inst.logger)
-            canvas.on("event", KitBuildApp.loggerListener)
-          }
-        } catch (error) { console.warn(error) }
-      }
-      if (learnerMap) {
-        KitBuildApp.inst.setKitMap(kitMap)
-        KitBuildApp.inst.setLearnerMap(learnerMap)
-        learnerMap.kitMap = kitMap
-        learnerMap.conceptMap = kitMap.conceptMap
-        canvas.cy.elements().remove()
-        canvas.cy.add(KitBuildUI.composeLearnerMap(learnerMap))
-        canvas.applyElementStyle()
-        canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
-      } // else UI.warning('Unable to display kit.').show()
+      } else $('.app-navbar .bt-sign-in').trigger('click')
+  
+      // listen to events for broadcast to collaboration room as commands
+      this.canvas.on('event', KitBuildApp.onCanvasEvent)
+  
+  
     })
-
-    KitBuildApp.enableNavbarButton(false)
-    if (sessions.user) {
-      KitBuildApp.initCollab(sessions.user)
-      KitBuildApp.enableNavbarButton()
-      KitBuildCollab.enableControl()
-
-      let status = `<span class="mx-2 d-flex align-items-center status-user">`
-      + `<small class="text-dark fw-bold">${sessions.user.name}</small>`
-      + `</span>`
-      StatusBar.instance().remove('.status-user').prepend(status);
-    } else $('.app-navbar .bt-sign-in').trigger('click')
-
-    // listen to events for broadcast to collaboration room as commands
-    KitBuildApp.inst.canvas.on('event', KitBuildApp.onCanvasEvent)
-
-
-  })
+  }
 }
+
+KitBuildApp.canvasId = "recompose-canvas";
 
 KitBuildApp.onBrowserStateChange = event => { console.warn(event)
   if (event.newState == "terminated") {
@@ -1310,7 +1294,7 @@ KitBuildApp.parseOptions = (optionJsonString, defaultValueIfNull) => {
 
 KitBuildApp.initCollab = (user) => {
   KitBuildApp.inst.user = user;
-  KitBuildApp.collabInst = KitBuildCollab.instance('kitbuild', user, canvas)
+  KitBuildApp.collabInst = KitBuildCollab.instance('kitbuild', user, KitBuildApp.inst.canvas)
   KitBuildApp.collabInst.off('event', KitBuildApp.onCollabEvent)
   KitBuildApp.collabInst.on('event', KitBuildApp.onCollabEvent)
   KitBuildCollab.enableControl()

@@ -209,14 +209,13 @@ class KitApp {
 
     $('#list-cmap').on('click', '.bt-assign-topic', (e) => {
       let cmid = $(e.currentTarget).parents('.item-cmap').attr('data-cmid');
-      KitBuild.openConceptMap(cmid).then(cmap => {
-        console.log(cmap)
+      KitBuild.openConceptMap(cmid).then(cmap => { // console.log(cmap)
         topicDialog.cmapTitle = cmap.map.title;
         topicDialog.cmid = cmap.map.cmid;
         topicDialog.show();
         if (cmap.map.topic) {
           this.ajax.get(`contentApi/getTopic/${cmap.map.topic}`).then(topic => {
-            console.log(topic)
+            // console.log(topic)
             topicDialog.setTopic(topic)
           })
         } else topicDialog.setTopic()
@@ -413,7 +412,7 @@ class KitApp {
 
     $('#list-topic').on('click', '.bt-show-cmap', (e) => {
       let cmid = $(e.currentTarget).parents('.item-cmap').attr('data-cmid');
-      KitBuild.openConceptMap(cmid).then(conceptMap => { console.log(conceptMap)
+      KitBuild.openConceptMap(cmid).then(conceptMap => { // console.log(conceptMap)
         let proceed = () => {
           let cyData = KitBuildUI.composeConceptMap(conceptMap)
           this.canvas.cy.elements().remove()
@@ -448,20 +447,21 @@ class KitApp {
       UI.warning('Invalid concept map ID.').show();
       return
     }
-    Promise.all([KitBuild.openConceptMap(cmid),
+    Promise.all([
+      KitBuild.openConceptMap(cmid),
       this.ajax.get(`kitBuildApi/getKitListByConceptMap/${cmid}`)
     ]).then(result => { 
 
-      let conceptMap = result[0];
-      let kits = result[1];
-
+      let [conceptMap, kits] = result;
       let cyData = KitBuildUI.composeConceptMap(conceptMap);
+
       this.canvas.cy.elements().remove();
       this.canvas.cy.add(cyData);
       this.canvas.applyElementStyle();
       this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0});
       this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
       UI.success('Concept map loaded.').show();
+      
       KitApp.populateKitList(kits);
       $('#nav-kit-tab').html(`Kit Map`);
       $('#tab-kit').html(`Kit <span class="badge rounded-pill bg-success ms-2">${kits.length}</span>`);

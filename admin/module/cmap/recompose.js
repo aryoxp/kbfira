@@ -247,8 +247,11 @@ class RecomposeApp {
     })
   
     $('#concept-map-open-dialog .list-topic').on('click', '.list-item', (e) => {
-      if (openDialog.tid != $(e.currentTarget).attr('data-tid')) // different concept map?
+      if (openDialog.tid != $(e.currentTarget).attr('data-tid')) {
+        // different concept map?
         openDialog.cmid = null; // reset selected concept map id.
+        openDialog.kid = null;
+      }
       openDialog.tid = $(e.currentTarget).attr('data-tid');
       $('#concept-map-open-dialog .list-topic .bi-check-lg').addClass('d-none');
       $('#concept-map-open-dialog .list-topic .list-item').removeClass('active');

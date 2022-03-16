@@ -256,8 +256,10 @@ class KitBuildApp {
     })
   
     $('#concept-map-open-dialog .list-topic').on('click', '.list-item', (e) => {
-      if (openDialog.tid != $(e.currentTarget).attr('data-tid')) // different concept map?
+      if (openDialog.tid != $(e.currentTarget).attr('data-tid')) { // different concept map?
         openDialog.cmid = null; // reset selected concept map id.
+        openDialog.kid = null; // reset selected kit id.
+      }
       openDialog.tid = $(e.currentTarget).attr('data-tid');
       $('#concept-map-open-dialog .list-topic .bi-check-lg').addClass('d-none');
       $('#concept-map-open-dialog .list-topic .list-item').removeClass('active');
@@ -278,6 +280,7 @@ class KitBuildApp {
               .html(cmapsHtml).slideDown({
                 duration: 100,
                 complete: () => {
+                  $('#concept-map-open-dialog .list-kit').html('');
                   if(openDialog.cmid) {
                     $(`#concept-map-open-dialog .list-concept-map .list-item[data-cmid="${openDialog.cmid}"]`)
                       .trigger('click')[0]

@@ -2,7 +2,7 @@
 
 class ConceptMapService extends CoreService {
 
-  function insert($cmfid, $title, $direction, $concepts = [], $links = [], $linktargets = [], $topic = null, $text = null, $author = null, $create_time = null) {
+  function insert($cmfid, $title, $direction, $type = null, $concepts = [], $links = [], $linktargets = [], $topic = null, $text = null, $author = null, $create_time = null) {
     /**
      * $cmid: auto
      * $concept : {
@@ -31,6 +31,7 @@ class ConceptMapService extends CoreService {
     $insert['author']      = QB::esc($author);
     $insert['create_time'] = QB::esc($create_time) ? QB::esc($create_time) : QB::default();
     $insert['direction']   = QB::esc($direction);
+    $insert['type']        = QB::esc($type);
     $insert['text']        = QB::esc($text);
     $insert['topic']       = QB::esc($topic);
     // var_dump(gettype(reset($inserts)) == "array");
@@ -96,7 +97,7 @@ class ConceptMapService extends CoreService {
 
   }
 
-  function update($cmid, $cmfid, $title, $direction, $concepts = [], $links = [], $linktargets = [], $topic = null, $text = null, $author = null, $create_time = null) {
+  function update($cmid, $cmfid, $title, $direction, $type = null, $concepts = [], $links = [], $linktargets = [], $topic = null, $text = null, $author = null, $create_time = null) {
     /**
      * $cmid: auto
      * $concept : {
@@ -126,17 +127,21 @@ class ConceptMapService extends CoreService {
     $insert['author']      = QB::esc($author);
     $insert['create_time'] = QB::esc($create_time) ? QB::esc($create_time) : QB::default();
     $insert['direction']   = QB::esc($direction);
-    $insert['text']        = QB::esc($text);
-    $insert['topic']       = QB::esc($topic);
+    
+    if ($text !== null)  $insert['text']  = QB::esc($text);
+    if ($topic !== null) $insert['topic'] = QB::esc($topic);
+    if ($type !== null)  $insert['type']  = QB::esc($type);
 
     $update['cmfid']       = QB::esc($cmfid);
     $update['title']       = QB::esc($title);
     $update['author']      = QB::esc($author);
     $update['create_time'] = QB::esc($create_time) ? QB::esc($create_time) : QB::default();
     $update['direction']   = QB::esc($direction);
-    $update['text']        = QB::esc($text);
-    $update['topic']       = QB::esc($topic);
     
+    if ($text !== null)  $update['text']  = QB::esc($text);
+    if ($topic !== null) $update['topic'] = QB::esc($topic);
+    if ($type !== null)  $update['type']  = QB::esc($type);
+
     $db = self::instance("kbv2");
     try {
       $db->begin();
@@ -289,6 +294,9 @@ class ConceptMapService extends CoreService {
       $qb = QB::instance('conceptmap');
       $qb->select()->where('cmid', QB::esc($cmid));
       $result->map = $db->getRow($qb->get());
+      
+      if (!$result->map) return null;
+      
       $qb = QB::instance('concept');
       $qb->select()->where('cmid', QB::esc($cmid));
       $result->concepts = $db->query($qb->get());

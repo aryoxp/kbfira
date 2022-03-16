@@ -33,12 +33,12 @@ class CoreEditor {
 class TextApp {
   constructor(options) {
     this.settings = Object.assign({}, options)
-    TextApp.handleEvent(this)
+    this.handleEvent();
   }
   static instance(options) {
     return new TextApp(options)
   }
-  static handleEvent(app) { console.log('handle')
+  handleEvent() {
 
     this.ajax = Core.instance().ajax();
     this.pagination = {
@@ -121,51 +121,37 @@ class TextApp {
     $('#form-search-text').on('submit', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      let perpage = $('#form-search-text .input-perpage').val()
-      let keyword = $('#form-search-text .input-keyword').val()
-      if (keyword != this.pagination.keyword) this.pagination.page = 1
-      // perpage = 1
-      this.ajax.post(`contentApi/getTexts/${this.pagination.page}/${perpage}`, {
-        keyword: keyword
-      }).then(texts => {
+      let perpage = $('#form-search-text .input-perpage').val();
+      let keyword = $('#form-search-text .input-keyword').val();
+
+      if (!TextApp.pagination) {
+        TextApp.pagination = Pagination.instance('#pagination-text', 1, perpage)
+          .listen('#form-search-text').update();
+          TextApp.pagination.keyword = keyword;
+      }
+
+      if (keyword != TextApp.pagination.keyword) TextApp.pagination.page = 1
+      TextApp.pagination.keyword = keyword;
+      TextApp.pagination.perpage = perpage;
+      
+      Promise.all([
+        this.ajax.post(`contentApi/getTexts/${TextApp.pagination.page}/${TextApp.pagination.perpage}`, {
+          keyword: keyword
+        }),
         this.ajax.post(`contentApi/getTextsCount`, {
           keyword: keyword
-        }).then(count => {
-        this.pagination.perpage = perpage
-        this.pagination.count = count
-        this.pagination.maxpage = Math.ceil(count/perpage)
-        this.pagination.keyword = keyword
-        TextApp.populateTexts(texts)
-        TextApp.populatePagination(count, this.pagination.page, perpage)
-        });
+        })
+      ]).then(results => {
+        let [texts, count] = results;
+        TextApp.pagination.count = count
+        TextApp.pagination.update(count, perpage);
+        TextApp.populateTexts(texts);
       });
     })
-    $('.bt-search').on('click', () => $('#form-search-text').trigger('submit'))
-
-
-    $('#pagination-text').on('click', '.pagination-next', (e) => {
-      if (this.pagination.page < this.pagination.maxpage) {
-        this.pagination.page++
-        $('#form-search-text').trigger('submit')
-      }
-    })
-
-    $('#pagination-text').on('click', '.pagination-prev', (e) => {
-      if (this.pagination.page > 1) {
-        this.pagination.page--
-        $('#form-search-text').trigger('submit')
-      }
-    })
-
-    $('#pagination-text').on('click', '.pagination-page', (e) => {
-      this.pagination.page = $(e.currentTarget).attr('data-page')
-      $('#form-search-text').trigger('submit')
-    })
-
 
     $('#text-dialog form.form-text').on('submit', (e) => {
-      e.preventDefault()
-      e.stopPropagation()
+      e.preventDefault();
+      e.stopPropagation();
       $('#text-dialog form.form-text').addClass('was-validated')
       let title = $('#input-title').val().trim();
       let content = textDialog.simplemde.value()
@@ -291,28 +277,28 @@ TextApp.populateTexts = texts => {
   $('#list-text').html(textsHtml)
 }
 
-TextApp.populatePagination = (count, page, perpage) => {
-  let paginationHtml = ''
-  let maxpage = Math.ceil(count/perpage);
-  console.log(count, page, maxpage)
-  if (count) {
-    paginationHtml += `<li class="page-item${page == 1 ? ' disabled': ''}">`
-    paginationHtml += `  <a class="page-link pagination-prev" href="#" tabindex="-1" aria-disabled="true">Previous</a>`
-    paginationHtml += `</li>`
+// TextApp.populatePagination = (count, page, perpage) => {
+//   let paginationHtml = ''
+//   let maxpage = Math.ceil(count/perpage);
+//   console.log(count, page, maxpage)
+//   if (count) {
+//     paginationHtml += `<li class="page-item${page == 1 ? ' disabled': ''}">`
+//     paginationHtml += `  <a class="page-link pagination-prev" href="#" tabindex="-1" aria-disabled="true">Previous</a>`
+//     paginationHtml += `</li>`
 
-    let min = page - 2 < 1 ? 1 : page - 2
-    let max = page + 2 > maxpage ? maxpage : page + 2
+//     let min = page - 2 < 1 ? 1 : page - 2
+//     let max = page + 2 > maxpage ? maxpage : page + 2
 
-    for(let p = min; p <= max; p++) {
-      paginationHtml += `<li class="page-item${page == p ? ' disabled': ''}"><a class="page-link pagination-page" data-page="${p}" href="#">${p}</a></li>`
-    }
+//     for(let p = min; p <= max; p++) {
+//       paginationHtml += `<li class="page-item${page == p ? ' disabled': ''}"><a class="page-link pagination-page" data-page="${p}" href="#">${p}</a></li>`
+//     }
 
-    paginationHtml += `<li class="page-item${page == maxpage ? ' disabled': ''}">`
-    paginationHtml += `  <a class="page-link pagination-next" href="#">Next</a>`
-    paginationHtml += `</li>`
-  }
-  $('#pagination-text').html(paginationHtml)
-}
+//     paginationHtml += `<li class="page-item${page == maxpage ? ' disabled': ''}">`
+//     paginationHtml += `  <a class="page-link pagination-next" href="#">Next</a>`
+//     paginationHtml += `</li>`
+//   }
+//   $('#pagination-text').html(paginationHtml)
+// }
 
 TextApp.populateTextDetail = text => {
   let textDetailHtml = '';
@@ -322,12 +308,12 @@ TextApp.populateTextDetail = text => {
     : '<em class="text-muted">This text has no content.</em>'
 
   textDetailHtml += `<span class="text-title h4 text-primary">${text.title}</span>`
-  textDetailHtml += `<div class="align-middle"><span class="badge rounded-pill bg-warning text-dark px-3">${text.tid}</span>`
+  textDetailHtml += `<div class="align-middle"><span class="badge rounded-pill bg-warning text-dark px-3">ID ${text.tid}</span>`
   textDetailHtml += ` <span class="badge rounded-pill bg-secondary mx-1 px-3">${text.created}</span></div>`
   textDetailHtml += `<hr>`
-  textDetailHtml += `<span class="d-block"><span class="text-primary">3 concept maps</span> were associated to this text.</span>`
-  textDetailHtml += `<span class="d-block">This text has text: <span class="text-primary">This is the title of the text.</span></span>`
-  textDetailHtml += `<div class="mt-4">Attached data: <span class="badge rounded-pill bg-primary mx-2" role="button">Attach</span></div>`
+  // textDetailHtml += `<span class="d-block"><span class="text-primary">3 concept maps</span> were associated to this text.</span>`
+  // textDetailHtml += `<span class="d-block">This text has text: <span class="text-primary">This is the title of the text.</span></span>`
+  // textDetailHtml += `<div class="mt-4">Attached data: <span class="badge rounded-pill bg-primary mx-2" role="button">Attach</span></div>`
   textDetailHtml += `<div class="border rounded p-2 my-2 bg-light scroll-y" style="max-height: 300px">`
   textDetailHtml += `  <div>${content}</div>`
   textDetailHtml += `</div>`

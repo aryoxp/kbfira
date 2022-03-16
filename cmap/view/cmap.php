@@ -48,8 +48,8 @@
         <label for="input-fid" class="col-sm-3 col-form-label">Custom ID (Optional)</label>
         <div class="col-sm-9">
           <div class="input-group">
-            <input type="text" class="form-control input-fid form-control-sm" name="fid" id="input-fid" style="text-transform: uppercase;">
-            <button class="bt-generate-fid btn btn-warning btn-sm"><i class="bi bi-magic"></i></button>
+            <input type="text" class="form-control input-fid form-control-sm" name="fid" id="input-fid" style="text-transform: uppercase;" disabled>
+            <button class="bt-generate-fid btn btn-warning btn-sm" disabled><i class="bi bi-magic"></i></button>
           </div>
         </div>
       </div>
@@ -64,7 +64,7 @@
               <option value="2">Two</option>
               <option value="3">Three</option> -->
             </select>
-            <button class="btn btn-secondary bt-new-topic-form bt-sm"><i class="bi bi-plus-lg"></i></button>
+            <button class="btn btn-secondary bt-new-topic-form bt-sm" disabled><i class="bi bi-plus-lg"></i></button>
           </div>
         </div>
       </div>

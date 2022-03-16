@@ -92,7 +92,6 @@ class CmapApp {
         let sessions = this.session ? this.session.sessionData : null;
         if (sessions.user) {
           KitBuild.getTopicListOfGroups(sessions.user.gids.split(",")).then(topics => {
-            console.log(topics,sessions.user.gids)
             let list = '<option value="">No topic associated</option>'
             topics.forEach(topic => {
               let selected = (this.conceptMap.map.topic == topic.tid) ? ' selected' : '';
@@ -111,6 +110,7 @@ class CmapApp {
         saveAsDialog.cmid = conceptMap.map.cmid
         $('#input-fid').val(conceptMap.map.cmfid)
         $('#input-title').val(conceptMap.map.title)
+        $('#input-type').prop('checked', conceptMap.map.type == 'teacher')
         $('#select-topic').val(conceptMap.map.topic)
         $('#select-text').val(conceptMap.map.text)
         saveAsDialog.create_time = conceptMap.map.create_time
@@ -118,6 +118,7 @@ class CmapApp {
         saveAsDialog.cmid = null
         $('#input-fid').val('')
         $('#input-title').val('')
+        $('#input-type').prop('checked', true)
         $('#select-topic').val(null)
         $('#select-text').val(null)
       }
@@ -240,25 +241,38 @@ class CmapApp {
     })
   
     $('#concept-map-save-as-dialog').on('submit', (e) => {
-      e.preventDefault()
-      let data = Object.assign({
-        cmid: saveAsDialog.cmid ? saveAsDialog.cmid : null,
-        cmfid: $('#input-fid').val().match(/^ *$/) ? null : $('#input-fid').val().trim().toUpperCase(),
-        title: $('#input-title').val(),
-        direction: this.canvas.direction,
-        topic: $('#select-topic').val().match(/^ *$/) ? null : $('#select-topic').val().trim(),
-        text: undefined,
-        author: this.user ? this.user.username : null,
-        create_time: null
-      }, KitBuildUI.buildConceptMapData(this.canvas)); // console.log(data); return
-      if (data.cmid === null) delete data.cmid;
-      this.ajax.post("kitBuildApi/saveConceptMap", { data: Core.compress(data) })
-        .then(conceptMap => { 
-          this.setConceptMap(conceptMap);
-          UI.success("Concept map has been saved successfully.").show(); 
-          saveAsDialog.hide(); 
-        })
-        .catch(error => { UI.error("Error saving concept map: " + error).show(); })
+      e.preventDefault();
+      let proceedSave = () => {
+        let data = Object.assign({
+          cmid: saveAsDialog.cmid ? saveAsDialog.cmid : null,
+          cmfid: $('#input-fid').val().match(/^ *$/) ? null : $('#input-fid').val().trim().toUpperCase(),
+          title: $('#input-title').val(),
+          direction: this.canvas.direction,
+          type: $('#input-type').prop('checked') ? 'teacher' : 'scratch',
+          topic: undefined,
+          text: undefined,
+          author: this.user ? this.user.username : null,
+          create_time: null
+        }, KitBuildUI.buildConceptMapData(this.canvas)) // console.log(data); return
+        if (data.cmid === null)
+          delete data.cmid
+        this.ajax.post("kitBuildApi/saveConceptMap", { data: Core.compress(data) })
+          .then(conceptMap => {
+            this.setConceptMap(conceptMap)
+            UI.success("Concept map has been saved successfully.").show()
+            saveAsDialog.hide()
+          })
+          .catch(error => { UI.error("Error saving concept map: " + error).show() })
+      }
+      if (this.conceptMap.map.author != this.user.username) {
+        let confirm = UI.confirm(`Do you want to save and <span class="text-danger">TAKE OWNERSHIP</span> of this concept map created by <code>${this.conceptMap.map.author}</code>?`)
+          .positive(() => {
+            proceedSave();
+            confirm.hide();
+          }).show();
+      } else proceedSave()
+
+      
     })
   
   
@@ -291,8 +305,10 @@ class CmapApp {
     })
   
     $('#concept-map-open-dialog .list-topic').on('click', '.list-item', (e) => {
-      if (openDialog.tid != $(e.currentTarget).attr('data-tid')) // different concept map?
+      if (openDialog.tid != $(e.currentTarget).attr('data-tid')) { // different concept map?
         openDialog.cmid = null; // reset selected concept map id.
+        openDialog.kid = null;
+      }
       openDialog.tid = $(e.currentTarget).attr('data-tid');
       $('#concept-map-open-dialog .list-topic .bi-check-lg').addClass('d-none');
       $('#concept-map-open-dialog .list-topic .list-item').removeClass('active');
@@ -479,14 +495,13 @@ class CmapApp {
         return;
       }
       let cmid = this.conceptMap.map.cmid;
-      KitBuild.openConceptMap(cmid).then(cmap => {
-        console.log(cmap)
+      KitBuild.openConceptMap(cmid).then(cmap => { // console.log(cmap)
         topicDialog.cmapTitle = cmap.map.title;
         topicDialog.cmid = cmap.map.cmid;
         topicDialog.show();
         if (cmap.map.topic) {
           this.ajax.get(`contentApi/getTopic/${cmap.map.topic}`).then(topic => {
-            console.log(topic)
+            // console.log(topic)
             topicDialog.setTopic(topic)
           })
         } else topicDialog.setTopic()
@@ -637,7 +652,8 @@ class CmapApp {
     this.session.getAll().then(sessions => {
       let cmid = sessions.cmid
       if (cmid) KitBuild.openConceptMap(cmid).then(conceptmap => {
-        this.setConceptMap(conceptmap)
+        this.setConceptMap(conceptmap); // if null will clear the session
+        if (!conceptmap) return;
         if (stateData && stateData.map) { // console.log(stateData.direction)
           this.canvas.cy.elements().remove()
           this.canvas.cy.add(Core.decompress(stateData.map))
@@ -1085,6 +1101,7 @@ CmapApp.populateAssignTopics = (topics, cmid) => {
   });
   if (topicsHtml.length == 0) topicsHtml = '<em class="d-block m-3 text-muted">No topics found in current search.</em>';
   $('form.form-assign-search-topic .list-topic').html(topicsHtml)
+  UI.centerDialog('#assign-topic-dialog');
 }
 
 CmapApp.populateAssignTexts = (texts, cmid) => {
@@ -1102,4 +1119,5 @@ CmapApp.populateAssignTexts = (texts, cmid) => {
   });
   if (textsHtml.length == 0) textsHtml = '<em class="d-block m-3 text-muted">No texts found in current search.</em>';
   $('form.form-assign-search-text .list-text').html(textsHtml)
+  UI.centerDialog('#assign-text-dialog');
 }

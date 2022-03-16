@@ -13,15 +13,16 @@ class KitBuildApiController extends CoreApi {
     $data = json_decode(CoreApi::decompress($this->postv('data'))); // var_dump($data);
     $cmService = new ConceptMapService();
     try {
-      if (!$data->cmid) {
+      if (!isset($data->cmid) || !$data->cmid) {
         $conceptMap = $cmService->insert(
           $data->cmfid, 
           $data->title, 
-          $data->direction, 
+          $data->direction,
+          (isset($data->type) ? $data->type : null),
           $data->concepts, 
           $data->links, 
           $data->linktargets, 
-          $data->topic, 
+          (isset($data->topic) ? $data->topic : null),
           (isset($data->text) ? $data->text : null), 
           $data->author, 
           $data->create_time);
@@ -31,10 +32,11 @@ class KitBuildApiController extends CoreApi {
           $data->cmfid, 
           $data->title, 
           $data->direction, 
+          (isset($data->type) ? $data->type : null),
           $data->concepts, 
           $data->links, 
           $data->linktargets, 
-          $data->topic, 
+          (isset($data->topic) ? $data->topic : null),
           (isset($data->text) ? $data->text : null),
           $data->author, 
           $data->create_time);

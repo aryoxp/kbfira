@@ -235,6 +235,7 @@ class LearnermapApp {
           $('#nav-lmap-tab').html(tabLabel);
           $('#nav-kit-tab').trigger('click');
           UI.success('Learner map is succesfully deleted.').show();
+          this.loadKitMap(this.kitMap.map.kid, false);
         }).catch(error => {
           UI.error(`Unable to delete learner map: ${error}`).show();
         }).finally(() => {
@@ -253,14 +254,13 @@ class LearnermapApp {
 
     $('#list-cmap').on('click', '.bt-assign-topic', (e) => {
       let cmid = $(e.currentTarget).parents('.item-cmap').attr('data-cmid');
-      KitBuild.openConceptMap(cmid).then(cmap => {
-        console.log(cmap)
+      KitBuild.openConceptMap(cmid).then(cmap => { // console.log(cmap)
         topicDialog.cmapTitle = cmap.map.title;
         topicDialog.cmid = cmap.map.cmid;
         topicDialog.show();
         if (cmap.map.topic) {
           this.ajax.get(`contentApi/getTopic/${cmap.map.topic}`).then(topic => {
-            console.log(topic)
+            // console.log(topic)
             topicDialog.setTopic(topic)
           })
         } else topicDialog.setTopic()
@@ -457,19 +457,16 @@ class LearnermapApp {
 
     $('#list-topic').on('click', '.bt-show-cmap', (e) => {
       let cmid = $(e.currentTarget).parents('.item-cmap').attr('data-cmid');
-      KitBuild.openConceptMap(cmid).then(conceptMap => { console.log(conceptMap)
-        let proceed = () => {
-          this.conceptMap = conceptMap;
-          let cyData = KitBuildUI.composeConceptMap(conceptMap)
-          this.canvas.cy.elements().remove()
-          this.canvas.cy.add(cyData)
-          this.canvas.applyElementStyle()
-          this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0});
-          this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
-          UI.success('Concept map loaded.').show();
-          $('#search-panel .bt-close').trigger('click');
-        }
-        proceed();
+      KitBuild.openConceptMap(cmid).then(conceptMap => { // console.log(conceptMap)
+        this.conceptMap = conceptMap;
+        let cyData = KitBuildUI.composeConceptMap(conceptMap)
+        this.canvas.cy.elements().remove()
+        this.canvas.cy.add(cyData)
+        this.canvas.applyElementStyle()
+        this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0});
+        this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
+        UI.success('Concept map loaded.').show();
+        $('#search-panel .bt-close').trigger('click');
       }).catch(error => {
         console.error(error); 
         UI.dialog("The concept map data is invalid.", {
@@ -485,25 +482,10 @@ class LearnermapApp {
 
 
 
-    $('#tabs-concept-map .list-lmap').on('change', (e) => {
-      let lmid = $(e.currentTarget).val();
+    $('#tabs-concept-map .list-lmap').on('click', '.item-lmap', (e) => {
+      let lmid = $(e.currentTarget).attr('data-lmid');
       KitBuild.openLearnerMap(lmid).then(learnerMap => { // console.log(learnerMap)
-        let proceed = () => {
-
-          learnerMap.kitMap = this.kitMap;
-          learnerMap.conceptMap = this.kitMap.conceptMap;
-          this.lmapCanvas.cy.elements().remove()
-          this.lmapCanvas.cy.add(KitBuildUI.composeLearnerMap(learnerMap))
-          this.lmapCanvas.applyElementStyle()
-          this.lmapCanvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0}).then(() => {})
-
-          let tabLabel = `<span class="text-primary">Learner Map: ${learnerMap.map.author}</span>`
-          tabLabel += `<span class="badge rounded-pill bg-danger bt-tab-delete-lmap ms-2" data-lmid="${lmid}">Delete</span>`;
-
-          $('#nav-lmap-tab').html(tabLabel).trigger('click');
-
-        }
-        proceed();
+        this.loadLearnerMap(learnerMap);
       }).catch(error => {
         console.error(error); 
         UI.dialog("The concept map data is invalid.", {
@@ -517,6 +499,7 @@ class LearnermapApp {
 
 
   }
+
   handleRefresh() {
     this.session.getAll().then(sess => {
       if(sess.cmid) this.loadTeacherMap(sess.cmid)
@@ -527,42 +510,49 @@ class LearnermapApp {
       UI.warning('Invalid concept map ID.').show();
       return
     }
-    Promise.all([KitBuild.openConceptMap(cmid),
+    Promise.all([
+      KitBuild.openConceptMap(cmid),
       this.ajax.get(`kitBuildApi/getKitListByConceptMap/${cmid}`)
     ]).then(result => { 
 
-      let conceptMap = result[0];
-      let kits = result[1];
-
+      let [conceptMap, kits] = result;
       let cyData = KitBuildUI.composeConceptMap(conceptMap);
+      
       this.canvas.cy.elements().remove();
       this.canvas.cy.add(cyData);
       this.canvas.applyElementStyle();
       this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0});
       this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
       UI.success('Concept map loaded.').show();
-      LearnermapApp.populateKitList(kits);
+
+      LearnermapApp.populateKits(kits);
+
+      // clear learnermap
+      LearnermapApp.populateLearnermaps(null);
+      this.kitCanvas.cy.elements().remove();
+      this.loadLearnerMap(); 
+      
       $('#nav-kit-tab').html(`Kit Map`);
       $('#tab-kit').html(`Kit <span class="badge rounded-pill bg-success ms-2">${kits.length}</span>`);
+      $('#tab-lmap').html(`Learner Map`);
       $('#nav-cmap-tab').trigger('click');
-      this.kitCanvas.cy.elements().remove();
+
       this.session.set('cmid', cmid);
 
-    }).catch(error => {
-      console.error(error); 
+    }).catch(error => { console.error(error); 
       UI.dialog("The concept map data is invalid.", {
         icon: 'exclamation-triangle',
         iconStyle: 'danger'
       }).show()
     })
   }
-  loadKitMap(kid) {
+  loadKitMap(kid, loadKit = true) {
     if (!kid) {
       UI.warning('Invalid kit map ID.').show();
       return
     }
     Promise.all([
-      KitBuild.openKitMap(kid),
+      (loadKit ? KitBuild.openKitMap(kid) : this.kitMap),
       this.ajax.get(`contentApi/getLearnermapsOfKit/${kid}`)
     ]).then(result => {
       let [kitMap, learnermaps] = result;
@@ -574,12 +564,34 @@ class LearnermapApp {
       this.kitCanvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0});
       this.kitCanvas.canvasTool.clearCanvas().clearIndicatorCanvas();
       this.session.set('kid', kid);
-      $('#nav-kit-tab').html(`Kit Map: <span class="text-primary">${kitMap.map.name}</span>
-        <span class="badge rounded-pill bg-danger bt-tab-delete-kit" data-name="${kitMap.map.name}" data-kid="${kid}">Delete</span>`).trigger('click');
+      let kitTabLabel = `<span class="text-primary text-truncate" style="max-width:100px;">${kitMap.map.name}</span>`
+      + `<span class="badge rounded-pill bg-primary bt-tab-detail-kit ms-2" data-name="${kitMap.map.name}" data-kid="${kid}">Detail</span>`
+      + `<span class="badge rounded-pill bg-danger bt-tab-delete-kit ms-1" data-name="${kitMap.map.name}" data-kid="${kid}">Delete</span>`;
+      $('#nav-kit-tab').html(kitTabLabel).trigger('click');
       $('#tab-lmap').html(`Learner Map <span class="badge rounded-pill bg-success ms-2">${learnermaps.length}</span>`)
       UI.success('Kit map loaded.').show();
       LearnermapApp.populateLearnermaps(learnermaps);
     })
+  }
+  loadLearnerMap(learnerMap = null) {
+    this.lmapCanvas.cy.elements().remove();
+    if (learnerMap === null) {
+      let tabLabel = `<span class="text-primary">Learner Map</span>`;
+      $('#nav-lmap-tab').html(tabLabel);
+      return;
+    }
+    learnerMap.kitMap = this.kitMap;
+    learnerMap.conceptMap = this.kitMap.conceptMap;
+    this.lmapCanvas.cy.add(KitBuildUI.composeLearnerMap(learnerMap));
+    this.lmapCanvas.applyElementStyle();
+    this.lmapCanvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, { duration: 0 }).then(() => { });
+
+    let tabLabel = `<span class="text-primary">Map: ${learnerMap.map.authorname}</span>`;
+    tabLabel += `<span class="badge rounded-pill bg-success ms-2" data-lmid="${learnerMap.map.lmid}">ID ${learnerMap.map.lmid}</span>`;
+    tabLabel += `<span class="badge rounded-pill bg-primary bt-tab-detail-lmap ms-1" data-lmid="${learnerMap.map.lmid}">Detail</span>`;
+    tabLabel += `<span class="badge rounded-pill bg-danger bt-tab-delete-lmap ms-1" data-lmid="${learnerMap.map.lmid}">Delete</span>`;
+
+    $('#nav-lmap-tab').html(tabLabel).trigger('click');
   }
 }
 
@@ -682,7 +694,7 @@ LearnermapApp.populateAssignTexts = (texts, cmid) => {
   $('form.form-assign-search-text .list-text').html(textsHtml)
 }
 
-LearnermapApp.populateKitList = (kits) => {
+LearnermapApp.populateKits = (kits) => {
   if (!kits) {
     UI.error("Invalid kit").show();
     return;
@@ -703,14 +715,23 @@ LearnermapApp.populateKitList = (kits) => {
 
 LearnermapApp.populateLearnermaps = (lmaps) => {
   if (!lmaps) {
-    UI.error("Invalid lmap").show();
+    // UI.error("Invalid lmap").show();
+    $('#nav-tab-maps .list-lmap').html('<small class="mx-3"><em class="text-muted">No learner map data</em></small>');
     return;
   }
   let lmapListHtml = '';
-  for(let lmap of lmaps) { console.log(lmap);
-    lmapListHtml += `<option value="${lmap.lmid}"/>`
-    lmapListHtml += `  <span class="lmap-name flex-fill">${lmap.creator}</span>`
-    lmapListHtml += `</option>`
+  for(let lmap of lmaps) { // console.log(lmap);
+    lmapListHtml += `<div data-lmid="${lmap.lmid}" class="item-lmap d-flex align-items-center justify-content-between py-1 border-bottom" role="button">`
+    lmapListHtml += `  <span class="lmap-name flex-fill text-truncate">`
+    lmapListHtml += `  ${lmap.creator}`
+    lmapListHtml += `    <span class="badge rounded-pill bg-success ms-2" role="button">ID ${lmap.lmid}</span>`
+    lmapListHtml += `  </span>`
+    lmapListHtml += `  <span class="d-flex align-items-center">`
+    lmapListHtml += `    <span class="badge rounded-pill bg-warning text-dark ms-2 bt-delete-lmap" role="button">${lmap.type}</span>`
+    lmapListHtml += `    <span class="badge rounded-pill bg-primary ms-1 bt-detail-lmap" role="button">Detail</span>`
+    lmapListHtml += `    <span class="badge rounded-pill bg-danger ms-1 bt-delete-lmap" role="button"><i class="bi bi-x-lg mx-1"></i></span>`
+    lmapListHtml += `  </span>`
+    lmapListHtml += `</div>`
   }
   if (lmaps.length == 0)
     lmapListHtml += `<small class="mx-3"><em class="text-muted">No learner map data</em></small>`

@@ -248,6 +248,7 @@ class CmapApp {
         direction: this.canvas.direction,
         topic: $('#select-topic').val().match(/^ *$/) ? null : $('#select-topic').val().trim(),
         // text: $('#select-text').val().match(/^ *$/) ? null : $('#select-text').val().trim(),
+        type: 'scratch',
         author: this.user ? this.user.username : null,
         create_time: null
       }, KitBuildUI.buildConceptMapData(this.canvas)); // console.log(data); return
@@ -363,63 +364,13 @@ class CmapApp {
       e.preventDefault();
       if (!openDialog.tid) {
         UI.dialog('Please select a topic.').show();
-        return
+        return;
       }
-
       this.ajax.get(`contentApi/getTopic/${openDialog.tid}`).then(topic => {
-        // console.log(topic);
         this.setTopic(topic)
         this.session.set('tid', openDialog.tid);
         openDialog.hide();
-      })
-
-
-      // openPromise.push(new Promise((resolve, reject) => {
-      //   KitBuild.openConceptMap(openDialog.cmid).then(conceptMap => {
-      //     resolve(Object.assign(conceptMap, {
-      //       cyData: KitBuildUI.composeConceptMap(conceptMap)
-      //     }))
-      //   }).catch((error) => { reject(error) })
-      // }));
-      // } else { // #decode
-      //   openPromise.push(new Promise((resolve, reject) => {
-      //     try {
-      //       let data = $('#decode-textarea').val().trim();
-      //       let conceptMap = Core.decompress(data)
-      //       resolve(Object.assign(conceptMap, {
-      //         cyData: KitBuildUI.composeConceptMap(conceptMap)
-      //       }))
-      //     } catch (error) { reject(error) }
-      //   }))
-      // }
-      // if (openPromise.length) 
-      //   Promise.any(openPromise).then(conceptMap => { console.log(conceptMap)
-      //     let proceed = () => {
-      //       CmapApp.inst.setConceptMap(conceptMap)
-      //       this.canvas.cy.elements().remove()
-      //       this.canvas.cy.add(conceptMap.cyData)
-      //       this.canvas.applyElementStyle()
-      //       this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0});
-      //       this.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(conceptMap.map.direction)
-      //       this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
-      //       UI.success('Concept map loaded.').show()
-      //       openDialog.hide()
-      //       CmapApp.collab("command", "set-concept-map", conceptMap, conceptMap.cyData)
-      //     }
-      //     if (this.canvas.cy.elements().length) {
-      //       let confirm = UI.confirm('Do you want to open and replace current concept map on canvas?').positive(() => {            
-      //         confirm.hide()
-      //         proceed()
-      //       }).show()
-      //     } else proceed()
-  
-      //   }).catch(error => {
-      //     console.error(error.errors); 
-      //     UI.dialog("The concept map data is invalid.", {
-      //       icon: 'exclamation-triangle',
-      //       iconStyle: 'danger'
-      //     }).show()
-      //   })
+      });
     });
   
     $('#concept-map-open-dialog').on('click', '.bt-open', (e) => {
@@ -451,7 +402,7 @@ class CmapApp {
         }))
       }
       if (openPromise.length) 
-        Promise.any(openPromise).then(conceptMap => { console.log(conceptMap)
+        Promise.any(openPromise).then(conceptMap => { // console.log(conceptMap)
           let proceed = () => {
             CmapApp.inst.setConceptMap(conceptMap)
             this.canvas.cy.elements().remove()
@@ -702,16 +653,17 @@ class CmapApp {
     // console.log("STATE DATA: ", stateData)
     session.getAll().then(sessions => {
       let cmid = sessions.cmid
-      if (cmid) KitBuild.openConceptMap(cmid).then(conceptmap => {
-        this.setConceptMap(conceptmap)
+      if (cmid) KitBuild.openConceptMap(cmid).then(conceptMap => {
+        this.setConceptMap(conceptMap);
+        if (!conceptMap) return;
         if (stateData && stateData.map) { // console.log(stateData.direction)
           this.canvas.cy.elements().remove()
           this.canvas.cy.add(Core.decompress(stateData.map))
           this.canvas.applyElementStyle()
           this.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(stateData.direction)
         } else {
-          this.canvas.cy.add(KitBuildUI.composeConceptMap(conceptmap))
-          this.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(conceptmap.map.direction)
+          this.canvas.cy.add(KitBuildUI.composeConceptMap(conceptMap))
+          this.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(conceptMap.map.direction)
         }
         this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
         this.canvas.cy.elements(':selected').unselect();

@@ -476,7 +476,9 @@ class LearnerMapService extends CoreService {
       $result = new stdClass;
       
       $qb = QB::instance('learnermap');
-      $qb->select()->where('lmid', QB::esc($lmid));
+      $qb->select()
+        ->select(QB::raw('(SELECT name FROM user u WHERE u.username = learnermap.author) AS authorname'))
+        ->where('lmid', QB::esc($lmid));
       $result->map = $db->getRow($qb->get());
       $qb = QB::instance('learnermap_concept');
       $qb->select()->where('lmid', QB::esc($lmid));

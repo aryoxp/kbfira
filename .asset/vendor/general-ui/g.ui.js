@@ -563,7 +563,7 @@ class Pagination {
       paginationHtml += `<li class="page-item${page == maxpage ? ' disabled': ''}">`
       paginationHtml += `  <a class="page-link pagination-next" href="#">Next <i class="bi bi-chevron-right"></i></a>`
       paginationHtml += `</li>`
-      $(this.containerElement).html(paginationHtml)
+      $(this.containerElement).addClass('pagination').html(paginationHtml)
     } else this.renderEmpty();
     return this;
   }
