@@ -156,7 +156,7 @@ class CmapApp {
           simplifiedAutoLink: true
         });
         sdown.setFlavor('github');
-        let htmlText = contentDialog.text.content ? 
+        let htmlText = contentDialog.text ? 
           sdown.makeHtml(contentDialog.text.content) : 
           "<em>Content text unavailable.</em>";
         $('#content-dialog .content').html(htmlText);

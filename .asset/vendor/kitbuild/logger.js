@@ -85,9 +85,8 @@ class CmapLogger extends Logger {  // TODO: SET cmid
   onCanvasEvent(canvasId, evt, data, options) { console.warn("LOGGER RECEIVE from Canvas: ", evt, data)
     
     let extra = new Map();
-    extra.set('canvasid', canvasId);
-
     let settings = Object.assign({ includeMapData: false }, options);
+    extra.set('canvasid', canvasId);
 
     switch(evt) {
       case 'undo-connect-right':
@@ -213,7 +212,7 @@ class KitBuildLogger extends Logger { // TODO: SET lmid
         settings.includeMapData = true
         break;
     }
-    this.log(evt, data, extra, options)
+    this.log(evt, data, extra, settings)
   }
   includeMapData(extra) {
     if (typeof Analyzer === 'undefined' || typeof Core === 'undefined' || !this.conceptMap) {
