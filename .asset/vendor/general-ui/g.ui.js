@@ -88,9 +88,17 @@ class Dialog {
     this.negativeLabel = this.settings.negativeLabel
     this.emphasized = false
     this.titleText = null
+    this.eventListeners = new Set();
   }
   static instance(content, opts) {
     return new Dialog(content, opts);
+  }
+  on(what, listener) {
+    switch (what && typeof listener == 'function') {
+      case 'event':
+        this.eventListeners.add(listener);
+        break;
+    }
   }
   title (titleText) {
     this.titleText = titleText
@@ -111,6 +119,7 @@ class Dialog {
     return this;
   }
   show(opts) {
+    Dialog.inst = this;
     this.settings = Object.assign({}, this.settings, opts)
     if (this.settings.width) $('#modal-dialog .modal-dialog').css('max-width', this.settings.width)
     $('#modal-dialog .modal-dialog').css('width', 'fit-content')
@@ -128,7 +137,7 @@ class Dialog {
     } else {
       setTimeout(() => { $('#modal-dialog .bt-positive').focus(); }, 200);
       $('#modal-dialog .bt-negative').hide()
-      $('#modal-dialog .bt-negative').off('click').on('click', this.hide)
+      $('#modal-dialog .bt-negative').off('click').on('click', this.hide.bind(this))
       $('#modal-dialog .dialog-foot').removeClass('text-end').addClass('text-center')
 
     }
@@ -146,7 +155,7 @@ class Dialog {
       $('#modal-dialog .bt-positive').show()
       $('#modal-dialog .bt-positive').off('click').on('click', this.posCallback)
     } else {
-      $('#modal-dialog .bt-positive').off('click').on('click', this.hide)
+      $('#modal-dialog .bt-positive').off('click').on('click', this.hide.bind(this))
     }
     if (this.titleText) {
       $('#modal-dialog .dialog-title').html(this.titleText)
@@ -162,9 +171,16 @@ class Dialog {
   }
   toggle(opts) {
     this.show(Object.assign({toggle: true, opts}))
+    this.broadcast('toggle');
   }
   hide() {
-    if (Dialog.modal) Dialog.modal.hide()
+    if (Dialog.modal) {
+      Dialog.modal.hide();
+      Dialog.inst.broadcast('hide');
+    }
+  }
+  broadcast(event, data) {
+    for(let listener of this.eventListeners) listener(event, data);
   }
 }
 
@@ -256,7 +272,8 @@ Loading.default = {
 
 class Modal {
   constructor(element, options) {
-    this.element = $(element)
+    this.element = $(element);
+    this.selector = element;
     this.settings = Object.assign({
       width: '500px',
       height: null,
@@ -273,10 +290,20 @@ class Modal {
     let hideElement = this.settings.hideElement 
       ? this.settings.hideElement 
       : this.settings.closeElement
-    if (hideElement) this.addHideElement(hideElement)
+    if (hideElement) this.addHideElement(hideElement);
+    this.eventListeners = new Set();
   }
   static instance(element, options) {
     return new Modal(element, options)
+  }
+  on(what, listener) {
+    if (typeof listener != 'function') return this;
+    switch (what) {
+      case 'event': 
+        this.eventListeners.add(listener);
+        break;
+    }
+    return this;
   }
   show(options) {
     this.settings = Object.assign(this.settings, options)
@@ -306,17 +333,19 @@ class Modal {
       });
     }
     
-    if (typeof this.settings.onShow == "function") this.settings.onShow()
+    if (typeof this.settings.onShow == "function") this.settings.onShow();
+    this.broadcast('show-modal', {selector: this.selector});
     return this;
   }
   hide(options) {
-    this.settings = Object.assign(this.settings, options)
-    $('.ui-backdrop').fadeOut({duration:100, complete: () => $('.ui-backdrop').remove()})
-    this.element.hide()
-    if (typeof this.settings.onHide == "function") this.settings.onHide()
+    this.settings = Object.assign(this.settings, options);
+    $('.ui-backdrop').fadeOut({duration:100, complete: () => $('.ui-backdrop').remove()});
+    this.element.hide();
+    this.broadcast('hide', Object.assign({selector: this.selector, options}));
+    if (typeof this.settings.onHide == "function") this.settings.onHide();
   }
   close(options) {
-    this.hide(options)
+    this.hide(options);
   }
   addBackdrop() {
     let backdrop = $(`<div class="ui-backdrop"></div>`)
@@ -326,7 +355,7 @@ class Modal {
     if (this.settings.backdrop != 'static')
       $(`.ui-backdrop[for="${this.element.attr('id')}"]`).on('click', (e) => {
         $(e.target).fadeOut({duration:100, complete: () => $(e.target).remove()})
-        this.element.hide()
+        this.element.hide({selector: this.selector, sender: e.currentTarget});
       })
     return this;
   }
@@ -334,9 +363,12 @@ class Modal {
     $(this.element).find(hideElement).off('click').on('click', (e) => {  // console.log(hideElement, this)
       e.stopPropagation()
       e.preventDefault()
-      this.hide()
+      this.hide({sender: e.currentTarget})
     })
     return this;
+  }
+  broadcast(event, data) {
+    for(let listener of this.eventListeners) listener(event, data);
   }
 }
 

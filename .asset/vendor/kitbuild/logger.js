@@ -52,13 +52,14 @@ class Logger {
 
     let url = Core.instance().config('baseurl') + "logApi/log";
     let status = navigator.sendBeacon(url, lData);
-    // let status = Core.instance().ajax().post(url, lData).then(result => console.warn(result))
+    // let status = Core.instance().ajax().post(url, lData).then(result => {
+    //   console.warn("Log status: ", result)
+    // }).catch(error => {
+    //   console.error("Log error: ", error)
+    // });
 
     console.warn(this.seq, action, Array.from(lData.entries()), status)
     return this;
-  }
-  post() {
-    
   }
 }
 
@@ -75,14 +76,19 @@ class CmapLogger extends Logger {  // TODO: SET cmid
     this.cmid = cmid;
   }
   log(action, data, extra, options) {
-    if (extra) extra.set('cmid', this.cmid);
-    else extra = new Map();
+    if (!extra) extra = new Map();
+    if (this.cmid) extra.set('cmid', this.cmid);
+    let settings = Object.assign({ includeMapData: false }, options)
+    if (settings.includeMapData) this.includeMapData(extra);
     super.log(action, data, extra, options);
   }
   onCanvasEvent(canvasId, evt, data, options) { console.warn("LOGGER RECEIVE from Canvas: ", evt, data)
-    let settings = Object.assign({ includeMapData: false }, options)
-    let extra = new Map()
+    
+    let extra = new Map();
     extra.set('canvasid', canvasId);
+
+    let settings = Object.assign({ includeMapData: false }, options);
+
     switch(evt) {
       case 'undo-connect-right':
       case 'undo-connect-left':
@@ -91,9 +97,11 @@ class CmapLogger extends Logger {  // TODO: SET cmid
       case 'undo-disconnect-links':
       case 'undo-move-connect-right':
       case 'undo-move-connect-left':
+      case 'undo-delete-node':
       case 'undo-delete-concept':
       case 'undo-delete-link':
-      case 'undo-delete-multi-nodes':       
+      case 'undo-delete-multi-nodes':
+      case 'undo-clear-canvas':   
       case 'redo-connect-right':
       case 'redo-connect-left':
       case 'redo-disconnect-right':
@@ -111,14 +119,22 @@ class CmapLogger extends Logger {  // TODO: SET cmid
       case 'disconnect-links':
       case 'move-connect-right':
       case 'move-connect-left':
+      case 'create-concept':
+      case 'create-link':
+      case 'duplicate-concept':
+      case 'duplicate-link':   
+      case 'duplicate-nodes':        
       case 'delete-concept':
       case 'delete-link':
       case 'delete-multi-nodes':
+      case 'switch-direction':
+      case 'update-link':
+      case 'update-concept':
+      case 'clear-canvas':
         settings.includeMapData = true
         break;
     }
-    if (settings.includeMapData) this.includeMapData(extra)
-    this.log(evt, data, extra, options)
+    this.log(evt, data, extra, settings);
   }
   includeMapData(extra) {
     if (typeof Analyzer === 'undefined' || typeof Core === 'undefined') {
@@ -157,17 +173,21 @@ class KitBuildLogger extends Logger { // TODO: SET lmid
     this.conceptMap = conceptMap;
   }
   log(action, data, extra, options) {
-    if (extra) extra.set('lmid', this.lmid);
-    else extra = new Map();
+    if (!extra) extra = new Map();
+    if (this.lmid) extra.set('lmid', this.lmid);
+    let settings = Object.assign({ includeMapData: false }, options)
+    if (settings.includeMapData) this.includeMapData(extra);
     super.log(action, data, extra, options);
   }
   static instance(username, seq, sessid, canvas, conceptMap) {
     return new KitBuildLogger(username, seq, sessid, canvas, conceptMap)
   }
   onCanvasEvent(canvasId, evt, data, options) { console.log("LOGGER RECEIVE: ", evt, data)
-    let settings = Object.assign({ includeMapData: false }, options)
-    let extra = new Map()
-    extra.set('canvasid', canvasId)
+
+    let extra = new Map();
+    let settings = Object.assign({ includeMapData: false }, options);
+    extra.set('canvasid', canvasId);
+
     switch(evt) {
       case 'undo-connect-right':
       case 'undo-connect-left':
@@ -193,7 +213,6 @@ class KitBuildLogger extends Logger { // TODO: SET lmid
         settings.includeMapData = true
         break;
     }
-    if (settings.includeMapData) this.includeMapData(extra)
     this.log(evt, data, extra, options)
   }
   includeMapData(extra) {

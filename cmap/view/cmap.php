@@ -58,7 +58,7 @@
         <!-- <label for="select-topic" class="col-sm-3 col-form-label">Topic (Optional)</label> -->
         <div class="col-sm-12">
           <div class="input-group input-group-sm">
-            <select class="form-select form-control-sm" id="select-topic" name="topic" aria-label="Default select example">
+            <select class="form-select form-control-sm" id="select-topic" name="topic" aria-label="Default select example" disabled>
               <option value="" selected>No topic associated</option>
               <!-- <option value="1">One</option>
               <option value="2">Two</option>

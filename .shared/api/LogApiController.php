@@ -17,18 +17,16 @@ class LogApiController extends CoreApi {
     $ua       = $_SERVER['HTTP_USER_AGENT'];
 
     $flag     = $this->postv('flag');
+    $cmid     = $this->postv('cmid');
+    $lmid     = $this->postv('lmid');
     
     $logService = new LogService();
     $lid = $logService->log($username, $seq, $tstampc, $canvasid, $action, $data, $sessid, $ua);
 
-    if ($cmid = $this->postv('cmid'))
-      $logService->logCmap($lid, $cmid);
-
-    if ($lmid = $this->postv('lmid'))
-      $logService->logKitBuild($lid, $lmid);
-
-    switch ($flag) {
-      case 'cmap':
+    if ($cmid) {
+      $lcmap = $logService->logCmap($lid, $cmid);
+      // var_dump($action, $lcmap, $flag == 'cmap', $flag); exit;
+      if ($flag == 'cmap' && $lcmap) {
         $concept     = $this->postv('concept');
         $link        = $this->postv('link');
         $edge        = $this->postv('edge');
@@ -37,10 +35,14 @@ class LogApiController extends CoreApi {
         $nc          = $this->postv('nc');
         $nl          = $this->postv('nl');
         $ne          = $this->postv('ne');
-        $np          = $this->postv('np');  
+        $np          = $this->postv('np');
         $result = $logService->logCmapState($lid, $concept, $link, $edge, $map, $proposition, $nc, $nl, $ne, $np);
-        break;
-      case 'kitbuild':
+      }
+    }
+
+    if ($lmid = $this->postv('lmid')) {
+      $lkb = $logService->logKitBuild($lid, $lmid);
+      if ($flag == 'kitbuild' && $lkb) {
         $edge        = $this->postv('edge');
         $map         = $this->postv('map');
         $proposition = $this->postv('proposition');
@@ -48,7 +50,7 @@ class LogApiController extends CoreApi {
         $ne          = $this->postv('ne');
         $np          = $this->postv('np');  
         $result = $logService->logKitBuildState($lid, $edge, $map, $proposition, $compare, $ne, $np);
-        break;
+      }
     }
 
     return CoreResult::instance($lid)->show();   

@@ -2,6 +2,10 @@ $(() => { // jQuery onReady callback
   let app = CmapApp.instance()
 })
 
+class L {
+  static log() {}
+}
+
 class CmapApp {
   constructor() {
     this.kbui = KitBuildUI.instance(CmapApp.canvasId)
@@ -52,6 +56,8 @@ class CmapApp {
       let sessid = Core.instance().config().get('sessid');
       this.logger = CmapLogger.instance(null, 0, sessid, canvas).enable();
       CmapApp.loggerListener = this.logger.onCanvasEvent.bind(this.logger)
+      L.log = this.logger.log.bind(this.logger);
+      L.log(`init-${this.constructor.name}`);
       canvas.on("event", CmapApp.loggerListener)
     }
 
@@ -90,7 +96,7 @@ class CmapApp {
         KitBuild.getTopicListOfGroups(this.user.gids.split(",")).then(topics => {
           let list = '<option value="">No topic associated</option>'
           topics.forEach(topic => {
-            let selected = (this.conceptMap.map.topic == topic.tid) ? ' selected' : '';
+            let selected = (this.conceptMap && this.conceptMap.map.topic == topic.tid) ? ' selected' : '';
             if(selected == '' && CmapApp.topic && CmapApp.topic.tid == topic.tid)
               selected = ' selected';
             list += `<option value="${topic.tid}"${selected}>${topic.title}</option>`;
@@ -161,6 +167,9 @@ class CmapApp {
       contentDialog.text = text
       return contentDialog
     }
+    contentDialog.on('event', (event, data) => {
+      L.log(`content-${event}`, data);
+    })
   
     let exportDialog = UI.modal('#concept-map-export-dialog', {
       hideElement: '.bt-cancel'
@@ -184,9 +193,10 @@ class CmapApp {
   
     $('.app-navbar .bt-new').on('click', () => {
       let proceed = () => {
-        this.canvas.reset()
-        CmapApp.inst.setConceptMap(null)
-        UI.info("Canvas has been reset").show()
+        this.canvas.reset();
+        CmapApp.inst.setConceptMap(null);
+        UI.info("Canvas has been reset").show();
+        L.log('reset-concept-map', this.conceptMap ? this.conceptMap.map.cmid : null)
       }
       if (this.canvas.cy.elements().length > 0 || CmapApp.inst.conceptMap) {
         let confirm = UI.confirm("Discard this map and create a new concept map from scratch?")
@@ -248,14 +258,18 @@ class CmapApp {
         direction: this.canvas.direction,
         topic: $('#select-topic').val().match(/^ *$/) ? null : $('#select-topic').val().trim(),
         // text: $('#select-text').val().match(/^ *$/) ? null : $('#select-text').val().trim(),
-        type: 'scratch',
+        type: CmapApp.defaultMapType,
         author: this.user ? this.user.username : null,
         create_time: null
       }, KitBuildUI.buildConceptMapData(this.canvas)); // console.log(data); return
       this.ajax.post("kitBuildApi/saveConceptMap", { data: Core.compress(data) })
         .then(conceptMap => { 
           CmapApp.inst.setConceptMap(conceptMap);
-          UI.success("Concept map has been saved successfully.").show(); 
+          UI.success("Concept map has been saved successfully.").show();
+          L.log(data.cmid ? 'save-map' : 'save-as-map', conceptMap.map, null, {
+            cmid: conceptMap.map.cmid,
+            includeMapData: true  
+          });
           saveAsDialog.hide(); 
         })
         .catch(error => { UI.error("Error saving concept map: " + error).show(); })
@@ -369,6 +383,7 @@ class CmapApp {
       this.ajax.get(`contentApi/getTopic/${openDialog.tid}`).then(topic => {
         this.setTopic(topic)
         this.session.set('tid', openDialog.tid);
+        L.log('open-topic', {tid: topic.tid, title: topic.title});
         openDialog.hide();
       });
     });
@@ -404,26 +419,31 @@ class CmapApp {
       if (openPromise.length) 
         Promise.any(openPromise).then(conceptMap => { // console.log(conceptMap)
           let proceed = () => {
-            CmapApp.inst.setConceptMap(conceptMap)
-            this.canvas.cy.elements().remove()
-            this.canvas.cy.add(conceptMap.cyData)
-            this.canvas.applyElementStyle()
+            CmapApp.inst.setConceptMap(conceptMap);
+            this.canvas.cy.elements().remove();
+            this.canvas.cy.add(conceptMap.cyData);
+            this.canvas.applyElementStyle();
             this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0});
-            this.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(conceptMap.map.direction)
+            this.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(conceptMap.map.direction);
             this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
-            UI.success('Concept map loaded.').show()
-            openDialog.hide()
+            UI.success('Concept map loaded.').show();
+            L.log('open-concept-map', conceptMap.map, null, {
+              cmid: conceptMap.map.cmid,
+              includeMapData: true
+            });
+            openDialog.hide();
             CmapApp.collab("command", "set-concept-map", conceptMap, conceptMap.cyData)
           }
           if (this.canvas.cy.elements().length) {
             let confirm = UI.confirm('Do you want to open and replace current concept map on canvas?').positive(() => {            
-              confirm.hide()
-              proceed()
+              confirm.hide();
+              proceed();
             }).show()
           } else proceed()
   
         }).catch(error => {
           console.error(error.errors); 
+          L.log('open-concept-map-error', {cmid: openDialog.cmid});
           UI.dialog("The concept map data is invalid.", {
             icon: 'exclamation-triangle',
             iconStyle: 'danger'
@@ -507,19 +527,22 @@ class CmapApp {
         this.ajax.get(`kitBuildApi/getTextOfTopic/${CmapApp.topic.text}`).then(text => {
           this.setText(text);
           this.session.set('txid', text.tid);
-          contentDialog.setContent(text).show()
+          contentDialog.setContent(text).show();
+          L.log('show-content', {tid: text.tid, title: text.title});
         })
       else contentDialog.show();
     })
   
     $('#kit-content-dialog .bt-scroll-top').on('click', (e) => {
       $('#kit-content-dialog .content').parent().animate({scrollTop: 0}, 200)
+      L.log('scroll-top-content');
     })
   
     $('#kit-content-dialog .bt-scroll-more').on('click', (e) => {
       let height = $('#kit-content-dialog .content').parent().height()
       let scrollTop = $('#kit-content-dialog .content').parent().scrollTop()
-      $('#kit-content-dialog .content').parent().animate({scrollTop: scrollTop + height - 16}, 200)
+      $('#kit-content-dialog .content').parent().animate({scrollTop: scrollTop + height - 16}, 200);
+      L.log('scroll-more-content');
     })
   
   
@@ -545,6 +568,10 @@ class CmapApp {
     */
      $('.app-navbar .bt-logout').on('click', (e) => {
       let confirm = UI.confirm('Do you want to logout?<br>This will <strong class="text-danger">END</strong> your concept mapping session.').positive(() => {
+        L.log('logout', {
+          username: this.user.username,
+          name: this.user.name
+        });
         Core.instance().session().unset('user').then(() => {
           CmapApp.inst.setConceptMap(null);
           KitBuildCollab.enableControl(false);
@@ -555,6 +582,7 @@ class CmapApp {
           this.canvas.cy.elements().remove();
           this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
           this.canvas.toolbar.tools.get(KitBuildToolbar.UNDO_REDO).clearStacks().updateStacksStateButton();
+          this.logger.seq = 0;
           UI.success("You have signed out.").show();
           StatusBar.instance().clear();
           confirm.hide()
@@ -586,9 +614,11 @@ class CmapApp {
      * Sign In
     */
     $('.app-navbar .bt-sign-in').on('click', (e) => {
+      L.log('show-sign-in-dialog');
       CmapApp.inst.modalSignIn = SignIn.instance({
         gids: "SCBASDAT2122",
         success: (user) => {
+          L.log('sign-in-success', user);
           this.session.set('user', user);
           this.setUser(user);
           CmapApp.initCollab(user);
@@ -609,6 +639,7 @@ class CmapApp {
             direction: this.canvas.direction,
             topic: null,
             text: null,
+            type: CmapApp.defaultMapType,
             author: this.user.username,
             create_time: null
           }, KitBuildUI.buildConceptMapData(this.canvas)); // console.log(data); return
@@ -617,6 +648,7 @@ class CmapApp {
               this.setConceptMap(conceptMap);
               this.logger.setConceptMapId(conceptMap.map.cmid);
               UI.success("Concept map has been initialized.").show();
+              L.log('cmap-initialized-empty', conceptMap.map);
             })
             .catch(error => { UI.error("Error saving concept map: " + error).show(); })
         }
@@ -652,27 +684,7 @@ class CmapApp {
     let stateData = JSON.parse(localStorage.getItem(CmapApp.name))
     // console.log("STATE DATA: ", stateData)
     session.getAll().then(sessions => {
-      let cmid = sessions.cmid
-      if (cmid) KitBuild.openConceptMap(cmid).then(conceptMap => {
-        this.setConceptMap(conceptMap);
-        if (!conceptMap) return;
-        if (stateData && stateData.map) { // console.log(stateData.direction)
-          this.canvas.cy.elements().remove()
-          this.canvas.cy.add(Core.decompress(stateData.map))
-          this.canvas.applyElementStyle()
-          this.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(stateData.direction)
-        } else {
-          this.canvas.cy.add(KitBuildUI.composeConceptMap(conceptMap))
-          this.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(conceptMap.map.direction)
-        }
-        this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
-        this.canvas.cy.elements(':selected').unselect();
-        this.logger.setConceptMapId(this.conceptMap.map.cmid);
-      })
-      let tid  = sessions.tid;
-      let txid = sessions.txid;
-      if (tid)  this.ajax.get(`contentApi/getTopic/${tid}`).then(topic => this.setTopic(topic));
-      if (txid) this.ajax.get(`kitBuildApi/getTextOfTopic/${txid}`).then(text => this.setText(text));
+
       try { 
         if (stateData.logger) {
 
@@ -689,6 +701,38 @@ class CmapApp {
           this.canvas.on("event", CmapApp.loggerListener)
         }
       } catch (error) { console.warn(error) }
+
+      let cmid = sessions.cmid;
+      if (cmid) KitBuild.openConceptMap(cmid).then(conceptMap => {
+        this.setConceptMap(conceptMap);
+        if (!conceptMap) return;
+        if (stateData && stateData.map) { // console.log(stateData.direction)
+          this.canvas.cy.elements().remove()
+          this.canvas.cy.add(Core.decompress(stateData.map))
+          this.canvas.applyElementStyle()
+          this.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(stateData.direction)
+        } else {
+          this.canvas.cy.add(KitBuildUI.composeConceptMap(conceptMap))
+          this.canvas.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).setActiveDirection(conceptMap.map.direction)
+        }
+        this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
+        this.canvas.cy.elements(':selected').unselect();
+        this.logger.setConceptMapId(this.conceptMap.map.cmid);
+        L.log('restore-concept-map', (conceptMap ? conceptMap.map : null), null, {
+          includeMapData: conceptMap ? true : false
+        });
+      })
+      let tid  = sessions.tid;
+      let txid = sessions.txid;
+      if (tid)  this.ajax.get(`contentApi/getTopic/${tid}`).then(topic => {
+        this.setTopic(topic);
+        L.log('restore-topic', {topic: (topic ? topic.tid : null)});
+      });
+      if (txid) this.ajax.get(`kitBuildApi/getTextOfTopic/${txid}`).then(text => {
+        this.setText(text);
+        L.log('restore-text', {text: (text ? text.tid : null)});
+      });
+
   
       // init collaboration feature
       CmapApp.enableNavbarButton(false);
@@ -710,12 +754,13 @@ class CmapApp {
   }
 }
 
-CmapApp.canvasId = "goalmap-canvas"
+CmapApp.canvasId = "goalmap-canvas";
+CmapApp.defaultMapType = "scratch";
 
 CmapApp.onBrowserStateChange = event => { // console.warn(event)
+  L.log('browser-state-change', {from: event.oldState, to: event.newState});
   if (event.newState == "terminated") {
     let stateData = {}
-    // console.log(CmapApp.inst.logger)
     if (CmapApp.inst && CmapApp.inst.logger) 
       stateData.logger = {
         username: CmapApp.inst.logger.username,
@@ -725,11 +770,7 @@ CmapApp.onBrowserStateChange = event => { // console.warn(event)
       }
     stateData.map = Core.compress(CmapApp.inst.canvas.cy.elements().jsons())
     stateData.direction = $('#dd-direction .icon-active').data('direction')
-    // console.warn(
-    //   JSON.stringify(CmapApp.inst.canvas.cy.elements().jsons()), 
-    //   JSON.stringify(CmapApp.inst.canvas.cy.nodes().jsons()))
     let cmapAppStateData = JSON.stringify(Object.assign({}, stateData)) 
-    // console.warn("STATE STORE:", cmapAppStateData)
     localStorage.setItem(CmapApp.name, cmapAppStateData)
   }
 }

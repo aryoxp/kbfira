@@ -1514,9 +1514,8 @@ class LayoutTool extends KitBuildToolbarTool {
       }
       try {
         this.layoutElements(this.canvas.cy.nodes(':selected'))
-      } catch(error) {
-        console.error(error);
-        try {
+      } catch(error) { // some elements are not selected
+        try { // select unselected elements, try again.
           this.selectGraphOfNode(this.canvas.cy.nodes(':selected')[0])
           this.layoutElements(this.canvas.cy.nodes(':selected'))
         } catch(error) {
