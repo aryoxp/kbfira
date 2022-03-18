@@ -33,7 +33,7 @@ class KitMapService extends CoreService {
     $insert['enabled']     = QB::esc($enabled);
     $insert['author']      = QB::esc($author);
     $insert['cmid']        = QB::esc($cmid);
-    $db = self::instance("kbv2");
+    $db = self::instance();
     try {
       $db->begin();
 
@@ -142,7 +142,7 @@ class KitMapService extends CoreService {
     $update['author']      = QB::esc($author);
     $update['cmid']        = QB::esc($cmid);
     
-    $db = self::instance("kbv2");
+    $db = self::instance();
     try {
       $db->begin();
 

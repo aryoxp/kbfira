@@ -15,7 +15,7 @@ class HomeController extends ModuleController {
       'modules' => $this->modules,
       'title' => 'Dashboard'
     ));
-    $auth = new CoreAuth("kbv2");
+    $auth = new CoreAuth();
     $this->ui->view('dashboard.php');
     $this->ui->view('foot.php');
   }

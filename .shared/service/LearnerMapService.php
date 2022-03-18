@@ -32,7 +32,7 @@ class LearnerMapService extends CoreService {
     $insert['create_time'] = QB::esc($create_time) ? QB::esc($create_time) : QB::default();
     $insert['data']        = QB::esc($data);
     
-    $db = self::instance("kbv2");
+    $db = self::instance();
     try {
       $db->begin();
 
@@ -124,7 +124,7 @@ class LearnerMapService extends CoreService {
      * CONSTRAINT
      * cmid, source_cmid, target_cmid MUST have equal value.
      */
-    $db = self::instance("kbv2");
+    $db = self::instance();
     try {
       $db->begin();
 
@@ -224,7 +224,7 @@ class LearnerMapService extends CoreService {
     $update['create_time'] = QB::esc($create_time) ? QB::esc($create_time) : QB::default();
     $update['data']        = QB::esc($data);
     
-    $db = self::instance("kbv2");
+    $db = self::instance();
     try {
       $db->begin();
 
@@ -355,7 +355,7 @@ class LearnerMapService extends CoreService {
      * cmid, source_cmid, target_cmid MUST have equal value.
      */
     
-    $db = self::instance("kbv2");
+    $db = self::instance();
     try {
       $db->begin();
 

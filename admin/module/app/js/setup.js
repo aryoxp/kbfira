@@ -10,14 +10,12 @@ $(() => {
     }
 
     readConfig() {
-      // console.log(Core.instance().ajax());
       let compressedDbConfig = Core.inst.config().get('dbconfig');
       let dbConfig = JSON.parse(Core.decompress(compressedDbConfig));
       let key = $('#select-config-key').val();
       let config = dbConfig[key];
       this.readServerInfo(key);
       this.ajax.get(`m/x/app/setupApi/checkDB/${key}`).then(result => {
-        // console.log(result);
         if (parseInt(result) == 0) {
           $('#config-status').addClass('alert-success').removeClass('alert-danger').html('Selected database is empty and ready to setup.');
           $('button.bt-setup').attr('disabled', false)
@@ -75,7 +73,27 @@ $(() => {
       });
       $('#config-status').on('click', '.bt-check-again', () => {
         $('#select-config-key').trigger('change');
-      })
+      });
+      $('button.bt-setup-init-data').on('click', (e) => {
+        let key = $('#select-config-key').val();
+        let label = $(e.currentTarget).html();
+        let confirm = UI.confirm("Begin setup inital authorization data to the selected database?").positive(() => {
+          $(e.currentTarget).html(`Setting up... ${UI.spinner()}`).attr('disabled', true);
+          this.ajax.post(`m/x/app/setupApi/doSetupInitData`, {
+            db: key
+          }).then(result => {
+            if(result == true) {
+              UI.success("Initial data has been setup successfully.").show();
+              $('#config-status-init-data').html("Initial data has been setup successfully.")
+            } else UI.warning(result).show();
+          })
+          .catch(error => UI.error(error).show())
+          .finally(() => {
+            $(e.currentTarget).html(label).attr('disabled', false);
+          })
+          confirm.hide();
+        }).show();
+      });
     }
 
     static instance() {
@@ -85,6 +103,7 @@ $(() => {
     static displayDbConfig(config) {
       let configContent = '<table class="table table-sm">';
       for(let attr in config) {
+        if (attr == "password") config[attr] = "***"
         configContent += `<tr><td>${attr}</td><td><code>${config[attr] === "1" ? "TRUE" : (config[attr] === "" ? "FALSE" : config[attr])}</code></td></tr>`
       }
       configContent += '</table>';

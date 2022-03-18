@@ -3,7 +3,7 @@
   "menu": [
     {
       "id": "app",
-      "label": "App",
+      "label": "App Registration",
       "url": "app/home/index",
       "icon": "app"
     }

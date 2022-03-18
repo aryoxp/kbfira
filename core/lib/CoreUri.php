@@ -55,7 +55,7 @@ class CoreUri {
     $xscript        = explode("/", $_SERVER['SCRIPT_NAME']);
     $this->scheme   = $_SERVER['REQUEST_SCHEME'];
     $this->host     = rtrim($_SERVER['HTTP_HOST'], ":" . $_SERVER['SERVER_PORT']);
-    $this->port     = $_SERVER['SERVER_PORT'];
+    $this->port     = $_SERVER['SERVER_PORT'] == 80 ? "" : $_SERVER['SERVER_PORT'];
     $this->uri      = $_SERVER['REQUEST_URI'];
     $this->script   = end($xscript);
     $this->query    = $_SERVER['QUERY_STRING'];

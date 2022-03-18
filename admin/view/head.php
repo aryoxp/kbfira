@@ -30,11 +30,6 @@
         <?php endif; ?>
 
         <div class="flex-fill flex-nowrap text-nowrap overflow-hidden d-flex align-items-stretch" style="position:relative; width: 100px">
-          <!-- <ul id="nav-bar" class="nav scroll-x d-flex align-items-center flex-nowrap">
-            <li><a href="#" class="nav-link px-2 link-secondary flex-nowrap">Concept Mapping</a></li>
-            <li><a href="#" class="nav-link px-2 link-secondary flex-nowrap">Analyzer</a></li>
-            <li><a href="#" class="nav-link px-2 link-secondary flex-nowrap">Administration</a></li>
-          </ul> -->
         </div>
 
         <div class="d-flex align-items-center ms-3">
@@ -91,12 +86,6 @@
               <?php endif; ?>
             </ul>
           </div>
-          <!-- <a class="px-3" role="button">
-            <i class="bi bi-fullscreen"></i>
-          </a>
-          <a class="px-3 admin-toggle-sidepanel" role="button">
-            <i class="bi bi-layout-sidebar-reverse"></i>
-          </a> -->
         </div>
 
       </div>
@@ -114,41 +103,101 @@
             </a>
           </li>
         <?php
-          $this->buildMenu = function($menu, $lv = 1, $app = '') {
-            foreach($menu as $m) {
-              
-              if (isset($m->id) && !CoreAuth::isMenuAuthorized($app, $m->id)) continue;
-
-              $hasMenu = @$m->menu && count($m->menu);
-              $hasMenuClass = $hasMenu ? ' has-submenu collapsed' : '';
-              echo '<li '. (property_exists($m, 'id') ? 'data-id="' . $app . "-" . $m->id . '"' : '') . ' class="mb-1">';
-              echo '<a '. (!$hasMenu && @$m->url ? 'href="' . $this->location($m->url, 'm/x/') . '" ' : '').' class="'.$hasMenuClass.'">';
-              if ($lv == 1 && @$m->icon) echo '<i class="bi bi-'.$m->icon.'"></i>';
-              echo '<span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">'.$m->label."</span>";
-              echo '</a>';
-              if ($hasMenu) {
-                echo "<ul>";
-                ($this->buildMenu)($m->menu, $lv + 1, $app);
-                echo "</ul>";
+          
+          function walk($ms, $lv = 1, $app = '', $pm = null) {
+            if (is_array($ms)) {
+              if ($pm) $pm->shouldShow = false;
+              foreach($ms as $m) {
+                $show = walk($m, $lv, $app);
+                if ($show) $pm->shouldShow = true;
               }
-              echo '</li>';
+            } else {
+              if (isset($ms->menu)) {
+                $ms->shouldShow = false;
+                $ms->sub = true;
+                walk($ms->menu, $lv + 1, $app, $ms);
+              } else {
+                $ms->sub = false;
+                $ms->lv = $lv;
+                if (isset($ms->auth) && !CoreAuth::isMenuAuthorized($app, $ms->id)) {
+                  $ms->ok = false;
+                } else $ms->ok = true;
+                return $ms->ok;
+              }
+            }
+          }
+          walk($menus);
+          // var_dump($menus);
 
+          $this->dwalk = function($ms, $lv = 1, $app = '', $pm = null) {
+            if (is_array($ms)) {
+              foreach($ms as $m) ($this->dwalk)($m, $lv, $app);
+            } else {
+              if (isset($ms->menu)) { // it has sub-menus
+                if (!$ms->shouldShow) return; // childs of this menu were not authorized, hide it.
+                if (isset($ms->heading)) { // this is app heading
+                  echo '<li class="admin-sidebar-heading">'.$ms->heading.'</li>';
+                  ($this->dwalk)($ms->menu, $lv, $app, $ms);
+                } else {
+                  echo "<li>";
+                  echo '<a class="has-submenu collapsed">';
+                  if ($lv == 1 && @$ms->icon) echo '<i class="bi bi-'.$ms->icon.'"></i>';
+                  echo '<span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">'.$ms->label."</span>";
+                  echo '</a>';
+                  echo "<ul>";
+                  ($this->dwalk)($ms->menu, $lv + 1, $app, $ms);
+                  echo "</ul>";
+                  echo "</li>";
+                }
+              } else {
+                echo "<li>";
+                echo '<a '. (@$ms->url ? 'href="' . $this->location($ms->url, 'm/x/') . '" ' : '').'>';
+                if ($lv == 1 && @$ms->icon) echo '<i class="bi bi-'.$ms->icon.'"></i>';
+                echo '<span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">'.$ms->label."</span>";
+                echo '</a>';
+                echo "</li>";
+              }
             }
           };
-          foreach($menus as $app => $menu) {
-            if (!CoreAuth::isAppAuthorized($app)) continue;
-            if (is_array($menu)) {
-              foreach($menu as $m) {
-                if (@$m->heading)
-                  echo '<li class="admin-sidebar-heading">'.$m->heading.'</li>';
-                ($this->buildMenu)($m->menu, 1, $app);
-              }
-              continue;
-            }
-            if (@$menu->heading)
-              echo '<li class="admin-sidebar-heading">'.$menu->heading.'</li>';
-            ($this->buildMenu)($menu->menu, 1, $app);
-          }
+
+          if (isset($_SESSION['user'])) ($this->dwalk)($menus);
+
+          // var_dump($menus);
+          // $this->buildMenu = function($menu, $lv = 1, $app = '') {
+          //   foreach($menu as $m) {
+              
+          //     if (isset($m->id) && !CoreAuth::isMenuAuthorized($app, $m->id)) continue;
+
+          //     $hasMenu = @$m->menu && count($m->menu);
+          //     $hasMenuClass = $hasMenu ? ' has-submenu collapsed' : '';
+          //     echo '<li '. (property_exists($m, 'id') ? 'data-id="' . $app . "-" . $m->id . '"' : '') . ' class="mb-1">';
+          //     echo '<a '. (!$hasMenu && @$m->url ? 'href="' . $this->location($m->url, 'm/x/') . '" ' : '').' class="'.$hasMenuClass.'">';
+          //     if ($lv == 1 && @$m->icon) echo '<i class="bi bi-'.$m->icon.'"></i>';
+          //     echo '<span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">'.$m->label."</span>";
+          //     echo '</a>';
+          //     if ($hasMenu) {
+          //       echo "<ul>";
+          //       ($this->buildMenu)($m->menu, $lv + 1, $app);
+          //       echo "</ul>";
+          //     }
+          //     echo '</li>';
+
+          //   }
+          // };
+          // foreach($menus as $app => $menu) {
+          //   // if (!CoreAuth::isAppAuthorized($app)) continue;
+          //   if (is_array($menu)) {
+          //     foreach($menu as $m) {
+          //       if (@$m->heading)
+          //         echo '<li class="admin-sidebar-heading">'.$m->heading.'</li>';
+          //       ($this->buildMenu)($m->menu, 1, $app);
+          //     }
+          //     continue;
+          //   }
+          //   if (@$menu->heading)
+          //     echo '<li class="admin-sidebar-heading">'.$menu->heading.'</li>';
+          //   ($this->buildMenu)($menu->menu, 1, $app);
+          // }
         ?>
         </ul>
       </div>

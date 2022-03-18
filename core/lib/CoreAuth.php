@@ -15,14 +15,14 @@ class CoreAuth extends CoreService {
   private $authorizedMenus = [];
   private $authorizedFunctions = [];
 
-  public function __construct($dbConfigKey, $app = null) {
+  public function __construct($dbConfigKey = null, $app = null) {
     // $this->rids = $rids;
     $this->app = $app ? $app : Core::lib(Core::URI)->get(CoreUri::APP);
     $this->db = self::instance($dbConfigKey);
     if ($user = isset($_SESSION['user']) ? $_SESSION['user'] : false) {
       $rids = explode(",", $user['rids']);
       // var_dump($rids, $this->app);
-      $rids[] = 'ADMINISTRATOR';
+      // $rids[] = 'ADMINISTRATOR';
       $qb = QB::instance('auth_app')->select()->whereIn('rid', $rids)->where('app', $this->app);
       $this->authorizedApps = $this->db->query($qb->get());
       $qb = QB::instance('auth_menu')->select()->whereIn('rid', $rids)->where('app', $this->app);

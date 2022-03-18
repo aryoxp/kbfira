@@ -24,7 +24,6 @@ class SetupService extends CoreService {
     $multi[] = "SET NAMES utf8mb4;";
     $multi[] = "SET FOREIGN_KEY_CHECKS = 0;";
     $multi[] = "DROP TABLE IF EXISTS `app`;";
-    $multi[] = "DROP TABLE IF EXISTS `app`;";
     $multi[] = "CREATE TABLE `app` (
       `app` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
       `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
@@ -103,17 +102,21 @@ class SetupService extends CoreService {
       `author` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
       `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
       `direction` enum('bi','uni','multi') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'multi',
+      `type` enum('teacher','scratch') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'teacher',
       `text` int unsigned DEFAULT NULL,
       `topic` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+      `refmap` int unsigned DEFAULT NULL,
       PRIMARY KEY (`cmid`) USING BTREE,
       UNIQUE KEY `cmfid_UNIQUE` (`cmfid`) USING BTREE /*!80000 INVISIBLE */,
       KEY `fk_conceptmap_user_idx` (`author`) USING BTREE /*!80000 INVISIBLE */,
       KEY `fk_conceptmap_text_idx` (`text`) USING BTREE /*!80000 INVISIBLE */,
       KEY `fk_conceptmap_topic_idx` (`topic`) USING BTREE /*!80000 INVISIBLE */,
+      KEY `fk_conceptmap_conceptmap` (`refmap`),
+      CONSTRAINT `fk_conceptmap_conceptmap` FOREIGN KEY (`refmap`) REFERENCES `conceptmap` (`cmid`) ON DELETE SET NULL ON UPDATE CASCADE,
       CONSTRAINT `fk_conceptmap_text` FOREIGN KEY (`text`) REFERENCES `text` (`tid`) ON DELETE CASCADE ON UPDATE CASCADE,
       CONSTRAINT `fk_conceptmap_topic` FOREIGN KEY (`topic`) REFERENCES `topic` (`tid`) ON DELETE CASCADE ON UPDATE CASCADE,
       CONSTRAINT `fk_conceptmap_user` FOREIGN KEY (`author`) REFERENCES `user` (`username`) ON DELETE CASCADE ON UPDATE CASCADE
-    ) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;";
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;";
 
     $multi[] = "DROP TABLE IF EXISTS `function`;";
     $multi[] = "CREATE TABLE `function` (
@@ -130,6 +133,17 @@ class SetupService extends CoreService {
       `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
       `description` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
       PRIMARY KEY (`gid`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;";
+
+    $multi[] = "DROP TABLE IF EXISTS `grup_kit`;";
+    $multi[] = "CREATE TABLE `grup_kit` (
+      `gid` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+      `kid` int unsigned NOT NULL,
+      PRIMARY KEY (`gid`,`kid`) USING BTREE,
+      KEY `fk_grup_has_kit_kit_idx` (`kid`) USING BTREE /*!80000 INVISIBLE */,
+      KEY `fk_grup_has_kit_grup_idx` (`gid`) USING BTREE /*!80000 INVISIBLE */,
+      CONSTRAINT `fk_grup_kit_grup` FOREIGN KEY (`gid`) REFERENCES `grup` (`gid`) ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT `fk_grup_kit_kit` FOREIGN KEY (`kid`) REFERENCES `kit` (`kid`) ON DELETE CASCADE ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;";
 
     $multi[] = "DROP TABLE IF EXISTS `grup_topic`;";
@@ -174,7 +188,7 @@ class SetupService extends CoreService {
       CONSTRAINT `fk_kit_conceptmap` FOREIGN KEY (`cmid`) REFERENCES `conceptmap` (`cmid`) ON DELETE CASCADE ON UPDATE CASCADE,
       CONSTRAINT `fk_kit_text` FOREIGN KEY (`text`) REFERENCES `text` (`tid`) ON DELETE CASCADE ON UPDATE CASCADE,
       CONSTRAINT `fk_kit_user` FOREIGN KEY (`author`) REFERENCES `user` (`username`) ON DELETE CASCADE ON UPDATE CASCADE
-    ) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;";
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;";
 
     $multi[] = "DROP TABLE IF EXISTS `kit_concept`;";
     $multi[] = "CREATE TABLE `kit_concept` (
@@ -262,8 +276,11 @@ class SetupService extends CoreService {
       `kid` int unsigned NOT NULL,
       `setid` tinyint unsigned NOT NULL,
       `order` tinyint unsigned DEFAULT NULL,
+      `text` int unsigned DEFAULT NULL,
       PRIMARY KEY (`kid`,`setid`),
-      CONSTRAINT `fk_kit_set_kit` FOREIGN KEY (`kid`) REFERENCES `kit` (`kid`) ON DELETE CASCADE ON UPDATE CASCADE
+      KEY `fk_kit_set_text` (`text`),
+      CONSTRAINT `fk_kit_set_kit` FOREIGN KEY (`kid`) REFERENCES `kit` (`kid`) ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT `fk_kit_set_text` FOREIGN KEY (`text`) REFERENCES `text` (`tid`) ON DELETE CASCADE ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
 
     $multi[] = "DROP TABLE IF EXISTS `kit_source_edge_ext`;";
@@ -307,7 +324,7 @@ class SetupService extends CoreService {
       KEY `fk_learnermap_user` (`author`) USING BTREE /*!80000 INVISIBLE */,
       CONSTRAINT `fk_learnermap_kit` FOREIGN KEY (`kid`) REFERENCES `kit` (`kid`) ON DELETE CASCADE ON UPDATE CASCADE,
       CONSTRAINT `fk_learnermap_user` FOREIGN KEY (`author`) REFERENCES `user` (`username`) ON DELETE CASCADE ON UPDATE CASCADE
-    ) ENGINE=InnoDB AUTO_INCREMENT=188 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;";
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;";
 
     $multi[] = "DROP TABLE IF EXISTS `learnermap_concept`;";
     $multi[] = "CREATE TABLE `learnermap_concept` (
@@ -544,106 +561,35 @@ class SetupService extends CoreService {
       CONSTRAINT `fk_user_has_role_role` FOREIGN KEY (`rid`) REFERENCES `role` (`rid`) ON DELETE CASCADE ON UPDATE CASCADE,
       CONSTRAINT `fk_user_has_role_user` FOREIGN KEY (`username`) REFERENCES `user` (`username`) ON DELETE CASCADE ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;";
-
+    
     $multi[] = "SET FOREIGN_KEY_CHECKS = 1;";
+  
+    // Execute!
+    try {
+      $db = self::instance($dbkey);
+      $db->begin();
+      foreach($multi as $sql) 
+        $result = $db->query($sql);
+      $db->commit();
+      return $result;
+    } catch (Exception $ex) {
+      $db->rollback();
+      throw CoreError::instance($ex->getMessage());
+    }
+  }
 
+  function doSetupInitData($dbkey) {
 
-    // Insert data...
-
-    $multi[] = "INSERT INTO `role` (`rid`, `name`, `inherit`) VALUES ('ADMINISTRATOR', 'Administrator', NULL);";
-    $multi[] = "INSERT INTO `role` (`rid`, `name`, `inherit`) VALUES ('GUEST', 'Guest', NULL);";
-    $multi[] = "INSERT INTO `role` (`rid`, `name`, `inherit`) VALUES ('LEARNER', 'Learner', NULL);";
-    $multi[] = "INSERT INTO `role` (`rid`, `name`, `inherit`) VALUES ('TEACHER', 'Teacher', NULL);";
+    $multi[] = "INSERT IGNORE INTO `role` (`rid`, `name`, `inherit`) VALUES ('ADMINISTRATOR', 'Administrator', NULL);";
+    $multi[] = "INSERT IGNORE INTO `role` (`rid`, `name`, `inherit`) VALUES ('GUEST', 'Guest', NULL);";
+    $multi[] = "INSERT IGNORE INTO `role` (`rid`, `name`, `inherit`) VALUES ('LEARNER', 'Learner', NULL);";
+    $multi[] = "INSERT IGNORE INTO `role` (`rid`, `name`, `inherit`) VALUES ('TEACHER', 'Teacher', NULL);";
 
     $multi[] = "INSERT INTO `user` (`username`, `password`, `name`) 
-      VALUES ('admin', 'd41d8cd98f00b204e9800998ecf8427e', 'Administrator');";
+      VALUES ('admin', 'd41d8cd98f00b204e9800998ecf8427e', 'Administrator') 
+      ON DUPLICATE KEY UPDATE `password` = VALUES(`password`);";
 
-    $multi[] = "INSERT INTO `user_role` (`username`, `rid`) VALUES ('admin', 'ADMINISTRATOR');";
-
-    $multi[] = "INSERT INTO `app` (`app`, `name`, `shortdesc`, `description`) 
-      VALUES ('analyzer', 'Analyzer Module', 'Analyzer Module', 'Analyzer Module');";
-    $multi[] = "INSERT INTO `app` (`app`, `name`, `shortdesc`, `description`) 
-      VALUES ('app', 'App Manager Module', 'App Manager Module', 'App Manager Module');";
-    $multi[] = "INSERT INTO `app` (`app`, `name`, `shortdesc`, `description`) 
-      VALUES ('cmap', 'Concept Map Module', 'Concept Map Module', 'Concept Map Module');";
-    $multi[] = "INSERT INTO `app` (`app`, `name`, `shortdesc`, `description`) 
-      VALUES ('content', 'Content Module', 'Content Module', 'Content Module');";
-    $multi[] = "INSERT INTO `app` (`app`, `name`, `shortdesc`, `description`) 
-      VALUES ('rbac', 'RBAC Authorization Module', 'RBAC Authorization Module', 'RBAC Authorization Module');";
-    $multi[] = "INSERT INTO `app` (`app`, `name`, `shortdesc`, `description`) 
-      VALUES ('user', 'User Management Module', 'User Management Module', 'User Management Module');";
-
-    $multi[] = "INSERT INTO `auth_app` (`app`, `rid`) VALUES ('analyzer', 'ADMINISTRATOR');";
-    $multi[] = "INSERT INTO `auth_app` (`app`, `rid`) VALUES ('app', 'ADMINISTRATOR');";
-    $multi[] = "INSERT INTO `auth_app` (`app`, `rid`) VALUES ('cmap', 'ADMINISTRATOR');";
-    $multi[] = "INSERT INTO `auth_app` (`app`, `rid`) VALUES ('user', 'ADMINISTRATOR');";
-    $multi[] = "INSERT INTO `auth_app` (`app`, `rid`) VALUES ('content', 'ADMINISTRATOR');";
-    $multi[] = "INSERT INTO `auth_app` (`app`, `rid`) VALUES ('rbac', 'ADMINISTRATOR');";
-
-    $multi[] = "INSERT INTO `menu` (`app`, `mid`, `label`, `url`, `icon`) 
-      VALUES ('analyzer', 'analyzer-dynamic', 'Dynamic Analyzer', 'analyzer/dynamic', 'graph-up-arrow');";
-    $multi[] = "INSERT INTO `menu` (`app`, `mid`, `label`, `url`, `icon`) 
-      VALUES ('analyzer', 'analyzer-static', 'Static Analyzer', 'analyzer/static', 'bar-chart-line');";
-    $multi[] = "INSERT INTO `menu` (`app`, `mid`, `label`, `url`, `icon`) 
-      VALUES ('app', 'app', 'App', 'app/home/index', 'app');";
-    $multi[] = "INSERT INTO `menu` (`app`, `mid`, `label`, `url`, `icon`) 
-      VALUES ('cmap', 'compose-cmap', 'Compose Concept Map', 'cmap/compose/cmap', 'file-plus');";
-    $multi[] = "INSERT INTO `menu` (`app`, `mid`, `label`, `url`, `icon`) 
-      VALUES ('cmap', 'compose-kit', 'Compose Kit', 'cmap/compose/kit', 'layout-wtf');";
-    $multi[] = "INSERT INTO `menu` (`app`, `mid`, `label`, `url`, `icon`) 
-      VALUES ('cmap', 'recompose', 'Recompose', 'cmap/kitbuild/recompose', 'ui-checks-grid');";
-    $multi[] = "INSERT INTO `menu` (`app`, `mid`, `label`, `url`, `icon`) 
-      VALUES ('cmap', 'recompose-ext', 'Recompose (Extended)', 'cmap/kitbuild/recomposeExt', 'ui-checks-grid');";
-    $multi[] = "INSERT INTO `menu` (`app`, `mid`, `label`, `url`, `icon`) 
-      VALUES ('cmap', 'runtime-cmap', 'Runtime Settings', 'cmap/compose/settings', 'gear');";
-    $multi[] = "INSERT INTO `menu` (`app`, `mid`, `label`, `url`, `icon`) 
-      VALUES ('cmap', 'runtime-recompose', 'Runtime Settings', 'cmap/kitbuild/settings', 'gear');";
-    $multi[] = "INSERT INTO `menu` (`app`, `mid`, `label`, `url`, `icon`) 
-      VALUES ('content', 'goalmaps-kits', 'Goalmaps and Kits', 'm.user/list', 'list');";
-    $multi[] = "INSERT INTO `menu` (`app`, `mid`, `label`, `url`, `icon`) 
-      VALUES ('content', 'kits', 'Kits', 'content/kit', 'list');";
-    $multi[] = "INSERT INTO `menu` (`app`, `mid`, `label`, `url`, `icon`) 
-      VALUES ('content', 'learnermaps', 'Learner Maps', 'content/lmap', 'list');";
-    $multi[] = "INSERT INTO `menu` (`app`, `mid`, `label`, `url`, `icon`) 
-      VALUES ('content', 'teachermaps', 'Teacher Maps', 'content/tmap', 'list');";
-    $multi[] = "INSERT INTO `menu` (`app`, `mid`, `label`, `url`, `icon`) 
-      VALUES ('content', 'text', 'Text', 'content/text', 'file-text');";
-    $multi[] = "INSERT INTO `menu` (`app`, `mid`, `label`, `url`, `icon`) 
-      VALUES ('content', 'topic', 'Topic', 'content/topic', 'book');";
-    $multi[] = "INSERT INTO `menu` (`app`, `mid`, `label`, `url`, `icon`) 
-      VALUES ('rbac', 'role-app', 'Role &mdash; App Module', 'rbac/role/app', 'grid');";
-    $multi[] = "INSERT INTO `menu` (`app`, `mid`, `label`, `url`, `icon`) 
-      VALUES ('rbac', 'role-function', 'Role &mdash; App Function', 'rbac/role/funct', 'gear-wide');";
-    $multi[] = "INSERT INTO `menu` (`app`, `mid`, `label`, `url`, `icon`) 
-      VALUES ('rbac', 'role-menu', 'Role &mdash; App Menu', 'rbac/role/menu', 'menu-button');";
-    $multi[] = "INSERT INTO `menu` (`app`, `mid`, `label`, `url`, `icon`) 
-      VALUES ('user', 'group', 'Group/Class', 'user/group', 'people-fill');";
-    $multi[] = "INSERT INTO `menu` (`app`, `mid`, `label`, `url`, `icon`) 
-      VALUES ('user', 'role', 'Role', 'user/role', 'file-person');";
-    $multi[] = "INSERT INTO `menu` (`app`, `mid`, `label`, `url`, `icon`) 
-      VALUES ('user', 'user-manager', 'User', 'user/manager', 'list');";
-
-    $multi[] = "INSERT INTO `auth_menu` (`rid`, `app`, `mid`) VALUES ('ADMINISTRATOR', 'analyzer', 'analyzer-dynamic');";
-    $multi[] = "INSERT INTO `auth_menu` (`rid`, `app`, `mid`) VALUES ('ADMINISTRATOR', 'analyzer', 'analyzer-static');";
-    $multi[] = "INSERT INTO `auth_menu` (`rid`, `app`, `mid`) VALUES ('ADMINISTRATOR', 'app', 'app');";
-    $multi[] = "INSERT INTO `auth_menu` (`rid`, `app`, `mid`) VALUES ('ADMINISTRATOR', 'cmap', 'compose-cmap');";
-    $multi[] = "INSERT INTO `auth_menu` (`rid`, `app`, `mid`) VALUES ('ADMINISTRATOR', 'cmap', 'compose-kit');";
-    $multi[] = "INSERT INTO `auth_menu` (`rid`, `app`, `mid`) VALUES ('ADMINISTRATOR', 'cmap', 'recompose');";
-    $multi[] = "INSERT INTO `auth_menu` (`rid`, `app`, `mid`) VALUES ('ADMINISTRATOR', 'cmap', 'recompose-ext');";
-    $multi[] = "INSERT INTO `auth_menu` (`rid`, `app`, `mid`) VALUES ('ADMINISTRATOR', 'cmap', 'runtime-cmap');";
-    $multi[] = "INSERT INTO `auth_menu` (`rid`, `app`, `mid`) VALUES ('ADMINISTRATOR', 'cmap', 'runtime-recompose');";
-    $multi[] = "INSERT INTO `auth_menu` (`rid`, `app`, `mid`) VALUES ('ADMINISTRATOR', 'content', 'goalmaps-kits');";
-    $multi[] = "INSERT INTO `auth_menu` (`rid`, `app`, `mid`) VALUES ('ADMINISTRATOR', 'content', 'kits');";
-    $multi[] = "INSERT INTO `auth_menu` (`rid`, `app`, `mid`) VALUES ('ADMINISTRATOR', 'content', 'learnermaps');";
-    $multi[] = "INSERT INTO `auth_menu` (`rid`, `app`, `mid`) VALUES ('ADMINISTRATOR', 'content', 'teachermaps');";
-    $multi[] = "INSERT INTO `auth_menu` (`rid`, `app`, `mid`) VALUES ('ADMINISTRATOR', 'content', 'text');";
-    $multi[] = "INSERT INTO `auth_menu` (`rid`, `app`, `mid`) VALUES ('ADMINISTRATOR', 'content', 'topic');";
-    $multi[] = "INSERT INTO `auth_menu` (`rid`, `app`, `mid`) VALUES ('ADMINISTRATOR', 'rbac', 'role-app');";
-    $multi[] = "INSERT INTO `auth_menu` (`rid`, `app`, `mid`) VALUES ('ADMINISTRATOR', 'rbac', 'role-function');";
-    $multi[] = "INSERT INTO `auth_menu` (`rid`, `app`, `mid`) VALUES ('ADMINISTRATOR', 'rbac', 'role-menu');";
-    $multi[] = "INSERT INTO `auth_menu` (`rid`, `app`, `mid`) VALUES ('ADMINISTRATOR', 'user', 'group');";
-    $multi[] = "INSERT INTO `auth_menu` (`rid`, `app`, `mid`) VALUES ('ADMINISTRATOR', 'user', 'role');";
-    $multi[] = "INSERT INTO `auth_menu` (`rid`, `app`, `mid`) VALUES ('ADMINISTRATOR', 'user', 'user-manager');";
+    $multi[] = "INSERT IGNORE INTO `user_role` (`username`, `rid`) VALUES ('admin', 'ADMINISTRATOR');";
 
     // Execute!
     try {

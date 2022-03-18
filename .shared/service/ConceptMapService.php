@@ -36,7 +36,7 @@ class ConceptMapService extends CoreService {
     $insert['topic']       = QB::esc($topic);
     // var_dump(gettype(reset($inserts)) == "array");
     // var_dump(gettype(reset($insert)) == "array");
-    $db = self::instance("kbv2");
+    $db = self::instance();
     // var_dump($qb, $db);
     try {
       $db->begin();
@@ -142,7 +142,7 @@ class ConceptMapService extends CoreService {
     if ($topic !== null) $update['topic'] = QB::esc($topic);
     if ($type !== null)  $update['type']  = QB::esc($type);
 
-    $db = self::instance("kbv2");
+    $db = self::instance();
     try {
       $db->begin();
 
