@@ -71,7 +71,7 @@ class CoreView {
     return $this;
   }
 
-  public function view($view, $data = array(), $options = null, $extra = null) {
+  public function view($view, $data = array(), $options = null) {
 
     $return   = $options & self::RETURN;
     $relative = $options & self::RELATIVE;
@@ -81,9 +81,13 @@ class CoreView {
     $shared   = $options & self::SHARED;
 
     $viewDir  = Core::lib(Core::CONFIG)->get('core_app_view_directory', CoreConfig::CONFIG_TYPE_CORE);
-    $viewPath = $relative ? $extra . DS . $view : CORE_APP_PATH . $viewDir . DS . $view;
+    $viewPath = CORE_APP_PATH . $viewDir . DS . $view;
+    if ($relative) {
+      $backtrace = debug_backtrace();
+      if($trace = $backtrace[0]) $viewPath = dirname($trace['file']) . DS . $view;
+    }
     $viewPath = $asset ? CORE_APP_PATH . CORE_APP_ASSET . $view : $viewPath;
-    $viewPath = $shared ? $extra . DS . $view : $viewPath;
+    $viewPath = $shared ? $view : $viewPath;
     $viewPath = $app ? CORE_APP_PATH . $view : $viewPath;
     $viewPath = $core ? CORE_VIEW_PATH . $view : $viewPath;
 
@@ -97,7 +101,7 @@ class CoreView {
     if ($return) ob_start();
     if (file_exists($viewPath) and is_readable($viewPath)) include $viewPath;
     else {
-      echo 'View: ' . $view . ' not found at ' . $viewPath . $extra . "\n";
+      echo 'View: ' . $view . ' not found at ' . $viewPath . "\n";
     }
     if ($return) return ob_get_clean();
   }
@@ -106,9 +110,10 @@ class CoreView {
     if (isset($this->pluginDefs[$key]) && $p = $this->pluginDefs[$key]) {
       $views = $p['views'];
       $path = $p['path'] ? $p['path'] : null;
+      if (substr("testers", -1) != DS) $path .= DS;
       if ($index == CoreView::ALL_VIEW) {
-        foreach($views as $v) $this->view($v, $data, $options, $path);
-      } else $this->view($views[$index], $data, $options, $path);
+        foreach($views as $v) $this->view($path . $v, $data, $options);
+      } else $this->view($path . $views[$index], $data, $options);
     }
   }
 
