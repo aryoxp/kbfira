@@ -51,7 +51,10 @@ class CoreAuth extends CoreService {
     if (!self::isAppAuthorized($app)) return false;
     $user = isset($_SESSION['user']) ? $_SESSION['user'] : null;
     if ($user && isset($user['auth']) && isset($user['auth']['menu'])) {
-      $count = count(array_filter($user['auth']['menu'], fn($m) => ($m['app'] == $app && $m['mid'] == $mid)));
+      // $count = count(array_filter($user['auth']['menu'], fn($m) => ($m['app'] == $app && $m['mid'] == $mid)));
+      $count = count(array_filter($user['auth']['menu'], function($m) use($app, $mid) {
+        return $m['app'] == $app && $m['mid'] == $mid;
+      }));
       return $count ? true : false;
     } 
     return false;
@@ -61,7 +64,10 @@ class CoreAuth extends CoreService {
     if (!self::isAppAuthorized($app)) return false;
     $user = isset($_SESSION['user']) ? $_SESSION['user'] : null;
     if ($user && isset($user['auth']) && isset($user['auth']['function'])) {
-      $count = count(array_filter($user['auth']['function'], fn($f) => ($f['app'] == $app && $f['fid'] == $fid)));
+      // $count = count(array_filter($user['auth']['function'], fn($f) => ($f['app'] == $app && $f['fid'] == $fid)));
+      $count = count(array_filter($user['auth']['function'], function($f) use($app, $fid) {
+        return $f['app'] == $app && $f['fid'] == $fid;
+      }));
       return $count ? true : false;
     }
     return false;

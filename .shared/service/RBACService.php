@@ -4,14 +4,19 @@ class RBACService extends CoreService {
 
   function getUserAuth($rids = []) {
     try {
-      $ridList = array_map(fn($v) => QB::qt($v), $rids);
+      $ridList = array_map(function($v) {
+        return QB::qt($v);
+      }, $rids);
       $auth = new stdClass;
       $db = self::instance();
 
       $qb = QB::instance('auth_app')->select('app')->distinct()
         ->where('rid', QB::IN, QB::raw('(' . implode(",", $ridList) . ')'));
       $app = $db->query($qb->get());
-      if ($app) $app = array_map(fn($a) => $a->app, $app);
+      
+      if ($app) $app = array_map(function($a) {
+        return $a->app;
+      }, $app);
 
       $qb = QB::instance('auth_menu')->select('app', 'mid')->distinct()
         ->where('rid', QB::IN, QB::raw('(' . implode(",", $ridList) . ')'));
