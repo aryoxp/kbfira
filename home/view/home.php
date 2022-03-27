@@ -16,10 +16,11 @@
       </a>
 
       <nav class="d-inline-flex mt-2 mt-md-0 ms-md-auto">
-        <a class="me-3 py-2 text-dark text-decoration-none" href="#">Publications</a>
-        <a class="me-3 py-2 text-dark text-decoration-none" href="#">Awards</a>
-        <a class="me-3 py-2 text-dark text-decoration-none" href="#">Documentation</a>
-        <a class="py-2 text-dark text-decoration-none" href="#">GitHub</a>
+        <a class="me-3 py-2 text-dark text-decoration-none" href="<?php echo $this->location('publication'); ?>">Publications</a>
+        <a class="me-3 py-2 text-dark text-decoration-none" href="<?php echo $this->location('award'); ?>">Awards</a>
+        <a class="me-3 py-2 text-dark text-decoration-none" href="<?php echo $this->location('docs'); ?>">Documentation</a>
+        <a class="me-3 py-2 text-dark text-decoration-none" href="https://github.com/aryoxp/kbfira">GitHub</a>
+        <a class="py-2 text-dark text-decoration-none" href="<?php echo $this->location('../admin'); ?>">Administration</a>
         <!-- <a class="py-2 text-dark text-decoration-none" href="#">Development</a> -->
       </nav>
     </div>
@@ -29,8 +30,8 @@
       <p class="mx-auto col-6 col-md-8 mt-5 mb-5"><span class="fst-italic fw-bold">The idea:</span> Learning with concept map is fun. <strong>Solve the puzzle:</strong> Learn by recomposing a kit while sharing one's knowledge and understanding. And <strong>what's great?</strong> Kit-Build made analysis to the recomposition easy. <strong>Real-time collaboration</strong> in concept mapping? No worries, Kit-Build system supports it!</p>
       <div class="mx-auto">
         <a type="button" href="<?php echo $this->location('../demo'); ?>" class="btn btn-lg btn-primary mx-2"><i class="bi bi-check-circle"></i> Try the demo</a>
-        <a type="button" class="btn btn-lg btn-danger mx-2"><i class="bi bi-youtube"></i> Watch Intro</a>
-        <a type="button" class="btn btn-lg btn-warning mx-2"><i class="bi bi-book"></i> Publications</a>
+        <a type="button" class="btn btn-lg btn-danger mx-2" href="https://www.youtube.com/watch?v=q-zgODOKFN4"><i class="bi bi-youtube"></i> Watch Intro</a>
+        <a type="button" class="btn btn-lg btn-warning mx-2" href="<?php echo $this->location('publication'); ?>"><i class="bi bi-book"></i> Publications</a>
       </div>
     </div>
   </header>
@@ -131,15 +132,21 @@
       <h4 class="mx-auto h4">Interested in deploying or developing the Kit-Build system?</h4>
       <div>Go to the repository, read the documentation, and start developing now.</div>
       <div class="mt-3">
-        <button type="button" class="btn btn-lg btn-primary"><i class="bi bi-github"></i> Fork on GitHub</button>
+        <a type="button" class="btn btn-lg btn-primary" href="https://github.com/aryoxp/kbfira"><i class="bi bi-github"></i> Fork on GitHub</a>
       </div>
     </div>
 
     <hr class="my-5">
 
     <div class="text-center">
-      <h4 class="mx-auto h5">This system is made available with:</h5>
-      <div>Sponsors...</div>
+      <h4 class="mx-auto h6 mb-4">This system is made available with the following awesome open source projects:</h5>
+      <div class="text-center d-flex justify-content-center">
+        <span><a href="https://js.cytoscape.org/" class="text-decoration-none"><img src="<?php echo $this->asset('images/cytoscape.png'); ?>" width="72" class="p-2 mx-2"><br>CytoscapeJS</a></span>
+        <a href="https://jquery.com" class="text-decoration-none"><img src="<?php echo $this->asset('images/jquery.png'); ?>" width="72" class="p-2 mx-2"><br>jQuery</a>
+        <a href="https://getbootstrap.com/" class="text-decoration-none"><img src="<?php echo $this->asset('images/bs.png'); ?>" width="87" class="mx-2">
+        <br>Bootstrap</a>
+        <a href="https://socket.io/" class="text-decoration-none"><img src="<?php echo $this->asset('images/socket-io.png'); ?>" width="72" class="p-2 mx-2"><br>Socket.IO</a>
+      </div>
     </div>
 
     
@@ -148,9 +155,9 @@
   <footer class="pt-4 my-md-5 pt-md-5 border-top">
     <div class="row">
       <div class="col-12 col-md">
-        <small class="d-block mb-3 text-muted">&copy; 2017–2021</small>
+        <small class="d-block mb-3 text-muted">&copy; 2018-<?php echo date('Y'); ?><br>Learning Engineering Laboratory, Hiroshima University, Japan<br>Faculty of Computer Science, Brawijaya University, Indonesia</small>
       </div>
-      <div class="col-6 col-md">
+      <!-- <div class="col-6 col-md">
         <h5>Features</h5>
         <ul class="list-unstyled text-small">
           <li class="mb-1"><a class="link-secondary text-decoration-none" href="#">Cool stuff</a></li>
@@ -178,7 +185,7 @@
           <li class="mb-1"><a class="link-secondary text-decoration-none" href="#">Privacy</a></li>
           <li class="mb-1"><a class="link-secondary text-decoration-none" href="#">Terms</a></li>
         </ul>
-      </div>
+      </div> -->
     </div>
   </footer>
 </div>
