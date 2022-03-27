@@ -243,6 +243,30 @@ class CoreView {
 
     Core::lib(Core::CONFIG)->set('core', base64_encode(json_encode($clientBaseConfig)), CoreConfig::CONFIG_TYPE_CLIENT);
   }
+  public function useClientLibs(...$plugins) {
+    return $this->useCoreClients(...$plugins);
+  }
+  public function loadClientLibs(...$plugins) {
+    return $this->useCoreClients(...$plugins);
+  }
+  public function useCoreLibs(...$plugins) {
+    return $this->useCoreClients(...$plugins);
+  }
+  public function loadCoreLibs(...$plugins) {
+    return $this->useCoreClients(...$plugins);
+  }
+  public function useClientLib(...$plugins) {
+    return $this->useCoreClients(...$plugins);
+  }
+  public function loadClientLib(...$plugins) {
+    return $this->useCoreClients(...$plugins);
+  }
+  public function useCoreLib(...$plugins) {
+    return $this->useCoreClients(...$plugins);
+  }
+  public function loadCoreLib(...$plugins) {
+    return $this->useCoreClients(...$plugins);
+  }
 
   protected function metaConfig() {
     if (!$cfgs = Core::lib(Core::CONFIG)->dump(CoreConfig::CONFIG_TYPE_CLIENT)) return;

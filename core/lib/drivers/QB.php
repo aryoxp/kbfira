@@ -25,7 +25,7 @@ class QBInsert {
     $this->tuples = $tuples;
   }
   public function push($tuples) {
-    $this->tuples = [...$this->tuples, ...$tuples];
+    $this->tuples = array_merge(...$this->tuples, ...$tuples);
   }
 }
 

@@ -59,7 +59,20 @@ class CoreUri {
     $this->uri      = $_SERVER['REQUEST_URI'];
     $this->script   = end($xscript);
     $this->query    = $_SERVER['QUERY_STRING'];
-    $this->pathinfo = isset($_SERVER['PATH_INFO']) ? (trim($_SERVER['PATH_INFO'], $_SERVER['QUERY_STRING'])) : "";
+
+    
+    $this->pathinfo = isset($_SERVER['PATH_INFO']) ? 
+      (trim($_SERVER['PATH_INFO'], $_SERVER['QUERY_STRING'])) : 
+      null;
+    
+    if ($this->pathinfo === null) {
+      throw new Exception("Web server is not configured to have PATH_INFO defined.");
+      exit;
+    }
+
+    if (trim($this->pathinfo) == "") $this->pathinfo = CORE_APP;
+    
+    // var_dump($this->uri, $this->script, $this->pathinfo);
 
     /**
      * Base URL extraction.
@@ -90,7 +103,8 @@ class CoreUri {
     $this->baselinkurl = $this->scheme . "://" .
       $this->host . ($this->port ? ":" . $this->port : "") . "/" .
       $this->basepath .
-      (strpos($this->uri, $this->script) === false ? "" : $this->script . "/");
+      ($coreConfig['runtime']['pretty_url'] === true ? "" : $this->script . "/");
+      // (strpos($this->uri, $this->script) === false ? "" : $this->script . "/");
       
     
     /**

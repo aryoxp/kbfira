@@ -1290,6 +1290,7 @@ class ShareTool extends KitBuildToolbarTool {
       <h6 class="card-header"><i class="dialog-icon bi"></i> <span class="dialog-title">Copy</span></h6>
       <div class="card-body">
         <textarea class="form-control encoded-data" rows="5"></textarea>
+        <div class="mt-2 fst-italic text-primary"><small>Copied data consists only canvas data.</small></div>
       </div>
       <div class="card-footer text-end">
         <button class="btn btn-sm btn-secondary bt-cancel px-3">Cancel</button>

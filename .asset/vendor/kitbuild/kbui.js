@@ -245,7 +245,7 @@ class KitBuildCanvas {
       // compose the node JSON for Cytoscape canas
       let nodeDefinition = this.toolbar.tools.get(KitBuildToolbar.NODE_CREATE).composeNode(nodeData)
 
-      console.log(nodeDefinition)
+      // console.log(nodeDefinition)
 
       // add the node at the center of canvas
       let node = this.cy.add(nodeDefinition);
@@ -324,7 +324,7 @@ class KitBuildCanvas {
     
   }
 
-  layout(options, lib = 'fcose') { console.log('layout')
+  layout(options, lib = 'fcose') { // console.log('layout')
     let settings = Object.assign({
       name: 'fcose',
       tile: false,

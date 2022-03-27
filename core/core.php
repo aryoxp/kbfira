@@ -74,7 +74,7 @@ try {
   throw CoreError::instance("Invalid app: " . $app . ".");
 
   // Start the session!
-  session_name("CORESID-" . CORE_ENV . DS . $app);
+  session_name("CORESID-" . CORE_ENV . "__" . $app);
   session_start();
 
   // var_dump(CORE_SHARED_PATH . CORE_SHARED_API . $controller . ".php", getcwd(), file_exists(CORE_SHARED_PATH . CORE_SHARED_API . $controller . ".php"));
