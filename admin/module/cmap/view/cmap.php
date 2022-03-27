@@ -129,6 +129,9 @@
         <div class="mb-3">
           <label for="decode-textarea" class="form-label">Concept Map Data</label>
           <textarea class="form-control" id="decode-textarea" rows="4"></textarea>
+          <div class="text-end mt-2">
+            <button class="btn btn-sm btn-primary bt-paste"><i class="bi bi-clipboard"></i> Paste</button>
+          </div>
         </div>
       </div>
     </div>

@@ -94,9 +94,12 @@ class CmapApp {
           KitBuild.getTopicListOfGroups(sessions.user.gids.split(",")).then(topics => {
             let list = '<option value="">No topic associated</option>'
             topics.forEach(topic => {
-              let selected = (this.conceptMap.map.topic == topic.tid) ? ' selected' : '';
-              if(selected == '' && CmapApp.topic && CmapApp.topic.tid == topic.tid)
-                selected = ' selected';
+              let selected = '';
+              if (this.conceptMap) {
+                selected = (this.conceptMap.map.topic == topic.tid) ? ' selected' : '';
+                if(selected == '' && CmapApp.topic && CmapApp.topic.tid == topic.tid)
+                  selected = ' selected';
+              }
               list += `<option value="${topic.tid}"${selected}>${topic.title}</option>`;
             })
             $('#select-topic').html(list);
@@ -194,9 +197,10 @@ class CmapApp {
   
     $('.app-navbar .bt-new').on('click', () => {
       let proceed = () => {
-        this.canvas.reset()
-        this.setConceptMap(null)
-        UI.info("Canvas has been reset").show()
+        this.canvas.reset();
+        this.setConceptMap(null);
+        StatusBar.instance().clear();
+        UI.info("Canvas has been reset").show();
       }
       if (this.canvas.cy.elements().length > 0 || this.conceptMap) {
         let confirm = UI.confirm("Discard this map and create a new concept map from scratch?")
@@ -212,6 +216,7 @@ class CmapApp {
     })
     
     $('.app-navbar .bt-save').on('click', () => { // console.log(CmapApp.inst)
+      console.log(this.conceptMap);
       if (!this.conceptMap) $('.app-navbar .bt-save-as').trigger('click')
       else saveAsDialog.setConceptMap(this.conceptMap)
         .setTitle("Save Concept Map (Update)")
@@ -264,7 +269,7 @@ class CmapApp {
           })
           .catch(error => { UI.error("Error saving concept map: " + error).show() })
       }
-      if (this.conceptMap.map.author != this.user.username) {
+      if (this.conceptMap && this.conceptMap.map.author != this.user.username) {
         let confirm = UI.confirm(`Do you want to save and <span class="text-danger">TAKE OWNERSHIP</span> of this concept map created by <code>${this.conceptMap.map.author}</code>?`)
           .positive(() => {
             proceedSave();
@@ -369,7 +374,15 @@ class CmapApp {
           }
         })
       })
-    })
+    });
+
+      
+    $('#concept-map-open-dialog').on('click', '.bt-paste', (e) => {
+      e.preventDefault();
+      navigator.clipboard.readText().then(text => {
+        $('#decode-textarea').val(text.trim());
+      }); 
+    });      
   
     $('#concept-map-open-dialog').on('click', '.bt-open', (e) => {
       e.preventDefault()
@@ -395,6 +408,7 @@ class CmapApp {
           try {
             let data = $('#decode-textarea').val().trim();
             let conceptMap = Core.decompress(data)
+            if (!conceptMap.map) reject('Concept map data does not have ID specified. Please try pasting and applying the data from the toolbar instead of opening it.');
             resolve(Object.assign(conceptMap, {
               cyData: KitBuildUI.composeConceptMap(conceptMap)
             }))
@@ -402,7 +416,7 @@ class CmapApp {
         }))
       }
       if (openPromise.length) 
-        Promise.any(openPromise).then(conceptMap => { console.log(conceptMap)
+        Promise.any(openPromise).then(conceptMap => { // console.log(conceptMap)
           let proceed = () => {
             this.setConceptMap(conceptMap)
             this.canvas.cy.elements().remove()
@@ -424,7 +438,7 @@ class CmapApp {
   
         }).catch(error => {
           console.error(error.errors); 
-          UI.dialog("The concept map data is invalid.", {
+          UI.dialog(`<span class="fst-italic text-danger">The concept map data is invalid</span>. ${error.errors ? '<br>' + error.errors : ''}`, {
             icon: 'exclamation-triangle',
             iconStyle: 'danger'
           }).show()
