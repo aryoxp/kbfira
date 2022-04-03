@@ -1,5 +1,16 @@
 # Develop App with CoreFramework
 
+- Where is the document root location?
+- How to access document root from URL using web browser?
+
+
+
+xampp/htdocs/kb/
+
+http://localhost/kb/
+
+http://collab.kit-build.net/kb
+
 
 
 ## Source Files Location

@@ -56,7 +56,7 @@
       <span class="bt-scroll-more btn btn-sm ms-1 btn-primary px-3"><i class="bi bi-chevron-down"></i> More</span>
     </span>
     <span>
-      <button class="btn btn-sm btn-secondary bt-close px-3">Close</button>
+      <button class="btn btn-sm btn-secondary bt-close px-3"><?php echo Lang::l('close'); ?></button>
       <button class="btn btn-sm resize-handle pe-0 ps-3"><i class="bi bi-textarea-resize"></i></button>
     </span>
   </div>
@@ -72,6 +72,6 @@
     <div class="feedback-content"></div>
   </div>
   <div class="card-footer text-end">
-    <button class="btn btn-sm btn-secondary bt-cancel bt-close px-5">OK</button>
+    <button class="btn btn-sm btn-secondary bt-cancel bt-close px-5"><?php echo Lang::l('ok'); ?></button>
   </div>
 </div>

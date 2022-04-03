@@ -5,12 +5,12 @@
   <div class="app-navbar d-flex p-2 ps-4" style="border-left: 125px solid #ff4444;">
     <span class="app-buttons">
       <div class="btn-group btn-group-sm">
-        <button class="bt-new btn btn-primary"><i class="bi bi-asterisk"></i> New</button>
-        <button class="bt-open btn btn-sm btn-primary"><i class="bi bi-folder2-open"></i> Open</button>
+        <button class="bt-new btn btn-primary"><i class="bi bi-asterisk"></i> <?php echo Lang::l('new'); ?></button>
+        <button class="bt-open btn btn-sm btn-primary"><i class="bi bi-folder2-open"></i> <?php echo Lang::l('open'); ?></button>
       </div>
       <div class="btn-group btn-group-sm ms-2">
-        <button class="bt-save btn btn-primary"><i class="bi bi-save"></i> Save</button>
-        <button class="bt-save-as btn btn-primary"><i class="bi bi-front"></i> Save As...</button>
+        <button class="bt-save btn btn-primary"><i class="bi bi-save"></i> <?php echo Lang::l('save'); ?></button>
+        <button class="bt-save-as btn btn-primary"><i class="bi bi-front"></i> <?php echo Lang::l('save-as'); ?></button>
       </div>
       <button class="bt-export btn btn-primary d-none"><i class="bi bi-send"></i> Export</button>
       <div class="btn-group btn-group-sm ms-2">
@@ -100,8 +100,8 @@
   <div class="card-footer">
     <div class="row">
       <div class="col text-end">
-        <button class="bt-cancel btn btn-sm btn-secondary" style="min-width: 6rem;">Cancel</button>
-        <button class="bt-save btn btn-sm btn-primary ms-1" style="min-width: 6rem;">Save</button>
+        <button class="bt-cancel btn btn-sm btn-secondary" style="min-width: 6rem;"><?php echo Lang::l('cancel'); ?></button>
+        <button class="bt-save btn btn-sm btn-primary ms-1" style="min-width: 6rem;"><?php echo Lang::l('save'); ?></button>
       </div>
     </div>
   </div>
@@ -153,8 +153,8 @@
         <span class="bt-open-topic btn btn-sm btn-success ms-1" role="button" style="min-width: 6rem;">Open Topic</span>
       </div>
       <div class="col text-end">
-        <button class="bt-cancel btn btn-sm btn-secondary" style="min-width: 6rem;">Cancel</button>
-        <button class="bt-open btn btn-sm btn-primary ms-1" style="min-width: 6rem;">Open</button>
+        <button class="bt-cancel btn btn-sm btn-secondary" style="min-width: 6rem;"><?php echo Lang::l('cancel'); ?></button>
+        <button class="bt-open btn btn-sm btn-primary ms-1" style="min-width: 6rem;"><?php echo Lang::l('open'); ?></button>
       </div>
     </div>
   </div>
@@ -188,7 +188,7 @@
         <span class="bt-scroll-more btn btn-sm ms-1 btn-primary px-3"><i class="bi bi-chevron-down"></i> More</span>
       </span>
       <span>
-        <button class="btn btn-sm btn-secondary bt-close px-3">Close</button>
+        <button class="btn btn-sm btn-secondary bt-close px-3"><?php echo Lang::l('close'); ?></button>
         <button class="btn btn-sm resize-handle pe-0 ps-3"><i class="bi bi-textarea-resize"></i></button>
       </span>
     </div>
@@ -200,19 +200,19 @@
     <textarea class="form-control encoded-data" rows="5"></textarea>
   </div>
   <div class="card-footer text-end">
-    <button class="btn btn-sm btn-secondary bt-cancel px-3">Cancel</button>
+    <button class="btn btn-sm btn-secondary bt-cancel px-3"><?php echo Lang::l('cancel'); ?></button>
     <button class="btn btn-sm btn-primary ms-1 bt-clipboard px-3"><i class="bi bi-clipboard"></i> Copy to Clipboard</button>
   </div>
 </div>
 
 <!-- <div id="concept-map-copy-paste-dialog" class="card d-none">
-  <h6 class="card-header"><i class="dialog-icon bi"></i> <span class="dialog-title">Copy</span></h6>
+  <h6 class="card-header"><i class="dialog-icon bi"></i> <span class="dialog-title"><?php echo Lang::l('copy'); ?></span></h6>
   <div class="card-body">
     <textarea class="form-control encoded-data" rows="5"></textarea>
   </div>
   <div class="card-footer text-end">
-    <button class="btn btn-sm btn-secondary bt-cancel px-3">Cancel</button>
+    <button class="btn btn-sm btn-secondary bt-cancel px-3"><?php echo Lang::l('cancel'); ?></button>
     <button class="btn btn-sm btn-secondary bt-paste px-3 ms-1"><i class="bi bi-clipboard"></i> Paste Clipboard</button>
-    <button class="btn btn-sm btn-primary ms-1 bt-copy-paste px-3"><i class="dialog-icon bi"></i> <span class="dialog-action">Copy</span></button>
+    <button class="btn btn-sm btn-primary ms-1 bt-copy-paste px-3"><i class="dialog-icon bi"></i> <span class="dialog-action"><?php echo Lang::l('copy'); ?></span></button>
   </div>
 </div> -->

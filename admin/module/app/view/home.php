@@ -146,7 +146,7 @@
   </div>
   <div class="card-footer text-end">
     <button class="btn btn-sm btn-primary bt-add px-5">Add</button>
-    <button class="btn btn-sm btn-secondary bt-close px-5">Cancel</button>
+    <button class="btn btn-sm btn-secondary bt-close px-5"><?php echo Lang::l('cancel'); ?></button>
   </div>
 </form>
 
@@ -182,7 +182,7 @@
     </div>
   </div>
   <div class="card-footer text-end">
-    <button class="btn btn-sm btn-secondary bt-close px-5">OK</button>
+    <button class="btn btn-sm btn-secondary bt-close px-5"><?php echo Lang::l('ok'); ?></button>
   </div>
 </div>
 
@@ -201,6 +201,6 @@
     <div class="text-end mt-2"><button class="btn btn-sm btn-primary bt-register-function"><i class="bi bi-pencil"></i> Register Functions</button></div>
   </div>
   <div class="card-footer text-end">
-    <button class="btn btn-sm btn-secondary bt-close px-5">OK</button>
+    <button class="btn btn-sm btn-secondary bt-close px-5"><?php echo Lang::l('ok'); ?></button>
   </div>
 </div>

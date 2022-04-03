@@ -5,11 +5,13 @@ class HomeController extends ModuleController {
   function index() {
     // echo $this->location('sapi/lari/gagah/berani');
     $this->ui->useCoreClients();
-    $this->ui->usePlugin('core-language', 'bootstrap', 'bootstrap-icons', 'sortable', 'general-ui');
+    $this->ui->usePlugin('bootstrap', 'bootstrap-icons', 'sortable', 'general-ui');
     $this->ui->useScript('js/admin.js');
     $this->ui->useStyle('css/admin.css');
     $this->getModules();
     $this->loadModuleMenus();
+    // $_SESSION['core-lang'] = "jp";
+    // $this->ui->language('admin');
     $this->ui->view('head.php', array(
       'menus' => $this->menus,
       'modules' => $this->modules,
@@ -22,7 +24,7 @@ class HomeController extends ModuleController {
 
   function profile() {
     $this->ui->useCoreClients();
-    $this->ui->usePlugin('core-language', 'bootstrap', 'bootstrap-icons', 'sortable', 'general-ui');
+    $this->ui->usePlugin('bootstrap', 'bootstrap-icons', 'sortable', 'general-ui');
     $this->ui->useScript('js/admin.js');
     $this->ui->useScript('js/profile.js');
     $this->ui->useStyle('css/admin.css');

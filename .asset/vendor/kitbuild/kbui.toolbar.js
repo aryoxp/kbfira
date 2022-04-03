@@ -705,10 +705,10 @@ class UndoRedoTool extends KitBuildToolbarTool {
     let controlHtml = 
       `<div class="btn-group ms-2">
         <button class="bt-undo btn btn-sm btn-outline-primary"
-          data-tippy-content="<?php echo $this->l('kbui-undo-last-action'); ?>">
+          data-tippy-content="<?php echo Lang::l('kbui-undo-last-action'); ?>">
           <i class="bi bi-arrow-90deg-left"></i> <span class="bt-label${hideLabel}">${labelUndo}</span></button>
         <button class="bt-redo btn btn-sm btn-outline-primary"
-          data-tippy-content="<?php echo $this->l('kbui-redo-last-action'); ?>">
+          data-tippy-content="<?php echo Lang::l('kbui-redo-last-action'); ?>">
           <i class="bi bi-arrow-90deg-right"></i> <span class="bt-label${hideLabel}">${labelRedo}</span></button>
       </div>`
     return controlHtml
@@ -1238,10 +1238,10 @@ class CanvasStateTool extends KitBuildToolbarTool {
     let controlHtml = 
       `<div class="btn-group ms-2">
         <button class="bt-save btn btn-sm btn-outline-primary"
-          data-tippy-content="<?php echo $this->l('kbui-undo-last-action'); ?>">
+          data-tippy-content="<?php echo Lang::l('kbui-undo-last-action'); ?>">
           <i class="bi bi-download"></i></button>
         <button class="bt-load btn btn-sm btn-outline-primary"
-          data-tippy-content="<?php echo $this->l('kbui-redo-last-action'); ?>">
+          data-tippy-content="<?php echo Lang::l('kbui-redo-last-action'); ?>">
           <i class="bi bi-upload"></i></button>
       </div>`
     return controlHtml

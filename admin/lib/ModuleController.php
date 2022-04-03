@@ -10,6 +10,12 @@ class ModuleController extends CoreController {
   protected $styles  = [];
   protected $plugins = [];
 
+  public function __construct() {
+    parent::__construct();
+    $this->ui->usePlugin('core-language');
+    $this->ui->language('admin');
+  }
+
   protected function isAppAuthorized($app = null) {
     $isAuthorized = CoreAuth::isAppAuthorized($app);
     if (!$isAuthorized) {

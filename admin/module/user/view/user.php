@@ -80,7 +80,7 @@
           <div style="font-size: .875rem;">
             <h4>Batch Create</h4>
             <div class="btn-group btn-group-sm">
-              <a class="btn btn-sm btn-secondary bt-download-file" href="<?php echo $this->location('module/user/file/user-pass.csv'); ?>"><i class="bi bi-download"></i> Download CSV Template File</a>
+              <a class="btn btn-sm btn-secondary bt-download-file" href="<?php echo $this->file('module/user/file/user-pass.csv'); ?>"><i class="bi bi-download"></i> Download CSV Template File</a>
               <button class="btn btn-sm btn-outline-secondary bt-help-csv"><i class="bi bi-question-lg"></i> Help</button>
             </div>
             <hr>
@@ -147,8 +147,8 @@
     </form>
   </div>
   <div class="card-footer text-end">
-    <button class="btn btn-sm btn-secondary bt-close px-4">Cancel</button>
-    <button class="btn btn-sm btn-primary bt-ok px-4 ms-1">OK</button>
+    <button class="btn btn-sm btn-secondary bt-close px-4"><?php echo Lang::l('cancel'); ?></button>
+    <button class="btn btn-sm btn-primary bt-ok px-4 ms-1"><?php echo Lang::l('ok'); ?></button>
   </div>
 </div>
 
@@ -162,7 +162,7 @@
     <div class="detail-content"></div>
   </div>
   <div class="card-footer text-end">
-    <button class="btn btn-sm btn-secondary bt-close px-4 ms-1">Close</button>
+    <button class="btn btn-sm btn-secondary bt-close px-4 ms-1"><?php echo Lang::l('close'); ?></button>
     <button class="btn btn-sm resize-handle"><i class="bi bi-arrows-angle-expand"></i></button>
   </div>
 </div>
@@ -191,7 +191,7 @@ nobody,"Nobody Name",demopass,"TEACHER,STUDENT","GROUPA,LEL"
   
   </div>
   <div class="card-footer text-end">
-    <button class="btn btn-sm btn-secondary bt-close px-4 ms-1">Close</button>
+    <button class="btn btn-sm btn-secondary bt-close px-4 ms-1"><?php echo Lang::l('close'); ?></button>
     <button class="btn btn-sm resize-handle"><i class="bi bi-arrows-angle-expand"></i></button>
   </div>
 </div>

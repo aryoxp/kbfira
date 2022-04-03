@@ -518,8 +518,8 @@ KitBuildCanvas.MULTIDIRECTIONAL = 'multi'
 class KitBuildUIDialog {
   constructor(content, canvasId, options) {
     this.settings = Object.assign({
-      okLabel: 'OK',
-      cancelLabel: 'Cancel',
+      okLabel: Lang.l('ok'),
+      cancelLabel: Lang.l('cancel'),
       canvas: canvasId ? canvasId : KitBuildUI.canvas().canvasId,
       backdrop: true,
       icon: 'info-circle-fill',
@@ -669,8 +669,8 @@ class KitBuildUI {
   }
   static confirm(question, canvasId, options) {
     return KitBuildUI.dialog(question, canvasId, Object.assign({
-      okLabel: 'Yes',
-      cancelLabel: 'No',
+      okLabel: Lang.l('yes'),
+      cancelLabel: Lang.l('no'),
       backdrop: true,
       icon: "question-diamond-fill",
       iconColor: "warning"

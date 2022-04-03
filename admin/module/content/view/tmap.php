@@ -27,7 +27,7 @@
               <div>
                 <div class="border-bottom pb-2 d-flex justify-content-between align-items-center">
                   <span class="ms-2 text-primary">Concept Map Name</span>
-                  <span class="badge rounded-pill bg-danger px-3 bt-close" role="button">Close</span>
+                  <span class="badge rounded-pill bg-danger px-3 bt-close" role="button"><?php echo Lang::l('close'); ?></span>
                 </div>
                 <div id="list-cmap"></div>
               </div>
@@ -61,7 +61,7 @@
               <div class="m-2">
                 <div class="border-bottom pb-2 d-flex justify-content-between align-items-center">
                   <span class="ms-2 text-primary">Topic Title</span>
-                  <span class="badge rounded-pill bg-danger px-3 bt-close" role="button">Close</span>
+                  <span class="badge rounded-pill bg-danger px-3 bt-close" role="button"><?php echo Lang::l('close'); ?></span>
                 </div>
                 <div id="list-topic"></div>
               </div>
@@ -116,7 +116,7 @@
     </form>
   </div>
   <div class="card-footer text-end">
-    <button class="btn btn-sm btn-secondary bt-close px-4">Close</button>
+    <button class="btn btn-sm btn-secondary bt-close px-4"><?php echo Lang::l('close'); ?></button>
   </div>
 </div>
 
@@ -150,7 +150,7 @@
     </form>
   </div>
   <div class="card-footer text-end">
-    <button class="btn btn-sm btn-secondary bt-close px-4">Close</button>
+    <button class="btn btn-sm btn-secondary bt-close px-4"><?php echo Lang::l('close'); ?></button>
   </div>
 </div>
 
@@ -162,6 +162,6 @@
   </h6>
   <div class="card-body"></div>
   <div class="card-footer text-center">
-    <button class="btn btn-sm btn-primary bt-close px-4">OK</button>
+    <button class="btn btn-sm btn-primary bt-close px-4"><?php echo Lang::l('ok'); ?></button>
   </div>
 </div>

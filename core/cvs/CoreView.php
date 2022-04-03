@@ -33,10 +33,10 @@ class CoreView {
    * Get an instance of language library 
    * and load the specified language definition file.
    * $path: path to the language definition file, relative to /app/asset/lang/ directory
-   * $basePath: path to the language definition file, relative to /app/ directory
+   * $location: path to the language definition file, relative to /app/ or global .shared/ directory
    */
-  public function language($path, $countryCode = "en", $basePath = null) {
-    CoreLanguage::instance()->load($path, $countryCode, $basePath);
+  public function language($path, $countryCode = CoreLanguage::DEFAULT_LANG_CODE, $location = CoreLanguage::LOCATION_APP) {
+    CoreLanguage::instance()->load($path, $countryCode, $location);
   }
 
   /**
@@ -270,11 +270,15 @@ class CoreView {
 
   protected function metaConfig() {
     if (!$cfgs = Core::lib(Core::CONFIG)->dump(CoreConfig::CONFIG_TYPE_CLIENT)) return;
-    echo '    <meta id="core-client-config" ' . "\n      ";
+    echo '    <meta id="core-lang" data-lang="' . "\n      ";
+    echo implode("\n      ", 
+      str_split(CoreApi::compress(json_encode(CoreLanguage::instance()->dump())), 80)
+      ) . "\">\n";
+    echo '    <meta id="core-client-config" ';
     $i = 0;
     foreach ($cfgs as $key => $value) {
       if ($key == 'core') {
-        echo ($i > 0 ? "\n      " : "") . "data-{$key}=\"" . "\n      ";
+        echo ($i > 0 ? "\n" : "") . "data-{$key}=\"" . "\n      ";
         echo implode("\n      ", str_split($value, 80)) . "\"";
       } else echo ($i > 0 ? "\n      " : "") . "data-{$key}=\"{$value}\"";
       $i++;

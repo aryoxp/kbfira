@@ -189,8 +189,8 @@ Dialog.default = {
   keyboard: true,
   focus: true,
   width: '400px',
-  negativeLabel: 'Cancel',
-  positiveLabel: 'OK',
+  negativeLabel: Lang.l('cancel'),
+  positiveLabel: Lang.l('ok'),
   icon: 'info-circle',
   iconStyle: 'primary'
 }
@@ -206,8 +206,8 @@ class Confirm extends Dialog {
 }
 
 Confirm.default = {
-  negativeLabel: 'No',
-  positiveLabel: 'Yes',
+  negativeLabel: Lang.l('no'),
+  positiveLabel: Lang.l('yes'),
   icon: 'question-diamond-fill',
   iconStyle: 'warning'
 }

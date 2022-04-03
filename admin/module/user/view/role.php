@@ -70,8 +70,8 @@
     </form>
   </div>
   <div class="card-footer text-end">
-    <button class="btn btn-sm btn-secondary bt-close px-4">Cancel</button>
-    <button class="btn btn-sm btn-primary bt-ok px-4 ms-1">OK</button>
+    <button class="btn btn-sm btn-secondary bt-close px-4"><?php echo Lang::l('cancel'); ?></button>
+    <button class="btn btn-sm btn-primary bt-ok px-4 ms-1"><?php echo Lang::l('ok'); ?></button>
   </div>
 </div>
 
@@ -87,8 +87,8 @@
     </form>
   </div>
   <div class="card-footer role-end">
-    <button class="btn btn-sm btn-secondary bt-close px-4">Cancel</button>
-    <button class="btn btn-sm btn-primary bt-ok px-4 ms-1">OK</button>
+    <button class="btn btn-sm btn-secondary bt-close px-4"><?php echo Lang::l('cancel'); ?></button>
+    <button class="btn btn-sm btn-primary bt-ok px-4 ms-1"><?php echo Lang::l('ok'); ?></button>
     <button class="btn btn-sm resize-handle"><i class="bi bi-arrows-angle-expand"></i></button>
   </div>
 </div>

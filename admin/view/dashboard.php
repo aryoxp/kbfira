@@ -4,7 +4,7 @@
     <?php if (isset($_SESSION['user'])) { // var_dump($data, $_SESSION['user']); ?>
     <div class="card-body d-flex justify-content-between mb-3">
       <span>
-        <span class="fs-2">Hi, <span class="text-primary"><?php echo $_SESSION['user']['name']; ?></span></span>.
+        <span class="fs-2"><?php echo $this->l('hello'); ?>, <span class="text-primary"><?php echo $_SESSION['user']['name']; ?></span></span>.
       <?php 
         $roles = ($_SESSION['user']['roles']) ? explode(",", $_SESSION['user']['roles']) : [];
         $rids = ($_SESSION['user']['rids']) ? explode(",", $_SESSION['user']['rids']) : [];

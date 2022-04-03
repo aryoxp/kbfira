@@ -113,6 +113,12 @@ To prepare a new database for Kit-Build system, execute the following commands f
    username: `kbv2user`
    password: `kbv2userpass`
 
+   > For compatibility with PHP 7.3 set authentication method to `mysql_native_password` when creating a user for the application, e.g.:
+   >
+   > ````mysql
+   > CREATE USER 'username'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';
+   > ````
+
    - Show existing databases in database server
 
      ````mysql
@@ -149,22 +155,22 @@ To prepare a new database for Kit-Build system, execute the following commands f
    - Create user for the new Kit-Build system to connect and use the newly created database:
 
      ````mysql
-     CREATE USER 'kbv2user'@'localhost' IDENTIFIED BY 'kbv2userpass';
+     CREATE USER 'kbv2user'@'localhost' IDENTIFIED WITH mysql_native_password BY 'kbv2userpass';
      ````
 
      ````shell
-     mysql> CREATE USER 'kbv2user'@'localhost' IDENTIFIED BY 'kbv2userpass';
+     mysql> CREATE USER 'kbv2user'@'localhost' IDENTIFIED WITH mysql_native_password BY 'kbv2userpass';
      Query OK, 0 rows affected (0.01 sec)
      ````
 
    - Also create a user with the same name to allow connection from outside server using other MySQL client application (e.g., MySQL Workbench or Jetbrains DataGrip) for easy maintenance and data management.
 
      ````mysql
-     CREATE USER 'kbv2user'@'%' IDENTIFIED BY 'kbv2userpass';
+     CREATE USER 'kbv2user'@'%' IDENTIFIED WITH mysql_native_password BY 'kbv2userpass';
      ````
 
      ````shell
-     mysql> CREATE USER 'kbv2user'@'%' IDENTIFIED BY 'kbv2userpass';
+     mysql> CREATE USER 'kbv2user'@'%' IDENTIFIED WITH mysql_native_password BY 'kbv2userpass';
      Query OK, 0 rows affected (0.01 sec)
      ````
 

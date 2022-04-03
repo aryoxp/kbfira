@@ -6,7 +6,7 @@
   <header class="border-bottom">
     <div class="d-flex flex-nowrap align-items-stretch">
       
-      <div class="sidebar-panel overflow-hidden <?php echo $sidebarcollapse ? 'collapsed' : ''; ?>">
+      <div class="sidebar-panel overflow-hidden <?php echo $sidebarcollapse ?? ''; ?>">
         <a href="<?php echo $this->location('../home'); ?>" class="text-dark text-decoration-none mx-3 my-2 d-flex align-items-center" style="white-space: nowrap;">
           <i class="bi bi-slash-square-fill me-2 text-danger fs-4" role="img" aria-label="Bootstrap"></i>
           <span class="text-dark">Kit-Build</span>
@@ -41,6 +41,16 @@
           <form action="<?php echo $this->location($controller . '/search'); ?>" method="get">
             <input type="search" name="q" class="form-control form-control-sm" placeholder="Search..." aria-label="Search">
           </form>
+          <div class="dropdown ms-3" id="lang-selection">
+            <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="current-lang" data-bs-toggle="dropdown" aria-expanded="false">
+              <small id="lang-label" data-lang="" class="text-primary"></small>
+            </a>
+            <ul id="dd-lang" class="dropdown-menu text-small" aria-labelledby="current-lang">
+              <li><a class="dropdown-item item-lang" role="button" data-code="en">English</a></li>
+              <li><a class="dropdown-item item-lang" role="button" data-code="jp">日本語</a></li>
+              <li><a class="dropdown-item item-lang" role="button" data-code="id">Bahasa Indonesia</a></li>
+            </ul>
+          </div>
           <div class="dropdown text-end mx-3">
             <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
               <i class="h4 text-secondary bi bi-person-circle"></i>

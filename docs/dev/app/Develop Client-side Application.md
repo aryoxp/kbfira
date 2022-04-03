@@ -68,3 +68,52 @@ class MyApp {
 Refer to the following diagram for the flow sequence of the client application Javascript code:
 
 ![client-app-structure](images/client-app-structure.png)
+
+
+
+## Client-Server Communication with AJAX: Client-Side
+
+To initiate a request data to server, client has to communicate with a specific API controller called ApiController. ApiController is similar with CoreController in terms of its main functionality to serve content, but designed to be more specific to serve data in JSON format.
+
+For example, an application ApiController has the following structure as follows:
+
+````php
+<?php 
+
+// this file stored in app's api/ directory
+// filename: ExampleApiController.php
+  
+class ExampleApi extends CoreApi {
+	function getExampleData($param = "zero") {
+
+    // build a result object of standard class
+    $result = new stdClass;
+    $result->param = $param;
+    $result->integer = 0;
+    
+    // output the result to client
+    CoreResult::instance($result)->show();
+    
+  }
+}
+````
+
+and a call to the function getExampleData() will yield a result object that has two attributes, `param`, and `integer`.
+
+To get the result object from a client app, use the following Javascript code:
+
+````javascript
+// this line should be put in app class constructor() method.
+this.ajax = Core.instance().ajax();
+
+// the following code should be put inside UI element's event method
+this.ajax.get('exampleApi/getExampleData/notZero').then(result => {
+  // result will contain an object data as defined in the Api:
+  console.log(result, result.param, result.integer);
+  // do something with the result data.
+}).catch(err => {
+  // if something happened, err will contain the error messages.
+  console.error(err);
+});
+````
+

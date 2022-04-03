@@ -7,17 +7,25 @@ class CoreLanguage
 {
   private static $instance;
   private static $CORE_LANG; // loaded language entries storage
-  private const DEFAULT_LANG_CODE = "en";
+  private const GENERAL_LANG = "general";
+  
+  const DEFAULT_LANG_CODE = "en";
+  const LOCATION_APP = "lang/";
+  const LOCATION_CORE = "core/asset/lang/";
+  const LOCATION_SHARED = ".shared/lang/";
 
   function __construct()
   {
     CoreLanguage::$CORE_LANG = array();
   }
 
-  public static function instance($path = null, $countryCode = "en", $basePath = 'lang')
+  public static function instance($path = null, $langCode = self::DEFAULT_LANG_CODE, $location = CoreLanguage::LOCATION_APP)
   {
-    if (CoreLanguage::$instance == null) CoreLanguage::$instance = new CoreLanguage();
-    if ($path) CoreLanguage::$instance->load($countryCode, $path, $basePath);
+    if (CoreLanguage::$instance === null) {
+      CoreLanguage::$instance = new CoreLanguage();
+      CoreLanguage::$instance->load(self::GENERAL_LANG, self::DEFAULT_LANG_CODE, CoreLanguage::LOCATION_CORE);      
+    }
+    if ($path) CoreLanguage::$instance->load($path, $langCode, $location);
     return CoreLanguage::$instance;
   }
 
@@ -29,30 +37,94 @@ class CoreLanguage
    * @param $basePath String base path to language JSON file relative to /assets
    * @return JSONString loaded languages key-value pairs JSON String
    */
-  public function load($path, $countryCode = "en", $basePath = 'lang/')
+  public function load($path, $langCode = "en", $location = CoreLanguage::LOCATION_APP)
   {
-
+    $langCode = $_SESSION['core-lang'] ?? $langCode;
     $langJson = null;
 
+    if ($location == self::LOCATION_CORE) {
+
+      $warnFlagS = false;
+      $warnFlagA = false;
+      
+      $langPath = CORE_LANG_PATH 
+        . trim($path, DS) . ".lang." . self::DEFAULT_LANG_CODE . ".json";
+      $codeLangPath = CORE_LANG_PATH 
+        . trim($path, DS) . ".lang." . $langCode . ".json";  
+
+      if (file_exists($langPath)) {
+        $langEntries = (array) json_decode(file_get_contents($langPath));
+        CoreLanguage::$CORE_LANG = array_merge(CoreLanguage::$CORE_LANG, $langEntries);
+      } else $warnFlagA = true;
+      if (file_exists($codeLangPath)) {
+        $langEntries = (array) json_decode(file_get_contents($codeLangPath));
+        CoreLanguage::$CORE_LANG = array_merge(CoreLanguage::$CORE_LANG, $langEntries);
+      } else $warnFlagS = true;
+      if ($warnFlagA && $warnFlagS) {
+        echo "<!-- Warning: default general language file on: $langPath does not exists. -->\n";
+      }
+      return CoreLanguage::$CORE_LANG;
+    }
+
     // Force load English version
-    $langPath = CORE_APP_PATH . CORE_APP_ASSET 
-      . (preg_match("/\/$/i", $basePath) ? ltrim($basePath, DS) : ltrim($basePath, DS) . DS) 
+    $langPath = CORE_APP_PATH . CORE_APP_LANG . trim($path, DS) . ".lang." . self::DEFAULT_LANG_CODE . ".json";
+    $sharedLangPath = CORE_ROOT_PATH . CORE_SHARED_LANG 
       . trim($path, DS) . ".lang." . self::DEFAULT_LANG_CODE . ".json";
 
+    // var_dump($langPath, $sharedLangPath);
+    $warnFlagS = false;
+    $warnFlagA = false;
+    
+    if (file_exists($sharedLangPath)) {
+      // echo "shared ok";
+      $langEntries = (array) json_decode(file_get_contents($sharedLangPath));
+      CoreLanguage::$CORE_LANG = array_merge(CoreLanguage::$CORE_LANG, $langEntries);
+    } else $warnFlagS = true;
+    
     if (file_exists($langPath)) {
+      // echo "app ok";
       $langEntries = (array) json_decode(file_get_contents($langPath));
       CoreLanguage::$CORE_LANG = array_merge(CoreLanguage::$CORE_LANG, $langEntries);
-    } else echo "<!-- Warning: default English language file on: $langPath does not exists. -->\n";
+    } else $warnFlagA = true;
+    
+    if ($warnFlagA && $warnFlagS) {
+      echo "<!-- Warning: default requested English language file on: $langPath or $sharedLangPath does not exists. -->\n";
+    }
 
     // Load intended language file, replaces the English entries 
-    $langPath = CORE_APP_PATH . CORE_APP_ASSET 
-      . (preg_match("/\/$/i", $basePath) ? ltrim($basePath, DS) : ltrim($basePath, DS) . DS) 
-      . trim($path, DS) . ".lang." . strtolower(trim($countryCode)) . ".json";
+    if ($langCode != self::DEFAULT_LANG_CODE) {
+      // $langPath = CORE_APP_PATH . CORE_APP_ASSET 
+      //   . (preg_match("/\/$/i", $location) ? ltrim($location, DS) : ltrim($location, DS) . DS) 
+      //   . trim($path, DS) . ".lang." . strtolower(trim($langCode)) . ".json";
+      $langPath = CORE_APP_PATH . CORE_APP_LANG 
+        . trim($path, DS) . ".lang." . strtolower(trim($langCode)) . ".json";
+      $sharedLangPath = CORE_ROOT_PATH . CORE_SHARED_LANG 
+        . trim($path, DS) . ".lang." . strtolower(trim($langCode)) . ".json";
 
-    if (file_exists($langPath)) {
-      $langEntries = (array) json_decode(file_get_contents($langPath));
-      CoreLanguage::$CORE_LANG = array_merge(CoreLanguage::$CORE_LANG, $langEntries);
-    } else echo "<!-- Warning: requested language file on: $langPath does not exists. -->\n";
+      $warnFlagS = false;
+      $warnFlagA = false;
+      
+      if (file_exists($sharedLangPath)) {
+        // echo "shared ok";
+        $langEntries = (array) json_decode(file_get_contents($sharedLangPath));
+        CoreLanguage::$CORE_LANG = array_merge(CoreLanguage::$CORE_LANG, $langEntries);
+      } else $warnFlagS = true;
+      
+      if (file_exists($langPath)) {
+        // echo "app ok";
+        $langEntries = (array) json_decode(file_get_contents($langPath));
+        CoreLanguage::$CORE_LANG = array_merge(CoreLanguage::$CORE_LANG, $langEntries);
+      } else $warnFlagA = true;
+      
+      if ($warnFlagA && $warnFlagS) {
+        echo "<!-- Warning: default requested language file on: $langPath or $sharedLangPath does not exists. -->\n";
+      }
+  
+      // if (file_exists($langPath)) {
+      //   $langEntries = (array) json_decode(file_get_contents($langPath));
+      //   CoreLanguage::$CORE_LANG = array_merge(CoreLanguage::$CORE_LANG, $langEntries);
+      // } else echo "<!-- Warning: requested language file on: $langPath does not exists. -->\n";
+    }
 
     return CoreLanguage::$CORE_LANG;
   }
@@ -64,6 +136,11 @@ class CoreLanguage
     return (isset(CoreLanguage::$CORE_LANG[$key]))
       ? $this->f(CoreLanguage::$CORE_LANG[$key], ...$args)
       : $key;
+  }
+
+  static function l() {
+    $ent = CoreLanguage::instance()->get(...func_get_args());
+    return $ent;
   }
 
   private function f()

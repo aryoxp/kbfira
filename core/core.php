@@ -30,6 +30,7 @@ define('CORE_API_PATH', CORE_CORE_PATH . $coreConfig['core']['core_api_directory
 define('CORE_CONFIG_PATH', CORE_CORE_PATH . $coreConfig['core']['core_config_directory'] . DS);
 define('CORE_ASSET_PATH', CORE_CORE_PATH . $coreConfig['core']['core_asset_directory'] . DS);
 define('CORE_VIEW_PATH', CORE_CORE_PATH . $coreConfig['core']['core_view_directory'] . DS);
+define('CORE_LANG_PATH', CORE_ASSET_PATH . $coreConfig['core']['core_lang_directory'] . DS);
 
 // defining app directories
 define('CORE_APP_CONFIG', $coreConfig['core']['core_app_config_directory'] . DS);
@@ -51,6 +52,7 @@ define('CORE_SHARED_SERVICE', $coreConfig['core']['core_shared_service_directory
 define('CORE_SHARED_MODEL', $coreConfig['core']['core_shared_model_directory'] . DS);
 define('CORE_SHARED_LIB', $coreConfig['core']['core_shared_library_directory'] . DS);
 define('CORE_SHARED_API', $coreConfig['core']['core_shared_api_directory'] . DS);
+define('CORE_SHARED_LANG', CORE_SHARED_PATH . $coreConfig['core']['core_shared_language_directory'] . DS);
 
 
 // instantiate the Core object

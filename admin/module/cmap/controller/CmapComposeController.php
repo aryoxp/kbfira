@@ -8,7 +8,7 @@ class CmapComposeController extends ModuleController {
 
   function cmap() {
     Core::lib(Core::CONFIG)->set('menu', 'compose-cmap', CoreConfig::CONFIG_TYPE_CLIENT);
-    $this->ui->usePlugin('kitbuild-logger', 'kitbuild-ui', 'kitbuild', 'kitbuild-collab');
+    $this->ui->usePlugin('core-language', 'kitbuild-logger', 'kitbuild-ui', 'kitbuild', 'kitbuild-collab');
     $this->useScript("cmap.js");
     $this->useStyle("cmap.css");
     $this->render($this->view("cmap.php"));

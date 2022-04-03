@@ -88,8 +88,8 @@
   <div class="card-footer">
     <div class="row">
       <div class="col text-end">
-        <button class="bt-cancel btn btn-sm btn-secondary" style="min-width: 6rem;">Cancel</button>
-        <button class="bt-open btn btn-sm btn-primary ms-1" style="min-width: 6rem;">Open</button>
+        <button class="bt-cancel btn btn-sm btn-secondary" style="min-width: 6rem;"><?php echo Lang::l('cancel'); ?></button>
+        <button class="bt-open btn btn-sm btn-primary ms-1" style="min-width: 6rem;"><?php echo Lang::l('open'); ?></button>
       </div>
     </div>
   </div>

@@ -10,12 +10,12 @@
     </div>
   
     <div class="btn-group btn-group-sm ms-2" id="recompose-saveload">
-      <button class="bt-save btn btn-secondary"><i class="bi bi-download"></i> Save</button>
-      <button class="bt-load btn btn-secondary"><i class="bi bi-upload"></i> Load</button>
+      <button class="bt-save btn btn-secondary"><i class="bi bi-download"></i> <?php echo Lang::l('save'); ?></button>
+      <button class="bt-load btn btn-secondary"><i class="bi bi-upload"></i> <?php echo Lang::l('load'); ?></button>
     </div>
   
     <div class="btn-group btn-group-sm ms-2" id="recompose-reset">
-      <button class="bt-reset btn btn-danger"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+      <button class="bt-reset btn btn-danger"><i class="bi bi-arrow-counterclockwise"></i> <?php echo Lang::l('reset'); ?></button>
     </div>
   
     <div class="btn-group btn-group-sm ms-2" id="recompose-feedbacklevel">
@@ -78,9 +78,9 @@
     <div class="card-footer">
       <div class="row">
         <div class="col text-end">
-          <button class="bt-cancel btn btn-sm btn-secondary" style="min-width: 6rem;">Cancel</button>
+          <button class="bt-cancel btn btn-sm btn-secondary" style="min-width: 6rem;"><?php echo Lang::l('cancel'); ?></button>
           <button class="bt-open btn btn-sm btn-primary ms-1" style="min-width: 6rem;">
-            <i class="bi bi-folder2-open"></i> Open</button>
+            <i class="bi bi-folder2-open"></i> <?php echo Lang::l('open'); ?></button>
         </div>
       </div>
     </div>
@@ -92,7 +92,7 @@
       <textarea class="form-control encoded-data" rows="5"></textarea>
     </div>
     <div class="card-footer text-end">
-      <button class="btn btn-sm btn-secondary bt-cancel px-3">Cancel</button>
+      <button class="btn btn-sm btn-secondary bt-cancel px-3"><?php echo Lang::l('cancel'); ?></button>
       <button class="btn btn-sm btn-primary ms-1 bt-clipboard px-3"><i class="bi bi-clipboard"></i> Copy to Clipboard</button>
     </div>
   </div>
@@ -125,7 +125,7 @@
         <span class="bt-scroll-more btn btn-sm ms-1 btn-primary px-3"><i class="bi bi-chevron-down"></i> More</span>
       </span>
       <span>
-        <button class="btn btn-sm btn-secondary bt-close px-3">Close</button>
+        <button class="btn btn-sm btn-secondary bt-close px-3"><?php echo Lang::l('close'); ?></button>
         <button class="btn btn-sm resize-handle pe-0 ps-3"><i class="bi bi-textarea-resize"></i></button>
       </span>
     </div>
@@ -140,7 +140,7 @@
       <div class="feedback-content"></div>
     </div>
     <div class="card-footer text-end">
-      <button class="btn btn-sm btn-secondary bt-cancel bt-close px-3">OK</button>
+      <button class="btn btn-sm btn-secondary bt-cancel bt-close px-3"><?php echo Lang::l('ok'); ?></button>
       <button class="btn btn-sm btn-primary bt-modify px-3 ms-1">Modify My Map</button>
     </div>
   </div>

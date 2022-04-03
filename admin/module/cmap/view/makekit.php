@@ -5,8 +5,8 @@
     <button class="bt-close-kit btn btn-primary"><i class="bi bi-x-lg"></i> Close Kit</button>
     <button class="bt-option btn btn-primary"><i class="bi bi-sliders"></i> Options</button>
     <button class="bt-content btn btn-primary"><i class="bi bi-file-text"></i> Content</button>
-    <button class="bt-save btn btn-primary"><i class="bi bi-save"></i> Save</button>
-    <button class="bt-save-as btn btn-primary"><i class="bi bi-front"></i> Save As...</button>
+    <button class="bt-save btn btn-primary"><i class="bi bi-save"></i> <?php echo Lang::l('save'); ?></button>
+    <button class="bt-save-as btn btn-primary"><i class="bi bi-front"></i> <?php echo Lang::l('save-as'); ?></button>
     <!-- <button class="bt-export btn btn-primary"><i class="bi bi-send"></i> Export</button> -->
   </div>
     
@@ -15,7 +15,7 @@
     <button class="bt-toggle-right btn btn-sm btn-warning" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle incoming edges"><i class="bi bi-box-arrow-in-up-right"></i></button>
     <button class="bt-remove btn btn-sm btn-warning" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Remove all edges<br>(full decompose)"><i class="bi bi-x-square"></i></button>
     <button class="bt-restore btn btn-sm btn-warning" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Restore all edges"><i class="bi bi-check2-square"></i></button>
-    <button class="bt-reset btn btn-sm btn-warning" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Reset to goalmap settings"><i class="bi bi-arrow-repeat"></i> Reset</button>
+    <button class="bt-reset btn btn-sm btn-warning" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Reset to goalmap settings"><i class="bi bi-arrow-repeat"></i> <?php echo Lang::l('reset'); ?></button>
   </div>
 
 </div>
@@ -70,8 +70,8 @@
   <div class="card-footer">
     <div class="row">
       <div class="col text-end">
-        <button class="bt-cancel btn btn-sm btn-secondary" style="min-width: 6rem;">Cancel</button>
-        <button class="bt-save btn btn-sm btn-primary ms-1" style="min-width: 6rem;">Save</button>
+        <button class="bt-cancel btn btn-sm btn-secondary" style="min-width: 6rem;"><?php echo Lang::l('cancel'); ?></button>
+        <button class="bt-save btn btn-sm btn-primary ms-1" style="min-width: 6rem;"><?php echo Lang::l('save'); ?></button>
       </div>
     </div>
   </div>
@@ -123,11 +123,11 @@
   <div class="card-footer">
     <div class="row">
       <div class="col text-end">
-        <button class="bt-cancel btn btn-sm btn-secondary" style="min-width: 6rem;">Cancel</button>
+        <button class="bt-cancel btn btn-sm btn-secondary" style="min-width: 6rem;"><?php echo Lang::l('cancel'); ?></button>
         <button class="bt-new btn btn-sm btn-success ms-1" style="min-width: 6rem;">
           <i class="bi bi-asterisk"></i> Create New</button>
         <button class="bt-open btn btn-sm btn-primary ms-1" style="min-width: 6rem;">
-          <i class="bi bi-folder2-open"></i> Open</button>
+          <i class="bi bi-folder2-open"></i> <?php echo Lang::l('open'); ?></button>
       </div>
     </div>
   </div>
@@ -139,7 +139,7 @@
     <textarea class="form-control encoded-data" rows="5"></textarea>
   </div>
   <div class="card-footer text-end">
-    <button class="btn btn-sm btn-secondary bt-cancel px-3">Cancel</button>
+    <button class="btn btn-sm btn-secondary bt-cancel px-3"><?php echo Lang::l('cancel'); ?></button>
     <button class="btn btn-sm btn-primary ms-1 bt-clipboard px-3"><i class="bi bi-clipboard"></i> Copy to Clipboard</button>
   </div>
 </div>
@@ -213,7 +213,7 @@
     </div>
   </div>
   <div class="card-footer text-end">
-    <button class="btn btn-sm btn-secondary bt-cancel px-3">Cancel</button>
+    <button class="btn btn-sm btn-secondary bt-cancel px-3"><?php echo Lang::l('cancel'); ?></button>
     <button class="btn btn-sm btn-primary ms-1 bt-apply px-3"><i class="dialog-icon bi bi-check-lg"></i> Apply</button>
   </div>
 </div>
@@ -238,6 +238,6 @@
     </form>
   </div>
   <div class="card-footer text-end">
-    <button class="btn btn-sm btn-secondary bt-close px-4">Close</button>
+    <button class="btn btn-sm btn-secondary bt-close px-4"><?php echo Lang::l('close'); ?></button>
   </div>
 </div>
