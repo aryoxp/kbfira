@@ -33,7 +33,7 @@ class Language {
   }
 
   get(key) {
-    console.log(this.lang, key);
+    // console.log(this.lang, key);
     if (!this.lang || typeof this.lang[key] == 'undefined') {
       return key;
     }

@@ -12,8 +12,11 @@ class ModuleController extends CoreController {
 
   public function __construct() {
     parent::__construct();
+    // should be read from runtime file
+    $defaultLangCode = "jp"; // echo CoreLanguage::DEFAULT_LANG_CODE;
+    Core::lib(Core::CONFIG)->set('defaultlang', $defaultLangCode, CoreConfig::CONFIG_TYPE_CLIENT);
     $this->ui->usePlugin('core-language');
-    $this->ui->language('admin');
+    $this->ui->language('admin', CoreLanguage::LOCATION_APP, $defaultLangCode);
   }
 
   protected function isAppAuthorized($app = null) {
@@ -143,6 +146,8 @@ class ModuleController extends CoreController {
     $this->ui->usePlugin(...$plugins);
   }
 
-  
+  protected function language($file, $location = CoreLanguage::LOCATION_APP, $langCode = CoreLanguage::DEFAULT_LANG_CODE) {
+
+  }
 
 }

@@ -29,8 +29,9 @@ class CmapKitbuildController extends ModuleController {
   }
 
   function settings() {
+    $this->ui->usePlugin('core-runtime');
     $this->useScript("settings.kitbuild.js");
-    $this->render();
+    $this->render($this->view("settings.kitbuild.php"));
   }
 
 }

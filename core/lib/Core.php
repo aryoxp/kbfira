@@ -21,6 +21,7 @@ class Core {
   const CONFIG     = "config";
   const URI        = "uri";
   const LANGUAGE   = "language";
+  const RUNTIME   = "runtime";
 
   public static function instance($coreConfig = null) {
     if (!Core::$instance) Core::$instance = new Core($coreConfig);
@@ -44,11 +45,11 @@ class Core {
     error_reporting($coreConfig['runtime']['environment'] == 'DEV' ? E_ALL : 0);
   }
 
-  public static function lib($lib) {
-    return (Core::instance())->getLib($lib);
+  public static function lib($lib, ...$args) {
+    return (Core::instance())->getLib($lib, ...$args);
   }
 
-  private function getLib($lib) {
+  private function getLib($lib, ...$args) {
     switch ($lib) {
       case Core::AUTOLOADER:
         return $this->autoloader;
@@ -59,6 +60,9 @@ class Core {
       case Core::LANGUAGE:
         // this library is not mandatory, so instantiate here, only when necessary.
         return $this->language ? $this->language : CoreLanguage::instance();
+      case Core::RUNTIME:
+        // this library is not mandatory, so instantiate here, only when necessary.
+        return $this->runtime ? $this->runtime : CoreRuntime::instance(...$args);
     }
   }
 }

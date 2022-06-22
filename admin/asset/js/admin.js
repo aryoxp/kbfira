@@ -103,11 +103,11 @@ class AdminApp {
 
   handleRefresh() {
     this.session.getAll().then(sessions => {
-      let lang = (sessions['core-lang']) ? (sessions['core-lang']) : Core.instance().config('default_lang');
+      let lang = (sessions['core-lang']) ? (sessions['core-lang']) : Core.instance().config('defaultlang');
       $(`#dd-lang .item-lang`).removeClass('text-primary');
       let name = $(`#dd-lang .item-lang[data-code="${lang}"]`).addClass('text-primary').text();
       $('#lang-label').attr('data-lang', lang).html(name);
-      console.log(sessions, name);
+      // console.log(sessions, name, lang, Core.instance().config());
     });
   }
 }

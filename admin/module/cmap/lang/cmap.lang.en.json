@@ -1,0 +1,22 @@
+{
+  "cmap-assign-text": "Assign Text",
+  "cmap-assign-topic": "Assign Topic",
+  "cmap-cmap": "Concept Map",
+  "cmap-cmap-data": "Concept Map Data",
+  "cmap-copy-to-clipboard": "Copy to clipboard",
+  "cmap-custom-id-opt": "Custom ID (Optional)",
+  "cmap-db": "Database",
+  "cmap-decode": "Decode",
+  "cmap-export": "Export",
+  "cmap-no-text-associated": "No text associated",
+  "cmap-no-topic-associated": "No topic associated",
+  "cmap-open-cmap": "Open Concept Map",
+  "cmap-opt-assign-text": "<strong class=\"fs-bold text-primary\">optionally</strong> associate with existing text:",
+  "cmap-opt-assign-topic": "<strong class=\"fs-bold text-primary\">optionally</strong> associate with a topic:",
+  "cmap-refresh-topic-list": "Refresh Topic List",
+  "cmap-save-cmap-as": "Save Concept Map As...",
+  "cmap-teacher-map": "Teacher Map",
+  "cmap-title": "Title",
+  "cmap-topic": "Topic",
+  "cmap-unassigned": "Unassigned"
+}

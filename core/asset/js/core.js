@@ -43,6 +43,11 @@ class Core {
     return Core.language;
   }
 
+  runtime(path, options) {
+    Core.runtime = Runtime.instance(path, options);
+    return Core.runtime;
+  }
+
   config(key) {
     if (key) return Core.configuration.get(key);
     return Core.configuration;

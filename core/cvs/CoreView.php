@@ -35,8 +35,8 @@ class CoreView {
    * $path: path to the language definition file, relative to /app/asset/lang/ directory
    * $location: path to the language definition file, relative to /app/ or global .shared/ directory
    */
-  public function language($path, $countryCode = CoreLanguage::DEFAULT_LANG_CODE, $location = CoreLanguage::LOCATION_APP) {
-    CoreLanguage::instance()->load($path, $countryCode, $location);
+  public function language($path, $location = CoreLanguage::LOCATION_APP, $countryCode = CoreLanguage::DEFAULT_LANG_CODE) {
+    CoreLanguage::instance()->load($path, $location, $countryCode);
   }
 
   /**

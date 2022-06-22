@@ -10,7 +10,8 @@ class CoreLanguage
   private const GENERAL_LANG = "general";
   
   const DEFAULT_LANG_CODE = "en";
-  const LOCATION_APP = "lang/";
+  const LOCATION_APP = "asset/lang/";
+  const LOCATION_APP_ROOT = "";
   const LOCATION_CORE = "core/asset/lang/";
   const LOCATION_SHARED = ".shared/lang/";
 
@@ -23,7 +24,7 @@ class CoreLanguage
   {
     if (CoreLanguage::$instance === null) {
       CoreLanguage::$instance = new CoreLanguage();
-      CoreLanguage::$instance->load(self::GENERAL_LANG, self::DEFAULT_LANG_CODE, CoreLanguage::LOCATION_CORE);      
+      CoreLanguage::$instance->load(self::GENERAL_LANG, CoreLanguage::LOCATION_CORE, self::DEFAULT_LANG_CODE);      
     }
     if ($path) CoreLanguage::$instance->load($path, $langCode, $location);
     return CoreLanguage::$instance;
@@ -37,7 +38,7 @@ class CoreLanguage
    * @param $basePath String base path to language JSON file relative to /assets
    * @return JSONString loaded languages key-value pairs JSON String
    */
-  public function load($path, $langCode = "en", $location = CoreLanguage::LOCATION_APP)
+  public function load($path, $location = CoreLanguage::LOCATION_APP, $langCode = "en")
   {
     $langCode = $_SESSION['core-lang'] ?? $langCode;
     $langJson = null;
@@ -46,12 +47,12 @@ class CoreLanguage
 
       $warnFlagS = false;
       $warnFlagA = false;
-      
+      // echo $path;
       $langPath = CORE_LANG_PATH 
         . trim($path, DS) . ".lang." . self::DEFAULT_LANG_CODE . ".json";
       $codeLangPath = CORE_LANG_PATH 
         . trim($path, DS) . ".lang." . $langCode . ".json";  
-
+      // var_dump($langPath, $codeLangPath);
       if (file_exists($langPath)) {
         $langEntries = (array) json_decode(file_get_contents($langPath));
         CoreLanguage::$CORE_LANG = array_merge(CoreLanguage::$CORE_LANG, $langEntries);
@@ -67,11 +68,10 @@ class CoreLanguage
     }
 
     // Force load English version
-    $langPath = CORE_APP_PATH . CORE_APP_LANG . trim($path, DS) . ".lang." . self::DEFAULT_LANG_CODE . ".json";
+    $langPath = CORE_APP_PATH . $location . trim($path, DS) . ".lang." . self::DEFAULT_LANG_CODE . ".json";
     $sharedLangPath = CORE_ROOT_PATH . CORE_SHARED_LANG 
       . trim($path, DS) . ".lang." . self::DEFAULT_LANG_CODE . ".json";
 
-    // var_dump($langPath, $sharedLangPath);
     $warnFlagS = false;
     $warnFlagA = false;
     
@@ -93,10 +93,7 @@ class CoreLanguage
 
     // Load intended language file, replaces the English entries 
     if ($langCode != self::DEFAULT_LANG_CODE) {
-      // $langPath = CORE_APP_PATH . CORE_APP_ASSET 
-      //   . (preg_match("/\/$/i", $location) ? ltrim($location, DS) : ltrim($location, DS) . DS) 
-      //   . trim($path, DS) . ".lang." . strtolower(trim($langCode)) . ".json";
-      $langPath = CORE_APP_PATH . CORE_APP_LANG 
+      $langPath = CORE_APP_PATH . $location 
         . trim($path, DS) . ".lang." . strtolower(trim($langCode)) . ".json";
       $sharedLangPath = CORE_ROOT_PATH . CORE_SHARED_LANG 
         . trim($path, DS) . ".lang." . strtolower(trim($langCode)) . ".json";

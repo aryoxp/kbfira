@@ -84,7 +84,7 @@ class Ajax {
           return;
         })
         .fail((response) => {
-          console.warn("foes here");
+          console.warn(response.responseText);
           this.response = response;
           if (!response.coreStatus && response.coreError) reject(response.coreError);
           else reject(response.responseText);
@@ -229,6 +229,11 @@ class Core {
   language(options) {
     Core.language = Language.instance(options);
     return Core.language;
+  }
+
+  runtime(path, options) {
+    Core.runtime = Runtime.instance(path, options);
+    return Core.runtime;
   }
 
   config(key) {

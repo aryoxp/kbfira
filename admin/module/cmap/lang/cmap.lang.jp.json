@@ -1,0 +1,22 @@
+{
+  "cmap-assign-text": "テキストの割り当て",
+  "cmap-assign-topic": "トピックの割り当て",
+  "cmap-cmap": "コンセプトマップ",
+  "cmap-cmap-data": "コンセプトマップデータ",
+  "cmap-copy-to-clipboard": "クリップボードにコピー",
+  "cmap-custom-id-opt": "カスタムID (オプション)",
+  "cmap-db": "データベース",
+  "cmap-decode": "デコード",
+  "cmap-export": "エクスポート",
+  "cmap-no-text-associated": "テキストが関連付けられていません",
+  "cmap-no-topic-associated": "トピックが関連付けられていません",
+  "cmap-open-cmap": "コンセプトマップを開く",
+  "cmap-opt-assign-text": "<strong class=\"fs-bold text-primary\">オプションで</strong> 既存のテキストに関連付ける：",
+  "cmap-opt-assign-topic": "<strong class=\"fs-bold text-primary\">オプションで</strong>トピックに関連付けます：",
+  "cmap-refresh-topic-list": "トピックリストを更新",
+  "cmap-save-cmap-as": "コンセプトマップに名前を付けて保存...",
+  "cmap-teacher-map": "先生のマップ",
+  "cmap-title": "タイトル",
+  "cmap-topic": "トピック",
+  "cmap-unassigned": "未割り当て"
+}
