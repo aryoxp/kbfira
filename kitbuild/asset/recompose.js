@@ -28,6 +28,7 @@ class KitBuildApp {
     this.canvas = canvas;
     this.session = Core.instance().session();
     this.ajax = Core.instance().ajax();
+    this.runtime = Core.instance().runtime();
 
     // Hack for sidebar-panel show/hide
     // To auto-resize the canvas.
@@ -921,24 +922,28 @@ class KitBuildApp {
      * Sign In
      */
     $(".app-navbar .bt-sign-in").on("click", (e) => {
-      KitBuildApp.inst.modalSignIn = SignIn.instance({
-        gids: "KBBASDAT2122",
-        success: (user) => {
-          L.log("sign-in-success", user);
-          this.session.set("user", user);
-          KitBuildApp.updateSignInOutButton();
-          KitBuildApp.inst.modalSignIn.hide();
-          KitBuildApp.initCollab(user);
-          KitBuildApp.enableNavbarButton();
-          KitBuildCollab.enableControl();
-          let status =
-            `<span class="mx-2 d-flex align-items-center status-user">` +
-            `<small class="text-dark fw-bold">${user.name}</small>` +
-            `</span>`;
-          StatusBar.instance().remove(".status-user").prepend(status);
-          this.logger.username = user.username;
-        },
-      }).show();
+      this.runtime.load('config.ini').then(runtimes => {
+        let runtimeGids = runtimes['sign-in-group'];
+        // console.log(runtimes, runtimeGids);
+        KitBuildApp.inst.modalSignIn = SignIn.instance({
+          gids: runtimeGids ?? null,
+          success: (user) => {
+            L.log("sign-in-success", user);
+            this.session.set("user", user);
+            KitBuildApp.updateSignInOutButton();
+            KitBuildApp.inst.modalSignIn.hide();
+            KitBuildApp.initCollab(user);
+            KitBuildApp.enableNavbarButton();
+            KitBuildCollab.enableControl();
+            let status =
+              `<span class="mx-2 d-flex align-items-center status-user">` +
+              `<small class="text-dark fw-bold">${user.name}</small>` +
+              `</span>`;
+            StatusBar.instance().remove(".status-user").prepend(status);
+            this.logger.username = user.username;
+          },
+        }).show();
+      });
     });
   }
 

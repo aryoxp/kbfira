@@ -38,6 +38,7 @@ class CmapApp {
 
     this.session = Core.instance().session();
     this.ajax = Core.instance().ajax();
+    this.runtime = Core.instance().runtime();
     // Hack for sidebar-panel show/hide
     // To auto-resize the canvas.
     // let observer = new MutationObserver((mutations) => $(`#${canvas.canvasId} > div`).css('width', 0))
@@ -660,51 +661,58 @@ class CmapApp {
      */
     $(".app-navbar .bt-sign-in").on("click", (e) => {
       L.log("show-sign-in-dialog");
-      CmapApp.inst.modalSignIn = SignIn.instance({
-        gids: "SCBASDAT2122",
-        success: (user) => {
-          L.log("sign-in-success", user);
-          this.session.set("user", user);
-          this.setUser(user);
-          CmapApp.initCollab(user);
-          CmapApp.enableNavbarButton();
-          CmapApp.updateSignInOutButton();
-          CmapApp.inst.modalSignIn.hide();
-          KitBuildCollab.enableControl();
-          let status =
-            `<span class="mx-2 d-flex align-items-center status-user">` +
-            `<small class="text-dark fw-bold">${user.name}</small>` +
-            `</span>`;
-          StatusBar.instance().remove(".status-user").prepend(status);
-          this.logger.username = user.username;
-          // Save initial map!
-          let data = Object.assign(
-            {
-              cmid: null,
-              cmfid: null,
-              title: "Untitled",
-              direction: this.canvas.direction,
-              topic: null,
-              text: null,
-              type: CmapApp.defaultMapType,
-              author: this.user.username,
-              create_time: null,
-            },
-            KitBuildUI.buildConceptMapData(this.canvas)
-          ); // console.log(data); return
-          this.ajax
-            .post("kitBuildApi/saveConceptMap", { data: Core.compress(data) })
-            .then((conceptMap) => {
-              this.setConceptMap(conceptMap);
-              this.logger.setConceptMapId(conceptMap.map.cmid);
-              UI.success("Concept map has been initialized.").show();
-              L.log("cmap-initialized-empty", conceptMap.map);
-            })
-            .catch((error) => {
-              UI.error("Error saving concept map: " + error).show();
-            });
-        },
-      }).show();
+      this.runtime.load('config.ini').then(runtimes => {
+        let runtimeGids = runtimes['sign-in-group'];
+        // console.log(runtimes, runtimeGids);
+        CmapApp.inst.modalSignIn = SignIn.instance({
+          gids: runtimeGids ?? null,
+          success: (user) => {
+            L.log("sign-in-success", user);
+            this.session.set("user", user);
+            this.setUser(user);
+            CmapApp.initCollab(user);
+            CmapApp.enableNavbarButton();
+            CmapApp.updateSignInOutButton();
+            CmapApp.inst.modalSignIn.hide();
+            KitBuildCollab.enableControl();
+            let status =
+              `<span class="mx-2 d-flex align-items-center status-user">` +
+              `<small class="text-dark fw-bold">${user.name}</small>` +
+              `</span>`;
+            StatusBar.instance().remove(".status-user").prepend(status);
+            this.logger.username = user.username;
+            // Save initial map!
+            let data = Object.assign(
+              {
+                cmid: null,
+                cmfid: null,
+                title: "Untitled",
+                direction: this.canvas.direction,
+                topic: null,
+                text: null,
+                type: CmapApp.defaultMapType,
+                author: this.user.username,
+                create_time: null,
+              },
+              KitBuildUI.buildConceptMapData(this.canvas)
+            ); // console.log(data); return
+            this.ajax
+              .post("kitBuildApi/saveConceptMap", { data: Core.compress(data) })
+              .then((conceptMap) => {
+                this.setConceptMap(conceptMap);
+                this.logger.setConceptMapId(conceptMap.map.cmid);
+                UI.success("Concept map has been initialized.").show();
+                L.log("cmap-initialized-empty", conceptMap.map);
+              })
+              .catch((error) => {
+                UI.error("Error saving concept map: " + error).show();
+              });
+          },
+        }).show();
+      });
+      // console.log("STATE DATA: ", stateData)
+      // console.log(this.runtime, runtimeGids);
+      
     });
   }
 
