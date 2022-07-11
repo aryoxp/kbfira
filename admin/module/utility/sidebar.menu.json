@@ -1,0 +1,11 @@
+{
+  "heading": "Utility",
+  "menu": [
+    {
+      "id": "encode-decode",
+      "label": "Log Data Decoder",
+      "icon": "code-square",
+      "url": "utility/decode"
+    }
+  ]
+}
