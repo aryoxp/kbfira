@@ -483,8 +483,11 @@ class LearnerMapService extends CoreService {
       $qb = QB::instance('learnermap_concept');
       $qb->select()->where('lmid', QB::esc($lmid));
       $result->concepts = $db->query($qb->get());
-      $qb = QB::instance('learnermap_link');
-      $qb->select()->where('lmid', QB::esc($lmid));
+      $qb = QB::instance('learnermap_link ll');
+      $qb->select(QB::raw('ll.*'), QB::raw('l.label'))
+        ->leftJoin('link l', 'l.lid', 'll.lid')
+        ->where('ll.lmid', QB::esc($lmid))
+        ->where('l.cmid', QB::raw('ll.cmid'));
       $result->links = $db->query($qb->get());
       $qb = QB::instance('learnermap_linktarget');
       $qb->select()->where('lmid', QB::esc($lmid));

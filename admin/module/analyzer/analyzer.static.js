@@ -506,10 +506,8 @@ StaticAnalyzerApp.populateLearnerMaps = (cmid) => {
         learnerMaps.map((learnerMap) => {
           learnerMap.conceptMap = StaticAnalyzerApp.inst.conceptMap;
           Analyzer.composePropositions(learnerMap);
-          learnerMap.compare = Analyzer.compare(
-            learnerMap,
-            learnerMap.conceptMap.map.direction
-          );
+          let direction = learnerMap.conceptMap.map.direction
+          learnerMap.compare = Analyzer.compare(learnerMap, direction);
         });
 
         learnerMaps.forEach((lm, i) => {
