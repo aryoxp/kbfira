@@ -117,8 +117,8 @@
           function walk($ms, $lv = 1, $app = '', $pm = null) {
             if (is_array($ms)) {
               if ($pm) $pm->shouldShow = false;
-              foreach($ms as $m) {
-                $show = walk($m, $lv, $app);
+              foreach($ms as $mapp => $m) {
+                $show = walk($m, $lv, $app == "" ? $mapp : $app);
                 if ($show) $pm->shouldShow = true;
               }
             } else {
@@ -141,7 +141,7 @@
 
           $this->dwalk = function($ms, $lv = 1, $app = '', $pm = null) {
             if (is_array($ms)) {
-              foreach($ms as $m) ($this->dwalk)($m, $lv, $app);
+              foreach($ms as $mapp => $m) ($this->dwalk)($m, $lv, $app == "" ? $mapp : $app);
             } else {
               if (isset($ms->menu)) { // it has sub-menus
                 if (!$ms->shouldShow) return; // childs of this menu were not authorized, hide it.
@@ -160,7 +160,7 @@
                   echo "</li>";
                 }
               } else {
-                echo "<li>";
+                echo "<li " . (property_exists($ms, 'id') ? 'data-id="' . $app . "-" . $ms->id . '"' : '') . ">";
                 echo '<a '. (@$ms->url ? 'href="' . $this->location($ms->url, 'm/x/') . '" ' : '').'>';
                 if ($lv == 1 && @$ms->icon) echo '<i class="bi bi-'.$ms->icon.'"></i>';
                 echo '<span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">'.$ms->label."</span>";

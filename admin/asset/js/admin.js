@@ -20,6 +20,8 @@ class AdminApp {
     });
   }
   handleEvent() {
+    this.config = Core.instance().config();
+    if(this.config.get('sidebarcollapse')) $(".sidebar-panel").addClass('collapsed');
     $(".admin-toggle-sidebar").on("click", (e) => {
       $(".sidebar-panel")
         .one('transitionend', (e) => {
