@@ -2,7 +2,8 @@
 
 class HomeController extends CoreController {
   
-  function index() {
+  function index($seq = null) {
+    Core::lib(Core::CONFIG)->set('seq', $seq ?? 0, CoreConfig::CONFIG_TYPE_CLIENT);
     $this->ui->useCoreClients();
     $this->ui->usePlugin('core-runtime');
     $this->ui->usePlugin('kitbuild-ui', 'kitbuild', 'kitbuild-analyzer', 'kitbuild-logger', 'kitbuild-collab', 'general-ui', 'highlight', 'showdown');

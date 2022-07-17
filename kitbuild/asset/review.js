@@ -2,6 +2,13 @@ $(() => { // jQuery onReady callback
   let app = ReviewApp.instance()
 })
 
+// short hand for logger class
+// so to log something, one could simply use:
+// Log.l('action', data);
+class L {
+  static log() {}
+}
+
 class ReviewApp {
   constructor() {
     this.kbui = KitBuildUI.instance(ReviewApp.canvasId)
@@ -19,6 +26,26 @@ class ReviewApp {
     this.session = Core.instance().session();
     this.ajax = Core.instance().ajax();
     this.canvas = canvas;
+
+    // Logger
+    if (typeof KitBuildLogger != "undefined") {
+      let sessid = Core.instance().config().get("sessid");
+      let seq = Core.instance().config().get("seq");
+      this.logger = KitBuildLogger.instance(
+        null,
+        seq ?? 0,
+        sessid,
+        canvas,
+        null
+      ).enable();
+
+      // bind logger, but don't listen to canvas events.
+      // ReviewApp.loggerListener = this.logger.onCanvasEvent.bind(this.logger);
+      // canvas.on("event", ReviewApp.loggerListener);
+      L.log = this.logger.log.bind(this.logger);
+      L.log(`init-${this.constructor.name}`);
+    }
+
     // Hack for sidebar-panel show/hide
     // To auto-resize the canvas.
     // let observer = new MutationObserver((mutations) => $(`#${ReviewApp.canvasId} > div`).css('width', 0))
@@ -67,6 +94,14 @@ class ReviewApp {
         + `<span class="badge rounded-pill bg-primary" role="button" data-bs-toggle="tooltip" data-bs-placement="top" title="${tooltipText}">ID: ${kitMap.map.kid}</span>`
         + `<span class="text-secondary ms-2 text-truncate"><small>${kitMap.map.name}</small></span>`
         + `</span>`
+      KitBuild.getTextOfKit(kitMap.map.kid).then((text) => {
+        this.text = text;
+        let textLabel = text ? `Text: ${text.title}` : "Text: None";
+        let statusText = `<span class="mx-2 d-flex align-items-center status-text">`;
+        statusText += `<span class="badge rounded-pill bg-danger">${textLabel}</span>`;
+        statusText += `</span>`;
+        StatusBar.instance().remove(".status-text").append(statusText);
+      });
       StatusBar.instance().remove('.status-kit').append(status);
     } else {
       StatusBar.instance().remove('.status-kit');
@@ -91,44 +126,44 @@ class ReviewApp {
 
   handleEvent() {
 
-    let saveAsDialog = UI.modal('#kit-save-as-dialog', {
-      onShow: () => { 
-        if (saveAsDialog.kitMap) { // means save existing kit...
-          $('#kit-save-as-dialog .input-title').val(saveAsDialog.kitMap.map.name)
-          $('#kit-save-as-dialog .input-title').focus().select()
-          $('#input-fid').val(saveAsDialog.kitMap.map.kfid)
-          $('#input-title').val(saveAsDialog.kitMap.map.name)
-          $(`#input-layout-${saveAsDialog.kitMap.map.layout}`).prop('checked', true)
-          $('#input-enabled').prop('checked', saveAsDialog.kitMap.map.enabled == "1" ? true : false)
-        } else {
-          $('#kit-save-as-dialog .input-title').val('Kit of ' + ReviewApp.inst.conceptMap.map.title)
-          $('#kit-save-as-dialog .input-title').focus().select()
-          $('#kit-save-as-dialog .bt-generate-fid').trigger('click')
-          $('#input-layout-preset').prop('checked', true)
-          $('#input-enabled').prop('checked', true)
-        }
-      },
-      hideElement: '.bt-cancel'
-    })
-    saveAsDialog.setKitMap = (kitMap) => { console.log(kitMap)
-      if (kitMap) saveAsDialog.kitMap = kitMap
-      else saveAsDialog.kitMap = null
-      return saveAsDialog;
-    }
-    saveAsDialog.setTitle = (title) => {
-      $('#kit-save-as-dialog .dialog-title').html(title)
-      return saveAsDialog
-    }
-    saveAsDialog.setIcon = (icon) => {
-      $('#kit-save-as-dialog .dialog-icon').removeClass()
-        .addClass(`dialog-icon bi bi-${icon} me-2`)
-      return saveAsDialog
-    }
+    // let saveAsDialog = UI.modal('#kit-save-as-dialog', {
+    //   onShow: () => { 
+    //     if (saveAsDialog.kitMap) { // means save existing kit...
+    //       $('#kit-save-as-dialog .input-title').val(saveAsDialog.kitMap.map.name)
+    //       $('#kit-save-as-dialog .input-title').focus().select()
+    //       $('#input-fid').val(saveAsDialog.kitMap.map.kfid)
+    //       $('#input-title').val(saveAsDialog.kitMap.map.name)
+    //       $(`#input-layout-${saveAsDialog.kitMap.map.layout}`).prop('checked', true)
+    //       $('#input-enabled').prop('checked', saveAsDialog.kitMap.map.enabled == "1" ? true : false)
+    //     } else {
+    //       $('#kit-save-as-dialog .input-title').val('Kit of ' + ReviewApp.inst.conceptMap.map.title)
+    //       $('#kit-save-as-dialog .input-title').focus().select()
+    //       $('#kit-save-as-dialog .bt-generate-fid').trigger('click')
+    //       $('#input-layout-preset').prop('checked', true)
+    //       $('#input-enabled').prop('checked', true)
+    //     }
+    //   },
+    //   hideElement: '.bt-cancel'
+    // })
+    // saveAsDialog.setKitMap = (kitMap) => { console.log(kitMap)
+    //   if (kitMap) saveAsDialog.kitMap = kitMap
+    //   else saveAsDialog.kitMap = null
+    //   return saveAsDialog;
+    // }
+    // saveAsDialog.setTitle = (title) => {
+    //   $('#kit-save-as-dialog .dialog-title').html(title)
+    //   return saveAsDialog
+    // }
+    // saveAsDialog.setIcon = (icon) => {
+    //   $('#kit-save-as-dialog .dialog-icon').removeClass()
+    //     .addClass(`dialog-icon bi bi-${icon} me-2`)
+    //   return saveAsDialog
+    // }
   
-    let openDialog = UI.modal('#concept-map-open-dialog', {
-      hideElement: '.bt-cancel',
-      width: '700px',
-    })
+    // let openDialog = UI.modal('#concept-map-open-dialog', {
+    //   hideElement: '.bt-cancel',
+    //   width: '700px',
+    // })
   
     let contentDialog = UI.modal('#kit-content-dialog', {
       hideElement: '.bt-close',
@@ -141,10 +176,23 @@ class ReviewApp {
       resizeHandle: '.resize-handle',
       minWidth: 375,
       minHeight: 200,
-      onShow: () => {}
+      onShow: () => {
+        let sdown = new showdown.Converter({
+          strikethrough: true,
+          tables: true,
+          simplifiedAutoLink: true,
+        });
+        sdown.setFlavor("github");
+        console.log(contentDialog.text);
+        let htmlText = contentDialog.text
+          ? sdown.makeHtml(contentDialog.text.content)
+          : "<em>Content text unavailable.</em>";
+        $("#kit-content-dialog .content").html(htmlText);
+        hljs.highlightAll();
+      }
     })
-    contentDialog.setContent = (content, type = 'plain') => {
-      contentDialog.content = content
+    contentDialog.setContent = (text, type = 'plain') => {
+      contentDialog.text = text
       return contentDialog
     }
   
@@ -204,10 +252,20 @@ class ReviewApp {
      * */
   
     $('.app-navbar').on('click', '.bt-modify', () => { // console.log(ReviewApp.inst)
+      let modification = this.kitMap.parsedOptions.modification;
+      if (!modification) {
+        UI.dialog('Map recomposition with this kit cannot be modified further.').show();
+        return;
+      }
       let confirm = UI.confirm('Go back and modify the map?').positive(() => {
+        L.log('review-begin-modify-map');
         this.session.unset('flmid').then(() => {
           let url = Core.instance().config().get('baseurl')
-          window.location.href = url;
+          if (this.logger && this.logger.seq) {
+            let seq = this.logger.seq;
+            if (seq) url += `home/index/${seq}`;
+          }
+          window.location.href = `${url}`;
           confirm.hide()
         })
       }).show()
@@ -232,8 +290,22 @@ class ReviewApp {
      * */
   
     $('.app-navbar').on('click', '.bt-content', () => { // console.log(ReviewApp.inst)
-      if (!ReviewApp.inst.kitMap) return
-      else contentDialog.setContent().show()
+      if (!this.kitMap || !this.learnerMap) {
+        UI.error('Invalid kit or learner map').show();
+        return
+      }
+      
+      let readcontent = this.kitMap.parsedOptions.readcontent;
+      if (!readcontent) {
+        UI.dialog('Content text of this kit is not enabled.').show();
+        return;
+      }
+      contentDialog.setContent(this.text).show();
+      L.log('review-content-shown', {
+        kid: this.learnerMap.map.kid,
+        lmid: this.learnerMap.map.lmid,
+      });
+      
     })
   
     $('#kit-content-dialog .bt-scroll-top').on('click', (e) => {
@@ -263,51 +335,55 @@ class ReviewApp {
      * 
      * Feedback
      */
-    $('.app-navbar').on('click', '.bt-feedback', () => {
+    $('.app-navbar').on('click', '.bt-comparison', (e) => {
   
-      if (!ReviewApp.inst.kitMap) return
+      if (!this.kitMap) return
       if (feedbackDialog.learnerMapEdgesData) 
         $('.app-navbar .bt-mymap').trigger('click')
   
       let learnerMapData = KitBuildUI.buildConceptMapData(this.canvas)
       feedbackDialog.learnerMapEdgesData = this.canvas.cy.edges().jsons()
   
-      let feedbacksave = ReviewApp.inst.kitMap.parsedOptions.feedbacksave
-      if (feedbacksave) {
-        let kitMap = ReviewApp.inst.kitMap
-        let data = Object.assign({
-          lmid: null, // so it will insert new rather than update
-          kid: kitMap.map.kid,
-          author: this.user ? this.user.username : null,
-          type: 'feedback',
-          cmid: kitMap.map.cmid,
-          create_time: null,
-          data: null,
-        }, learnerMapData); console.log(data); // return
-        this.ajax.post("kitBuildApi/saveLearnerMap", { data: Core.compress(data) })
-          .then(learnerMap => {
-            console.warn("Concept map save-on-feedback has been saved successfully.");
-          }).catch(error => { console.error(error); })
+      let fullfeedback = this.kitMap.parsedOptions.fullfeedback;
+      console.log(fullfeedback, this.kitMap.parsedOptions);
+      
+      if (fullfeedback) {
+
+        // Analyze learner map 
+        learnerMapData.conceptMap = this.conceptMap;
+        Analyzer.composePropositions(learnerMapData);
+        let direction = learnerMapData.conceptMap.map.direction;
+        let compare = Analyzer.compare(learnerMapData, direction);
+
+        // Provide level 4 analysis
+        let level = Analyzer.MATCH | Analyzer.EXCESS | Analyzer.MISS;
+
+        // Display the comparison map
+        Analyzer.showCompareMap(compare, this.canvas.cy, direction, level);
+
+        // Display comparison dialog
+        feedbackDialog.setCompare(compare, level).show();
+
+        // Disable unnecessary canvas tool
+        this.canvas.canvasTool.enableIndicator(false).enableConnector(false)
+          .clearCanvas().clearIndicatorCanvas();
+        // feedbackDialog.setCompare(compare, level).show()
+        
+        // Apply edge visibility settings
+        let compareTool = this.canvas.toolbar.tools.get(KitBuildToolbar.COMPARE);
+        if (compareTool) compareTool.apply();
+        L.log('review-compare');
+      } else {
+        UI.dialog('Sorry, full comparison map feature for this kit is <span class="text-danger">not enabled</span> in kit options.').show();
+        // L.log('review-compare');
       }
   
-      learnerMapData.conceptMap = ReviewApp.inst.conceptMap
-      Analyzer.composePropositions(learnerMapData)
-      let direction = learnerMapData.conceptMap.map.direction
-      let compare = Analyzer.compare(learnerMapData, direction)
-      let level = Analyzer.MATCH | Analyzer.EXCESS | Analyzer.MISS
-      Analyzer.showCompareMap(compare, this.canvas.cy, direction, level)
-      this.canvas.canvasTool.enableIndicator(false).enableConnector(false)
-        .clearCanvas().clearIndicatorCanvas()
-      // feedbackDialog.setCompare(compare, level).show()
-      
-      // Apply edge visibility settings
-      let compareTool = this.canvas.toolbar.tools.get(KitBuildToolbar.COMPARE)
-      if (compareTool) compareTool.apply()
   
       
     })
     $('.app-navbar').on('click', '.bt-mymap', () => {
-      if (!feedbackDialog.learnerMapEdgesData) return
+      if (!feedbackDialog.learnerMapEdgesData) return;
+      L.log('review-show-my-map');
       this.canvas.cy.edges().remove()
       this.canvas.cy.add(feedbackDialog.learnerMapEdgesData)
       this.canvas.applyElementStyle()
@@ -332,9 +408,17 @@ class ReviewApp {
      * Submit
     */
     $('.app-navbar').on('click', '.bt-finish', () => {
-      let confirm = UI.confirm("Finish reviwing your concept map?<br/>This will end all the concept mapping session.", {
+      if (!this.learnerMap) {
+        UI.dialog('Invalid learner map').show();
+        return;
+      }
+      let confirm = UI.confirm("Finish reviwing your concept map?<br/>This will end all the concept mapping session. and you will need to sign in again for another concept mapping session.", {
           iconStyle: 'danger', icon: 'exclamation-triangle-fill'
         }).positive(() => {
+          L.log('review-finish', {
+            kid: this.learnerMap.map.kid,
+            lmid: this.learnerMap.map.lmid,
+          })
           this.session.destroy();
           UI.success('Logging out...').show();
           setTimeout(() => {
@@ -354,13 +438,18 @@ class ReviewApp {
    */
   
   handleRefresh() {
-    this.session.getAll().then(sessions => { // console.log(sessions)
+    this.session.getAll().then(sessions => { console.log(sessions)
       let kid  = sessions.kid
       let lmid = sessions.flmid // fixed
+      let username = sessions.user.username;
+
       if (!lmid) {
         UI.dialog('Invalid concept map.', {icon: 'exclamation-triangle-fill', iconStyle: 'danger'}).show();
         return;
       }
+
+      this.logger.setUsername(username);
+
       let promises = []
       if (kid) promises.push(KitBuild.openKitMap(kid))
   
@@ -369,7 +458,7 @@ class ReviewApp {
       Promise.all(promises).then(maps => { // console.log(maps)
         let kitMap = maps[0]
         let learnerMap = maps[1]
-        ReviewApp.parseKitMapOptions(kitMap)
+        ReviewApp.parseKitMapOptions(kitMap);
         if (kitMap && !learnerMap) {
           ReviewApp.resetMapToKit(kitMap, this.canvas)
           return
@@ -381,8 +470,17 @@ class ReviewApp {
           this.canvas.cy.add(KitBuildUI.composeLearnerMap(learnerMap))
           this.canvas.applyElementStyle()
           this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
-          ReviewApp.inst.setKitMap(kitMap)
-          ReviewApp.inst.setLearnerMap(learnerMap)
+          this.setKitMap(kitMap)
+          this.setLearnerMap(learnerMap)
+
+          // Apply kitMap options;
+          // console.log(this.kitMap.parsedOptions);
+          let fullfeedback = this.kitMap.parsedOptions.fullfeedback;
+          let modification = this.kitMap.parsedOptions.modification;
+          let readcontent = this.kitMap.parsedOptions.readcontent;
+          $('.bt-comparison').attr('disabled', !fullfeedback);
+          $('.bt-modify').attr('disabled', !modification);
+          $('.bt-content').attr('disabled', !readcontent);
         }
         else UI.warning('Unable to display kit.').show()
       })

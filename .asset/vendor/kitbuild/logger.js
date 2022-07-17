@@ -61,6 +61,15 @@ class Logger {
     console.warn(this.seq, action, Array.from(lData.entries()), status)
     return this;
   }
+  reset() {
+    this.seq = 0;
+  }
+  setUsername(username) {
+    this.username = username;
+  }
+  setSequence(seq) {
+    this.seq = parseInt(seq);
+  }
 }
 
 class CmapLogger extends Logger {  // TODO: SET cmid

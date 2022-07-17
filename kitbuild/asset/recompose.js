@@ -51,20 +51,25 @@ class KitBuildApp {
     // Logger
     if (typeof KitBuildLogger != "undefined") {
       let sessid = Core.instance().config().get("sessid");
+      let url = Core.instance().config().get('baseurl')
+      let seq = Core.instance().config().get("seq");
+      window.history.replaceState({}, document.title, url);
       this.logger = KitBuildLogger.instance(
         null,
-        0,
+        seq ?? 0,
         sessid,
         canvas,
         null
       ).enable();
+      if (this.logger.seq != 0) this.seq = seq;
       KitBuildApp.loggerListener = this.logger.onCanvasEvent.bind(this.logger);
       L.log = this.logger.log.bind(this.logger);
       L.log(`init-${this.constructor.name}`);
       canvas.on("event", KitBuildApp.loggerListener);
     }
 
-    console.log(this, typeof KitBuildLogger);
+
+    // console.log(this, typeof KitBuildLogger);
 
     this.handleEvent();
     this.handleRefresh();
@@ -120,8 +125,9 @@ class KitBuildApp {
         `</span>`;
       KitBuild.getTextOfKit(kitMap.map.kid).then((text) => {
         this.text = text;
+        let textLabel = text ? `Text: ${text.title}` : "Text: None";
         let statusText = `<span class="mx-2 d-flex align-items-center status-text">`;
-        statusText += `<span class="badge rounded-pill bg-warning text-dark">Text: ${text.title}</span>`;
+        statusText += `<span class="badge rounded-pill bg-danger">${textLabel}</span>`;
         statusText += `</span>`;
         StatusBar.instance().remove(".status-text").append(statusText);
       });
@@ -465,6 +471,7 @@ class KitBuildApp {
 
     $("#concept-map-open-dialog").on("click", ".bt-open", (e) => {
       e.preventDefault();
+      let username = this.user.username;
       if (!openDialog.kid) {
         UI.dialog("Please select a concept map and a kit.").show();
         return;
@@ -473,56 +480,114 @@ class KitBuildApp {
         .then((kitMap) => {
           try {
             KitBuildApp.parseKitMapOptions(kitMap);
-            let proceed = () => {
+            let proceed = (learnerMap) => {
+              openDialog.hide();
               this.setKitMap(kitMap);
               this.logger.setConceptMap(kitMap.conceptMap);
-              this.setLearnerMap();
+              this.setLearnerMap(learnerMap ?? undefined);
               L.log("open-kit", kitMap.map);
-              KitBuildApp.resetMapToKit(kitMap, this.canvas).then(() => {
-                let cyData = this.canvas.cy.elements().jsons();
-                KitBuildApp.collab("command", "set-kit-map", kitMap, cyData);
-              });
-              openDialog.hide();
-
-              let data = Object.assign(
-                {
-                  lmid: null,
+              if (learnerMap) {
+                L.log("continue-recompose", learnerMap.map, null, {
+                  lmid: learnerMap.map.lmid,
                   kid: kitMap.map.kid,
-                  author: KitBuildApp.inst.user
-                    ? KitBuildApp.inst.user.username
-                    : null,
-                  type: "draft",
-                  cmid: kitMap.map.cmid,
-                  create_time: null,
-                  data: null,
-                },
-                KitBuildUI.buildConceptMapData(this.canvas)
-              ); // console.log(data); // return
-              this.ajax
-                .post("kitBuildApi/saveLearnerMap", {
-                  data: Core.compress(data),
-                })
-                .then((learnerMap) => {
-                  // console.log(kitMap);
-                  this.setLearnerMap(learnerMap);
-                  this.logger.setLearnerMapId(learnerMap.map.lmid);
-                  UI.success("Concept map has been initialized.").show();
-                  L.log("learnermap-initialized", learnerMap.map, null, {
-                    lmid: learnerMap.map.lmid,
-                    includeMapData: true,
-                  });
-                })
-                .catch((error) => {
-                  UI.error(error).show();
+                  includeMapData: true,
                 });
+                this.logger.setLearnerMapId(learnerMap.map.lmid);
+                learnerMap.kitMap = kitMap;
+                learnerMap.conceptMap = kitMap.conceptMap;
+                this.canvas.cy.elements().remove();
+                this.canvas.cy.add(KitBuildUI.composeLearnerMap(learnerMap));
+                this.canvas.applyElementStyle();
+                this.canvas.toolbar.tools
+                  .get(KitBuildToolbar.CAMERA)
+                  .fit(null, { duration: 0 })
+                  .then(() => {
+                    KitBuildApp.collab(
+                      "command",
+                      "set-kit-map",
+                      kitMap,
+                      this.canvas.cy.elements().jsons()
+                    );
+                  });
+                // this.setLearnerMap(learnerMap);
+                // this.logger.setLearnerMapId(learnerMap.map.lmid);
+                // L.log("load-learner-map", learnerMap.map, null, {
+                //   includeMapData: true,
+                //   lmid: learnerMap.map.lmid,
+                // });
+                // UI.info("Concept map loaded.").show();
+                // confirm.hide();
+                UI.success("Saved concept map has been loaded.").show();
+              } else {
+                this.logger.reset();
+                L.log("begin-recompose");
+                KitBuildApp.resetMapToKit(kitMap, this.canvas).then(() => {
+                  let cyData = this.canvas.cy.elements().jsons();
+                  KitBuildApp.collab("command", "set-kit-map", kitMap, cyData);
+                });
+                let data = Object.assign(
+                  {
+                    lmid: null,
+                    kid: kitMap.map.kid,
+                    author: KitBuildApp.inst.user
+                      ? KitBuildApp.inst.user.username
+                      : null,
+                    type: "draft",
+                    cmid: kitMap.map.cmid,
+                    create_time: null,
+                    data: null,
+                  },
+                  KitBuildUI.buildConceptMapData(this.canvas)
+                ); // console.log(data); // return
+                this.ajax
+                  .post("kitBuildApi/saveLearnerMap", {
+                    data: Core.compress(data),
+                  })
+                  .then((learnerMap) => {
+                    // console.log(kitMap);
+                    this.setLearnerMap(learnerMap);
+                    this.logger.setLearnerMapId(learnerMap.map.lmid);
+                    UI.success("Concept map has been initialized.").show();
+                    L.log("learnermap-initialized", learnerMap.map, null, {
+                      lmid: learnerMap.map.lmid,
+                      includeMapData: true,
+                    });
+                  })
+                  .catch((error) => {
+                    UI.error(error).show();
+                  });
+              }
             };
             if (this.canvas.cy.elements().length) {
               let confirm = UI.confirm(
-                "Open the kit replacing the current kit on Canvas?"
+                'Opening the kit will <span class="text-danger">REPLACE</span> current concept map on Canvas. Continue?'
               )
                 .positive(() => {
                   confirm.hide();
-                  proceed();
+                  let data = {
+                    kid: kitMap.map.kid,
+                    username: username, // KitBuildApp.inst.user.username,
+                  };
+                  this.ajax
+                    .post("kitBuildApi/getLastDraftLearnerMapOfUser", data)
+                    .then((learnerMap) => {
+                      if (!learnerMap) {
+                        proceed();
+                        return;
+                      }
+                      confirm = UI.confirm(
+                        "You have a saved draft concept map for this kit.<br>Do you want to load and continue working on the saved concept map?"
+                      )
+                        .positive(() => {
+                          confirm.hide();
+                          proceed(learnerMap);
+                        }, 'Yes, continue.')
+                        .negative(() => {
+                          confirm.hide();
+                          proceed(null);
+                        }, "No, I want to start from the beginning.")
+                        .show();
+                    });
                 })
                 .show();
               return;
@@ -794,8 +859,14 @@ class KitBuildApp {
         .enableConnector(false)
         .clearCanvas()
         .clearIndicatorCanvas();
-      console.log(compare, level);
-      feedbackDialog.setCompare(compare, dialogLevel).show();
+
+      if (feedbacklevel == 0) {
+        UI.dialog("Feedback is not enabled for this kit.")
+          .on("dismiss", () => {
+            $(".app-navbar .bt-clear-feedback").trigger("click");
+          })
+          .show();
+      } else feedbackDialog.setCompare(compare, dialogLevel).show();
 
       L.log("feedback", {
         level: level,
@@ -871,7 +942,7 @@ class KitBuildApp {
                   setTimeout(() => {
                     // TODO: and then change state to full feedback if set in kit options
                     let baseurl = Core.instance().config().get("baseurl");
-                    window.location.href = baseurl + "review";
+                    window.location.href = baseurl + "review/index/" + this.logger.seq;
                   }, 2000);
                 })
                 .catch(() => {
@@ -922,8 +993,8 @@ class KitBuildApp {
      * Sign In
      */
     $(".app-navbar .bt-sign-in").on("click", (e) => {
-      this.runtime.load('config.ini').then(runtimes => {
-        let runtimeGids = runtimes['sign-in-group'];
+      this.runtime.load("config.ini").then((runtimes) => {
+        let runtimeGids = runtimes["sign-in-group"];
         // console.log(runtimes, runtimeGids);
         KitBuildApp.inst.modalSignIn = SignIn.instance({
           gids: runtimeGids ?? null,
@@ -954,19 +1025,20 @@ class KitBuildApp {
 
   handleRefresh() {
     let stateData = JSON.parse(localStorage.getItem(KitBuildApp.name));
-    // console.warn("RESTORE STATE:", stateData)
+    console.warn("RESTORE STATE:", stateData)
     this.session.getAll().then((sessions) => {
       // console.log(sessions)
 
       try {
         if (stateData && stateData.logger) {
           // restore previous logger data and sequence
+          // console.log(this.logger.seq);
           this.logger.username = sessions.user ? sessions.user.username : null;
-          this.logger.seq = stateData.logger.seq;
+          this.logger.seq = this.logger.seq == 1 ? stateData.logger.seq : this.logger.seq;
           this.logger.sessid = Core.instance().config().get("sessid");
           this.logger.canvas = this.canvas;
           this.logger.enable();
-
+          L.log('restore-logger-state');
           // reattach logger
           if (KitBuildApp.loggerListener)
             this.canvas.off("event", KitBuildApp.loggerListener);
@@ -1019,7 +1091,7 @@ class KitBuildApp {
         KitBuildCollab.enableControl();
         this.setUser(sessions.user);
         let status =
-          `<span class="mx-2 d-flex align-items-center status-user">` +
+          `<span class="mx-2 d-flex align-items-center status-user" style="white-space: nowrap;">` +
           `<small class="text-dark fw-bold">${sessions.user.name}</small>` +
           `</span>`;
         StatusBar.instance().remove(".status-user").prepend(status);
