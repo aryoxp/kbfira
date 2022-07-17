@@ -9,8 +9,8 @@
       <div class="btn-group btn-group-sm ms-2" id="review-mymap">
         <button class="bt-mymap btn btn-primary"><i class="bi bi-person"></i> My Map</button>
       </div>
-      <div class="btn-group btn-group-sm ms-2" id="review-feedbacklevel">
-        <button class="bt-feedback btn btn-warning"><i class="bi bi-shuffle"></i> Comparison Map</button>
+      <div class="btn-group btn-group-sm ms-2" id="review-comparison">
+        <button class="bt-comparison btn btn-warning"><i class="bi bi-shuffle"></i> Comparison Map</button>
       </div>
       <div class="btn-group btn-group-sm ms-2" id="review-readcontent">
         <button class="bt-content btn btn-sm btn-secondary"><i class="bi bi-file-text-fill"></i> Contents</button>
@@ -26,7 +26,7 @@
     <?php $this->pluginView('kitbuild-ui', ["id" => "review-canvas"], 0); ?>
   </div>
   <div class="d-flex">
-    <div class="status-panel flex-fill m-2 mt-0 d-flex">&nbsp;</div>
+    <div class="status-panel flex-fill m-2 mt-0 d-flex" style="overflow-x: scroll">&nbsp;</div>
     <div class="status-control text-end m-2 mt-0"><button class="btn btn-sm">&nbsp;</button></div>
   </div>
 </div>
@@ -68,7 +68,7 @@
 
   <div id="feedback-dialog" class="card d-none">
     <h6 class="card-header d-flex">
-      <span class="drag-handle flex-fill"><i class="dialog-icon bi bi-eye-fill me-2"></i> <span class="dialog-title">Quick Feedback</span></span>
+      <span class="drag-handle flex-fill"><i class="dialog-icon bi bi-eye-fill me-2"></i> <span class="dialog-title">Map Comparison</span></span>
       <i class="bi bi-x-lg bt-close bt-x" role="button"></i>
     </h6>
     <div class="card-body">

@@ -39,7 +39,7 @@
     <?php $this->pluginView('kitbuild-ui', ["id" => "recompose-canvas"], 0); ?>
   </div>
   <div class="d-flex">
-    <div class="status-panel flex-fill m-2 mt-0 d-flex"></div>
+    <div class="status-panel flex-fill m-2 mt-0 d-flex" style="overflow-x: scroll"></div>
     <div class="status-control text-end m-2 mt-0"></div>
   </div>
     

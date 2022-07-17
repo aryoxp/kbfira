@@ -3,13 +3,11 @@
   <div class="btn-group btn-group-sm ms-2">
     <button class="bt-open-kit btn btn-primary"><i class="bi bi-folder2-open"></i> Open Kit</button>
     <button class="bt-close-kit btn btn-primary"><i class="bi bi-x-lg"></i> Close Kit</button>
-    <button class="bt-option btn btn-primary"><i class="bi bi-sliders"></i> Options</button>
-    <button class="bt-content btn btn-primary"><i class="bi bi-file-text"></i> Content</button>
-    <button class="bt-save btn btn-primary"><i class="bi bi-save"></i> <?php echo Lang::l('save'); ?></button>
-    <button class="bt-save-as btn btn-primary"><i class="bi bi-front"></i> <?php echo Lang::l('save-as'); ?></button>
-    <!-- <button class="bt-export btn btn-primary"><i class="bi bi-send"></i> Export</button> -->
   </div>
-    
+  <div class="btn-group btn-group-sm ms-2">
+    <button class="bt-option btn btn-warning text-dark"><i class="bi bi-sliders"></i> Options</button>
+    <button class="bt-content btn btn-warning text-dark"><i class="bi bi-file-text"></i> Content</button>
+  </div>
   <div class="btn-group btn-group-sm ms-2">
     <button class="bt-toggle-left btn btn-sm btn-warning" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle outgoing edges"><i class="bi bi-box-arrow-up-right"></i></button>
     <button class="bt-toggle-right btn btn-sm btn-warning" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle incoming edges"><i class="bi bi-box-arrow-in-up-right"></i></button>
@@ -17,7 +15,12 @@
     <button class="bt-restore btn btn-sm btn-warning" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Restore all edges"><i class="bi bi-check2-square"></i></button>
     <button class="bt-reset btn btn-sm btn-warning" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Reset to goalmap settings"><i class="bi bi-arrow-repeat"></i> <?php echo Lang::l('reset'); ?></button>
   </div>
-
+  <div class="btn-group btn-group-sm ms-2">
+    <button class="bt-save btn btn-primary"><i class="bi bi-save"></i> <?php echo Lang::l('save'); ?></button>
+    <button class="bt-save-as btn btn-primary"><i class="bi bi-front"></i> <?php echo Lang::l('save-as'); ?></button>
+    <!-- <button class="bt-export btn btn-primary"><i class="bi bi-send"></i> Export</button> -->
+  </div>  
+  
 </div>
 <div class="d-flex flex-fill align-items-stretch">
   <?php $this->pluginView('kitbuild-ui', ["id" => "makekit-canvas"], 0); ?>
