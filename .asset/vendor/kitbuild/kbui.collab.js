@@ -1,6 +1,6 @@
 class KitBuildCollab {
   constructor(namespace, user, canvas, options) {
-    console.log("COLLAB INSTANTIATED")
+    console.log("COLLAB INSTANTIATED", options);
     this.namespace = namespace
     this.user = user
     this.canvas = canvas;

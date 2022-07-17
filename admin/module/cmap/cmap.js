@@ -31,7 +31,9 @@ class CmapApp {
     
     this.canvas = canvas
 
-    this.session = Core.instance().session()
+    this.session = Core.instance().session();
+    this.config = Core.instance().config();
+
     // Hack for sidebar-panel show/hide
     // To auto-resize the canvas.
     let observer = new MutationObserver((mutations) => $(`#${canvas.canvasId} > div`).css('width', 0))
@@ -693,16 +695,23 @@ class CmapApp {
   
       // init collaboration feature
       if (sessions.user) {
-        CmapApp.collabInst = KitBuildCollab.instance('cmap', sessions.user, this.canvas)
-        CmapApp.collabInst.on('event', CmapApp.onCollabEvent)
-        KitBuildCollab.enableControl();
         this.setUser(sessions.user);
+        this.initCollab(sessions.user);
       }
   
       // listen to events for broadcast to collaboration room as commands
       this.canvas.on('event', CmapApp.onCanvasEvent)
   
     })
+  }
+
+  initCollab(user) {
+    CmapApp.collabInst = KitBuildCollab.instance('cmap', user, this.canvas, {
+      host: this.config.get('collabhost'),
+      port: this.config.get('collabport'),
+    });
+    CmapApp.collabInst.on('event', CmapApp.onCollabEvent);
+    KitBuildCollab.enableControl();
   }
 }
 

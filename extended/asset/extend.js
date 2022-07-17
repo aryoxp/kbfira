@@ -17,6 +17,8 @@ class KitBuildExtApp {
     this.canvas = canvas;
     this.session = Core.instance().session();
     this.ajax = Core.instance().ajax();
+    this.config = Core.instance().config();
+
     // Hack for sidebar-panel show/hide
     // To auto-resize the canvas.
     // AA
@@ -24,9 +26,6 @@ class KitBuildExtApp {
     // observer.observe(document.querySelector('#admin-sidebar-panel'), {attributes: true})
     // Enable tooltip
     $('[data-bs-toggle="tooltip"]').tooltip({ html: true })
-
-    if (typeof KitBuildCollab == 'function')
-      KitBuildExtApp.collabInst = KitBuildCollab.instance('kitbuild', null, canvas)
 
     // Browser lifecycle event
     KitBuildUI.addLifeCycleListener(KitBuildExtApp.onBrowserStateChange)
@@ -47,6 +46,10 @@ class KitBuildExtApp {
   static instance() {
     KitBuildExtApp.inst = new KitBuildExtApp()
     return KitBuildExtApp.inst;
+  }
+
+  setUser(user = null) {
+    this.user = user;
   }
 
   setConceptMap(conceptMap) { console.warn("CONCEPT MAP SET:", conceptMap)
@@ -868,10 +871,10 @@ class KitBuildExtApp {
           this.session.set('user', user).then(() => {
             KitBuildExtApp.updateSignInOutButton();
             KitBuildExtApp.enableNavbarButton();
-            KitBuildExtApp.initCollab(user);
-          })
-          this.modalSignIn.hide()
-          this.user = user;
+            this.initCollab(user);
+          });
+          this.modalSignIn.hide();
+          this.setUser(user);
   
           let status = `<span class="mx-2 d-flex align-items-center status-user">`
           + `<small class="text-dark fw-bold">${user.name}</small>`
@@ -945,7 +948,8 @@ class KitBuildExtApp {
   
       KitBuildExtApp.enableNavbarButton(false);
       if (sessions.user) {
-        KitBuildExtApp.initCollab(sessions.user);
+        this.setUser(sessions.user);
+        this.initCollab(sessions.user);
         KitBuildExtApp.enableNavbarButton();
         KitBuildCollab.enableControl();
   
@@ -960,6 +964,16 @@ class KitBuildExtApp {
   
   
     })
+  }
+
+  initCollab(user) {
+    KitBuildExtApp.collabInst = KitBuildCollab.instance('kitbuildext', user, this.canvas, {
+      host: this.config.get('collabhost'),
+      port: this.config.get('collabport'),
+    });
+    KitBuildExtApp.collabInst.off('event', KitBuildExtApp.onCollabEvent);
+    KitBuildExtApp.collabInst.on('event', KitBuildExtApp.onCollabEvent);
+    KitBuildCollab.enableControl();
   }
 
 }
@@ -1419,14 +1433,6 @@ KitBuildExtApp.parseOptions = (optionJsonString, defaultValueIfNull) => {
     option.feedbacklevel = option.feedbacklevel ? parseInt(option.feedbacklevel) : defopt.feedbacklevel
   } catch (error) { UI.error(error).show() }
   return option
-}
-
-KitBuildExtApp.initCollab = (user) => {
-  KitBuildExtApp.inst.user = user;
-  KitBuildExtApp.collabInst = KitBuildCollab.instance('kitbuild', user, KitBuildExtApp.inst.canvas)
-  KitBuildExtApp.collabInst.off('event', KitBuildExtApp.onCollabEvent)
-  KitBuildExtApp.collabInst.on('event', KitBuildExtApp.onCollabEvent)
-  KitBuildCollab.enableControl()
 }
 
 KitBuildExtApp.updateSignInOutButton = () => {

@@ -39,16 +39,14 @@ class CmapApp {
     this.session = Core.instance().session();
     this.ajax = Core.instance().ajax();
     this.runtime = Core.instance().runtime();
+    this.config = Core.instance().config();
+    
     // Hack for sidebar-panel show/hide
     // To auto-resize the canvas.
     // let observer = new MutationObserver((mutations) => $(`#${canvas.canvasId} > div`).css('width', 0))
     // observer.observe(document.querySelector('#admin-sidebar-panel'), {attributes: true})
     // Enable tooltip;
     $('[data-bs-toggle="tooltip"]').tooltip();
-
-    // Instantiate temporary collab
-    if (typeof KitBuildCollab == "function")
-      CmapApp.collabInst = KitBuildCollab.instance("cmap", null, canvas);
 
     // Browser lifecycle event
     KitBuildUI.addLifeCycleListener(CmapApp.onBrowserStateChange);
@@ -670,7 +668,7 @@ class CmapApp {
             L.log("sign-in-success", user);
             this.session.set("user", user);
             this.setUser(user);
-            CmapApp.initCollab(user);
+            this.initCollab(user);
             CmapApp.enableNavbarButton();
             CmapApp.updateSignInOutButton();
             CmapApp.inst.modalSignIn.hide();
@@ -813,7 +811,8 @@ class CmapApp {
       // init collaboration feature
       CmapApp.enableNavbarButton(false);
       if (sessions.user) {
-        CmapApp.initCollab(sessions.user);
+        this.setUser(sessions.user);
+        this.initCollab(sessions.user);
         CmapApp.enableNavbarButton();
         KitBuildCollab.enableControl();
         this.logger.username = sessions.user.username;
@@ -828,6 +827,18 @@ class CmapApp {
       this.canvas.on("event", CmapApp.onCanvasEvent);
     });
   }
+
+  initCollab(user) {
+    CmapApp.collabInst = KitBuildCollab.instance("cmap", user, this.canvas, {
+        host: this.config.get('collabhost'),
+        port: this.config.get('collabport'),
+      }
+    );
+    CmapApp.collabInst.off("event", CmapApp.onCollabEvent);
+    CmapApp.collabInst.on("event", CmapApp.onCollabEvent);
+    KitBuildCollab.enableControl();
+  };
+  
 }
 
 CmapApp.canvasId = "goalmap-canvas";
@@ -1325,18 +1336,6 @@ CmapApp.applyMapState = (mapState) => {
     CmapApp.inst.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
     resolve(mapState);
   });
-};
-
-CmapApp.initCollab = (user) => {
-  CmapApp.inst.user = user;
-  CmapApp.collabInst = KitBuildCollab.instance(
-    "cmap",
-    user,
-    CmapApp.inst.canvas
-  );
-  CmapApp.collabInst.off("event", CmapApp.onCollabEvent);
-  CmapApp.collabInst.on("event", CmapApp.onCollabEvent);
-  KitBuildCollab.enableControl();
 };
 
 CmapApp.updateSignInOutButton = () => {

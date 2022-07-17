@@ -14,9 +14,10 @@ class RecomposeApp {
 
     canvas.addCanvasTool(KitBuildCanvasTool.CENTROID)
     
-    this.canvas = canvas
-    this.session = Core.instance().session()
-    this.ajax = Core.instance().ajax()
+    this.canvas = canvas;
+    this.session = Core.instance().session();
+    this.ajax = Core.instance().ajax();
+    this.config = Core.instance().config();
     
     // Hack for sidebar-panel show/hide
     // To auto-resize the canvas.
@@ -723,7 +724,10 @@ class RecomposeApp {
   
       if (sessions.user) {
         RecomposeApp.inst.user = sessions.user;
-        RecomposeApp.collabInst = KitBuildCollab.instance('kitbuild', sessions.user, this.canvas)
+        RecomposeApp.collabInst = KitBuildCollab.instance('kitbuild', sessions.user, this.canvas, {
+          host: this.config.get('collabhost'),
+          port: this.config.get('collabport'),
+        })
         RecomposeApp.collabInst.on('event', RecomposeApp.onCollabEvent)
         KitBuildCollab.enableControl()
       }

@@ -7,6 +7,10 @@ class CmapComposeController extends ModuleController {
   }
 
   function cmap() {
+    $host = Core::lib(Core::CONFIG)->get('default_collab_host');
+    $port = Core::lib(Core::CONFIG)->get('default_collab_port');
+    Core::lib(Core::CONFIG)->set('collabhost', $host, CoreConfig::CONFIG_TYPE_CLIENT);
+    Core::lib(Core::CONFIG)->set('collabport', $port, CoreConfig::CONFIG_TYPE_CLIENT);
     Core::lib(Core::CONFIG)->set('menu', 'compose-cmap', CoreConfig::CONFIG_TYPE_CLIENT);
     $this->ui->usePlugin('kitbuild-logger', 'kitbuild-ui', 'kitbuild', 'kitbuild-collab');
     $this->ui->language('module/cmap/lang/cmap', CoreLanguage::LOCATION_APP_ROOT);

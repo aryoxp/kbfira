@@ -7,6 +7,10 @@ class CmapKitbuildController extends ModuleController {
   }
 
   function recompose() {
+    $host = Core::lib(Core::CONFIG)->get('default_collab_host');
+    $port = Core::lib(Core::CONFIG)->get('default_collab_port');
+    Core::lib(Core::CONFIG)->set('collabhost', $host, CoreConfig::CONFIG_TYPE_CLIENT);
+    Core::lib(Core::CONFIG)->set('collabport', $port, CoreConfig::CONFIG_TYPE_CLIENT);
     Core::lib(Core::CONFIG)->set('menu', 'recompose', CoreConfig::CONFIG_TYPE_CLIENT);
     $this->ui->usePlugin('kitbuild-ui', 'kitbuild', 'kitbuild-analyzer', 'kitbuild-logger', 'kitbuild-collab', 'highlight', 'showdown');
     $this->useScript("recompose.js");
@@ -15,6 +19,10 @@ class CmapKitbuildController extends ModuleController {
   }
 
   function recomposeExt() {
+    $host = Core::lib(Core::CONFIG)->get('default_collab_host');
+    $port = Core::lib(Core::CONFIG)->get('default_collab_port');
+    Core::lib(Core::CONFIG)->set('collabhost', $host, CoreConfig::CONFIG_TYPE_CLIENT);
+    Core::lib(Core::CONFIG)->set('collabport', $port, CoreConfig::CONFIG_TYPE_CLIENT);
     Core::lib(Core::CONFIG)->set('menu', 'recompose-ext', CoreConfig::CONFIG_TYPE_CLIENT);
     $this->ui->usePlugin('kitbuild-ui', 'kitbuild', 'kitbuild-analyzer', 'kitbuild-logger', 'kitbuild-collab', 'highlight', 'showdown');
     $this->useScript("recompose.ext.js");

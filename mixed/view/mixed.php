@@ -1,8 +1,8 @@
 <div class="d-flex flex-column vh-100">
-  <a class="position-absolute d-flex align-items-center text-white px-3 text-decoration-none" href="<?php echo $this->location('../home'); ?>">
+  <a class="position-absolute d-flex align-items-center text-dark px-3 text-decoration-none" href="<?php echo $this->location('../home'); ?>">
     <i class="bi bi-house pe-2" style="font-size: 1.8rem;"></i> <span>Home</span>
   </a>
-  <div class="app-navbar d-flex p-2 ps-4" style="border-left: 120px solid #4C9E65;">
+  <div class="app-navbar d-flex p-2 ps-4" style="border-left: 120px solid #ffc107;">
 
     <button class="bt-open-kit btn btn-sm btn-primary"><i class="bi bi-folder2-open"></i> Open Kit</button>
     
@@ -41,7 +41,7 @@
   </div>
   <div class="d-flex">
     <div class="status-panel flex-fill m-2 mt-0 d-flex"></div>
-    <div class="status-control text-end m-2 mt-0"></div>
+    <div class="status-control text-end m-2 mt-0"><button class="btn btn-primary btn-sm opacity-0">&nbsp;</button></div>
   </div>
     
   <form id="concept-map-open-dialog" class="card d-none">

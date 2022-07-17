@@ -31,6 +31,8 @@ class MixedApp {
     this.canvas = canvas
     this.session = Core.instance().session();
     this.ajax = Core.instance().ajax();
+    this.config = Core.instance().config();
+
     // Hack for sidebar-panel show/hide
     // To auto-resize the canvas.
     // AA
@@ -38,9 +40,6 @@ class MixedApp {
     // observer.observe(document.querySelector('#admin-sidebar-panel'), {attributes: true})
     // Enable tooltip
     $('[data-bs-toggle="tooltip"]').tooltip({ html: true })
-
-    if (typeof KitBuildCollab == 'function')
-      MixedApp.collabInst = KitBuildCollab.instance('kitbuild', null, canvas)
 
     // Browser lifecycle event
     KitBuildUI.addLifeCycleListener(MixedApp.onBrowserStateChange)
@@ -61,6 +60,10 @@ class MixedApp {
   static instance() {
     MixedApp.inst = new MixedApp()
     return MixedApp.inst;
+  }
+
+  setUser(user = null) {
+    this.user = user;
   }
 
   setConceptMap(conceptMap) { console.warn("CONCEPT MAP SET:", conceptMap)
@@ -759,10 +762,11 @@ class MixedApp {
           Core.instance().session().set('user', user).then(() => {
             MixedApp.updateSignInOutButton();
             MixedApp.enableNavbarButton();
-            MixedApp.initCollab(user);
+            this.setUser(user);
+            this.initCollab(user);
           })
-          MixedApp.inst.modalSignIn.hide()
-          MixedApp.inst.user = user;
+          this.modalSignIn.hide()
+          this.user = user;
   
           let status = `<span class="mx-2 d-flex align-items-center status-user">`
           + `<small class="text-dark fw-bold">${user.name}</small>`
@@ -825,9 +829,10 @@ class MixedApp {
   
       MixedApp.enableNavbarButton(false)
       if (sessions.user) {
-        MixedApp.initCollab(sessions.user)
-        MixedApp.enableNavbarButton()
-        KitBuildCollab.enableControl()
+        this.setUser(sessions.user);
+        this.initCollab(sessions.user);
+        MixedApp.enableNavbarButton();
+        KitBuildCollab.enableControl();
   
         let status = `<span class="mx-2 d-flex align-items-center status-user">`
         + `<small class="text-dark fw-bold">${sessions.user.name}</small>`
@@ -839,6 +844,16 @@ class MixedApp {
       this.canvas.on('event', MixedApp.onCanvasEvent)
   
     })
+  }
+
+  initCollab(user) {
+    MixedApp.collabInst = KitBuildCollab.instance('kitbuild', user, this.canvas, {
+      host: this.config.get('collabhost'),
+      port: this.config.get('collabport'),
+    });
+    MixedApp.collabInst.off('event', MixedApp.onCollabEvent);
+    MixedApp.collabInst.on('event', MixedApp.onCollabEvent);
+    KitBuildCollab.enableControl()
   }
 }
 
@@ -1300,14 +1315,6 @@ MixedApp.parseOptions = (optionJsonString, defaultValueIfNull) => {
     option.feedbacklevel = option.feedbacklevel ? parseInt(option.feedbacklevel) : defopt.feedbacklevel
   } catch (error) { UI.error(error).show() }
   return option
-}
-
-MixedApp.initCollab = (user) => {
-  MixedApp.inst.user = user;
-  MixedApp.collabInst = KitBuildCollab.instance('kitbuild', user, MixedApp.inst.canvas)
-  MixedApp.collabInst.off('event', MixedApp.onCollabEvent)
-  MixedApp.collabInst.on('event', MixedApp.onCollabEvent)
-  KitBuildCollab.enableControl()
 }
 
 MixedApp.updateSignInOutButton = () => {

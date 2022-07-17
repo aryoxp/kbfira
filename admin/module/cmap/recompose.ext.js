@@ -14,9 +14,10 @@ class RecomposeExtApp {
 
     canvas.addCanvasTool(KitBuildCanvasTool.CENTROID)
     
-    this.canvas = canvas
-    this.session = Core.instance().session()
-    this.ajax = Core.instance().ajax()
+    this.canvas = canvas;
+    this.session = Core.instance().session();
+    this.ajax = Core.instance().ajax();
+    this.config = Core.instance().config();
 
     // Hack for sidebar-panel show/hide
     // To auto-resize the canvas.
@@ -44,6 +45,10 @@ class RecomposeExtApp {
   static instance() {
     RecomposeExtApp.inst = new RecomposeExtApp()
     return RecomposeExtApp.inst;
+  }
+
+  setUser(user = null) {
+    this.user = user;
   }
 
   setConceptMap(conceptMap) { console.warn("CONCEPT MAP SET:", conceptMap)
@@ -853,7 +858,8 @@ class RecomposeExtApp {
       })
 
       if (sessions.user) {
-        RecomposeExtApp.initCollab(sessions.user);
+        this.setUser(sessions.user);
+        this.initCollab(sessions.user);
         KitBuildCollab.enableControl();
       }
 
@@ -861,6 +867,16 @@ class RecomposeExtApp {
       this.canvas.on('event', RecomposeExtApp.onCanvasEvent);
 
     })
+  }
+
+  initCollab(user) {
+    RecomposeExtApp.collabInst = KitBuildCollab.instance('kitbuildext', user, this.canvas, {
+      host: this.config.get('collabhost'),
+      port: this.config.get('collabport'),
+    });
+    RecomposeExtApp.collabInst.off('event', RecomposeExtApp.onCollabEvent)
+    RecomposeExtApp.collabInst.on('event', RecomposeExtApp.onCollabEvent)
+    KitBuildCollab.enableControl()
   }
 
 }
@@ -1330,10 +1346,3 @@ RecomposeExtApp.parseOptions = (optionJsonString, defaultValueIfNull) => {
   return option
 }
 
-RecomposeExtApp.initCollab = (user) => {
-  RecomposeExtApp.inst.user = user;
-  RecomposeExtApp.collabInst = KitBuildCollab.instance('kitbuild', user, RecomposeExtApp.inst.canvas)
-  RecomposeExtApp.collabInst.off('event', RecomposeExtApp.onCollabEvent)
-  RecomposeExtApp.collabInst.on('event', RecomposeExtApp.onCollabEvent)
-  KitBuildCollab.enableControl()
-}

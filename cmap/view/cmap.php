@@ -28,7 +28,7 @@
   </div>
   <div class="d-flex">
     <div class="status-panel flex-fill m-2 mt-0 d-flex"></div>
-    <div class="status-control text-end m-2 mt-0"></div>
+    <div class="status-control text-end m-2 mt-0"><button class="btn btn-primary btn-sm opacity-0">&nbsp;</button></div>
   </div>
 </div>
 
