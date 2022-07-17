@@ -89,16 +89,25 @@ class Dialog {
     this.emphasized = false
     this.titleText = null
     this.eventListeners = new Set();
+    this.dismissListeners = new Set();
   }
   static instance(content, opts) {
     return new Dialog(content, opts);
   }
   on(what, listener) {
-    switch (what && typeof listener == 'function') {
+    if (typeof listener != 'function') {
+      console.warn('Invalid dialog listener');
+      return;
+    }
+    switch (what) {
       case 'event':
         this.eventListeners.add(listener);
         break;
+      case 'dismiss':
+        this.dismissListeners.add(listener);
+        break;
     }
+    return this;
   }
   title (titleText) {
     this.titleText = titleText
@@ -153,7 +162,10 @@ class Dialog {
 
     if (this.posCallback) {
       $('#modal-dialog .bt-positive').show()
-      $('#modal-dialog .bt-positive').off('click').on('click', this.posCallback)
+      $('#modal-dialog .bt-positive').off('click').on('click', () => {
+        this.hide();
+        this.posCallback();
+      })
     } else {
       $('#modal-dialog .bt-positive').off('click').on('click', this.hide.bind(this))
     }
@@ -165,6 +177,12 @@ class Dialog {
     }
     $('#modal-dialog .dialog-content').html(this.content)
     Dialog.modal = new bootstrap.Modal($('#modal-dialog'), this.settings);
+    var myModalEl = document.querySelector('#modal-dialog');
+    myModalEl.removeEventListener('hidden.bs.modal', Dialog.dismissListener);
+    Dialog.dismissListener = (event) => {
+      for(let listener of this.dismissListeners) listener();
+    }
+    myModalEl.addEventListener('hidden.bs.modal', Dialog.dismissListener);
     if (this.settings.toggle) Dialog.modal.toggle()
     else Dialog.modal.show()
     return Dialog.modal;

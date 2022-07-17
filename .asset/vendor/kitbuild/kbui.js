@@ -157,6 +157,9 @@ class KitBuildCanvas {
       case KitBuildCanvasTool.FOCUS:
         this.canvasTool.addTool(what, new KitBuildFocusTool(this, settings))
         break;
+      case KitBuildCanvasTool.PROPOSITION:
+        this.canvasTool.addTool(what, new KitBuildPropositionTool(this, settings))
+        break;
       case KitBuildCanvasTool.LOCK:
         this.canvasTool.addTool(what, new KitBuildLockTool(this, settings))
         break;

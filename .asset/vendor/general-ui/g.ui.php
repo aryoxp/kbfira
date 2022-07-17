@@ -13,8 +13,8 @@
         </div>
         <hr>
         <div class="dialog-foot">
-          <button type="button" class="btn btn-sm btn-secondary bt-negative px-2 mx-2"><?php echo Lang::l('no'); ?></button>
-          <button type="button" class="btn btn-sm btn-primary bt-positive px-2"><?php echo Lang::l('yes'); ?></button>
+          <button type="button" class="btn btn-sm btn-secondary bt-negative px-2 mx-2 mb-2"><?php echo Lang::l('no'); ?></button>
+          <button type="button" class="btn btn-sm btn-primary bt-positive px-2 mb-2"><?php echo Lang::l('yes'); ?></button>
         </div>
       </div>
     </div>

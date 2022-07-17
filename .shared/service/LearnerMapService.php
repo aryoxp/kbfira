@@ -585,7 +585,10 @@ class LearnerMapService extends CoreService {
       $qb = QB::instance('learnermap l');
       $qb->select('lmid')
         ->leftJoin('kit k', 'k.kid', 'l.kid')
-        ->where('k.cmid', $cmid);
+        ->where('k.cmid', $cmid)
+        ->orderBy('l.author')
+        ->orderBy('l.kid')
+        ->orderBy('l.create_time');
       $lmids = $db->query($qb->get());
       $learnerMaps = [];
       foreach($lmids as $lm) {
