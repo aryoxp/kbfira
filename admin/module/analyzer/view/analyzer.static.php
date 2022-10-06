@@ -110,3 +110,16 @@
     <button class="btn btn-sm btn-secondary bt-close px-5"><?php echo Lang::l('ok'); ?></button>
   </div>
 </div>
+
+<div id="proposition-author-dialog" class="card d-none">
+  <h6 class="card-header d-flex">
+    <span class="drag-handle flex-fill"><i class="dialog-icon bi bi-bezier me-2"></i> <span class="dialog-title">Proposition Authors</span></span>
+    <i class="bi bi-x-lg bt-close bt-x" role="button"></i>
+  </h6>
+  <div class="card-body">
+    <div class="author-list scroll-y" style="max-height: 150px;"></div>
+  </div>
+  <div class="card-footer text-end">
+    <button class="btn btn-sm btn-secondary bt-close px-5"><?php echo Lang::l('ok'); ?></button>
+  </div>
+</div>

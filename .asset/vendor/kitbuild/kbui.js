@@ -160,6 +160,9 @@ class KitBuildCanvas {
       case KitBuildCanvasTool.PROPOSITION:
         this.canvasTool.addTool(what, new KitBuildPropositionTool(this, settings))
         break;
+      case KitBuildCanvasTool.PROPAUTHOR:
+        this.canvasTool.addTool(what, new KitBuildPropositionAuthorTool(this, settings))
+        break;
       case KitBuildCanvasTool.LOCK:
         this.canvasTool.addTool(what, new KitBuildLockTool(this, settings))
         break;

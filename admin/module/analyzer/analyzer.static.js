@@ -19,6 +19,7 @@ class StaticAnalyzerApp {
       gridPos: { x: 0, y: -1 },
     });
     canvas.addCanvasTool(KitBuildCanvasTool.PROPOSITION);
+    canvas.addCanvasTool(KitBuildCanvasTool.PROPAUTHOR);
     canvas.addToolbarTool(KitBuildToolbar.CAMERA, { priority: 4 });
     canvas.addToolbarTool(KitBuildToolbar.UTILITY, {
       priority: 5,
@@ -267,6 +268,12 @@ class StaticAnalyzerApp {
       });
       $("#proposition-dialog .proposition-list").html(html);
     };
+
+    this.propositionAuthorDialog = UI.modal('#proposition-author-dialog', {
+      hideElement: ".bt-close",
+      draggable: true,
+      dragHandle: ".drag-handle",
+    })
 
     /**
      *
@@ -721,6 +728,7 @@ class StaticAnalyzerApp {
           case CanvasState.COMPARE:
           case CanvasState.GROUPCOMPARE: {
             let lmid = $("#list-learnermap").find(".active").data("lmid");
+            if (!lmid) break;
             conceptMap = StaticAnalyzerApp.inst.learnerMaps.get(
               lmid.toString()
             );
@@ -733,6 +741,62 @@ class StaticAnalyzerApp {
         );
         StaticAnalyzerApp.inst.propositionDialog.show();
         break;
+      case "proposition-author-tool-clicked":
+        if (!data) return;
+        if (StaticAnalyzerApp.canvasState != CanvasState.GROUPCOMPARE) {
+          UI.info("This feature only works with group maps.").show();
+          return;
+        }
+        // console.log(data, StaticAnalyzerApp.inst);
+        let edge = StaticAnalyzerApp.inst.canvas.cy.edges(`#${data.id}`);
+        let learnerMaps = [];
+        let lmids = [];
+        $('#list-learnermap input[type="checkbox"]:checked').each((i, e) => {
+          lmids.push($(e).parents(".learnermap").attr("data-lmid"));
+        });
+        StaticAnalyzerApp.inst.learnerMaps.forEach((lm, i) => {
+          if (lmids.includes(i)) learnerMaps.push(lm);
+        });
+        let groupCompare = Analyzer.groupCompare(learnerMaps);
+        let ctype = edge ? edge.data('ctype') : null;
+        if (!ctype) return;
+        let gcType = groupCompare[ctype];
+        let gclmids = [];
+        gcType.forEach(gc => {
+          if (gc.lid == edge.data('source') && gc.tid == edge.data('target')) {
+            gclmids = gc.lmids;
+            return;
+          }
+        });
+        // console.log(edge.data(), groupCompare, gclmids);
+        let authorsMap = [];
+        learnerMaps.forEach(lm => {
+          if (gclmids.includes(lm.map.lmid)) authorsMap.push(lm.map);
+        });
+        let authorList = "";
+        authorsMap.forEach(map => {
+          authorList += `<div class="p-1">`;
+          authorList += `<span class="pe-2">${map.authorname}</span>`;
+          switch(map.type) {
+            case 'feedback':
+              authorList += `<span class="badge bg-warning text-dark ms-1" title="Feedback: ${map.create_time}">Fb</span>`;
+              break;
+            case 'draft':
+              authorList += `<span class="badge bg-secondary ms-1" title="Draft: ${map.create_time}">D</span>`;
+              break;
+            case 'fix':
+              authorList += `<span class="badge bg-primary ms-1" title="Submitted: ${map.create_time}">S</span>`;
+              break;
+            case 'auto':
+              authorList += `<span class="badge bg-secondary ms-1" title="Autosaved: ${map.create_time}">A</span>`;
+              break;
+          }
+          authorList += `<span class="badge bg-warning text-dark ms-1">Map ID: ${map.lmid}</span>`;
+          authorList += `</div>`;
+          });
+        $('#proposition-author-dialog .author-list').html(authorsMap.length == 0 ? '<div><em>No author</em></div>' : authorList);
+        StaticAnalyzerApp.inst.propositionAuthorDialog.show();
+        break;
     }
   }
 }
@@ -742,11 +806,12 @@ StaticAnalyzerApp.canvasState = CanvasState.INIT;
 
 StaticAnalyzerApp.populateLearnerMaps = (cmid, kid = null, type = null) => {
   return new Promise((resolve, reject) => {
+    $("#list-learnermap").html('<span class="p-2 mt-2 d-block text-center text-primary">Loading...</span>');
     Core.instance()
       .ajax()
       .get(`analyzerApi/getLearnerMapsOfConceptMap/${cmid}${kid ? "/" + kid : ""}`)
       .then((learnerMaps) => {
-        // console.log(learnerMaps)
+        learnerMaps = Core.decompress(learnerMaps);
         let list = "";
         StaticAnalyzerApp.inst.learnerMaps = new Map(
           learnerMaps.map((obj) => [obj.map.lmid, obj])
@@ -771,7 +836,7 @@ StaticAnalyzerApp.populateLearnerMaps = (cmid, kid = null, type = null) => {
           list += ` class="py-1 mx-1 d-flex justify-content-between border-bottom learnermap list-item fs-6" role="button">`;
           list += `<span class="d-flex align-items-center">`;
           list += `<input type="checkbox" class="cb-learnermap" id="cb-lm-${lm.map.lmid}">`;
-          list += `<label class="text-truncate ms-1" title="Map ID: ${lm.map.lmid}"><small>${lm.map.author}</small></label>`;
+          list += `<label class="text-truncate ms-1" title="Author: ${lm.map.author}; Map ID: ${lm.map.lmid}"><small>${lm.map.authorname}</small></label>`;
           list += `</span>`;
           list += `<span class="d-flex align-items-center">`;
           if (lm.map.type == "feedback")

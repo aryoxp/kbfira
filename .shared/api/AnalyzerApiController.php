@@ -9,7 +9,7 @@ class AnalyzerApiController extends CoreApi {
     try {
       $lmService = new LearnerMapService();
       $learnerMaps = $lmService->getLearnerMapsOfConceptMap($cmid);
-      CoreResult::instance($learnerMaps)->show();
+      CoreResult::instance(CoreResult::compress($learnerMaps))->show();
     } catch (Exception $ex) {
       CoreError::instance($ex->getMessage())->show();
     }

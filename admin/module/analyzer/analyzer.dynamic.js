@@ -48,13 +48,9 @@ DynamicAnalyzerApp.canvasId = "analyzer-canvas"
 
 DynamicAnalyzerApp.handleEvent = kbui => {
 
-  let canvas = kbui.canvases.get(DynamicAnalyzerApp.canvasId)
-  let ajax = Core.instance().ajax()
-  let session = Core.instance().session()
-
-  this.canvas = canvas
-  this.ajax = ajax
-  this.session = session
+  this.canvas = kbui.canvases.get(DynamicAnalyzerApp.canvasId);
+  this.ajax = Core.instance().ajax();
+  this.session = Core.instance().session();
 
   let openDialog = UI.modal('#concept-map-open-dialog', {
     hideElement: '.bt-cancel'
@@ -384,7 +380,7 @@ DynamicAnalyzerApp.handleEvent = kbui => {
     DynamicAnalyzerApp.updateRangeInformation()
   })
 
-  canvas.cy.on('tap', 'edge', (e) => {
+  this.canvas.cy.on('tap', 'edge', (e) => {
     if (e.target.hasClass && e.target.hasClass('count')) {
       console.error("COUNT", e.target.data('count'))
     }
@@ -404,6 +400,7 @@ DynamicAnalyzerApp.populateLearnerMaps = (cmid) => {
   return new Promise((resolve, reject) => {
     Core.instance().ajax().get(`kitBuildApi/getLearnerMapsOfConceptMap/${cmid}`)
       .then(learnerMaps => { // console.log(learnerMaps)
+      learnerMaps = Core.decompress(learnerMaps);
       let list = ''
       let score = '147%'
       DynamicAnalyzerApp.inst.learnerMaps = new Map(learnerMaps.map(obj => [obj.map.lmid, obj]));

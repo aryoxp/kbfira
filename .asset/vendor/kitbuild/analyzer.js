@@ -290,43 +290,58 @@ class Analyzer {
       abandons = new Map();
     learnerMaps.forEach((lm) => {
       lm.compare.matchg.forEach((m) => {
+        if (!m) return;
         let key = `${m.sid}|${m.link}|${m.tid}`;
         let proposition = matches.has(key)
           ? matches.get(key)
-          : Object.assign({ count: 0 }, m);
+          : Object.assign({ count: 0, authors: [], lmids: [] }, m);
         proposition.count++;
+        proposition.authors.push(lm.map.author);
+        proposition.lmids.push(lm.map.lmid);
         if (!matches.has(key)) matches.set(key, proposition);
       });
       lm.compare.miss.forEach((m) => {
+        if (!m) return;
         let key = `${m.sid}|${m.link}|${m.tid}`;
         let proposition = misses.has(key)
           ? misses.get(key)
-          : Object.assign({ count: 0 }, m);
+          : Object.assign({ count: 0, authors: [], lmids: [] }, m);
         proposition.count++;
+        proposition.authors.push(lm.map.author);
+        proposition.lmids.push(lm.map.lmid);
         if (!misses.has(key)) misses.set(key, proposition);
       });
       lm.compare.excess.forEach((m) => {
+        if (!m) return;
         let key = `${m.sid}|${m.link}|${m.tid}`;
         let proposition = excesses.has(key)
           ? excesses.get(key)
-          : Object.assign({ count: 0 }, m);
+          : Object.assign({ count: 0, authors: [], lmids: [] }, m);
         proposition.count++;
+        proposition.authors.push(lm.map.author);
+        proposition.lmids.push(lm.map.lmid);
         if (!excesses.has(key)) excesses.set(key, proposition);
       });
       lm.compare.leave.forEach((m) => {
+        if (!m) return;
         let key = `${m.sid}|${m.link}|${m.tid}`;
         let proposition = leaves.has(key)
           ? leaves.get(key)
-          : Object.assign({ count: 0 }, m);
+          : Object.assign({ count: 0, authors: [], lmids: [] }, m);
         proposition.count++;
+        proposition.authors.push(lm.map.author);
+        proposition.lmids.push(lm.map.lmid);
         if (!leaves.has(key)) leaves.set(key, proposition);
       });
       lm.compare.abandon.forEach((m) => {
+        if (!m) return;
         let key = `${m.sid}|${m.link}|${m.tid}`;
         let proposition = abandons.has(key)
           ? abandons.get(key)
-          : Object.assign({ count: 0 }, m);
+          : Object.assign({ count: 0, authors: [], lmids: [] }, m);
         proposition.count++;
+        proposition.authors.push(lm.map.author);
+        proposition.lmids.push(lm.map.lmid);
         if (!abandons.has(key)) abandons.set(key, proposition);
       });
     });
@@ -351,6 +366,7 @@ class Analyzer {
           source: m.lid,
           target: m.tid,
           type: "right",
+          ctype: "match",
           count: m.count,
         },
       }).addClass("match");
@@ -385,6 +401,7 @@ class Analyzer {
           source: e.lid,
           target: e.tid,
           type: "right",
+          ctype: "excess",
           count: e.count,
         },
       }).addClass("excess");
@@ -423,6 +440,7 @@ class Analyzer {
           source: source ? source : e.lid,
           target: e.tid,
           type: "right",
+          ctype: "miss",
           count: e.count,
         },
       }).addClass("miss");
