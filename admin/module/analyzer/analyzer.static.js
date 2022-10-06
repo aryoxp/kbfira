@@ -108,7 +108,6 @@ class StaticAnalyzerApp {
           let learnerMap = conceptMap;
           learnerMap.propositions.forEach((p) => { 
             if (p.link.lid == lid) {
-              console.log(p, learnerMap);
               if (edgeData.type == "right" && p.target.cid == cid) {
                 this.propositionDialog.propositions.push(p);
               }
@@ -183,6 +182,7 @@ class StaticAnalyzerApp {
             if (lmids.includes(k)) learnerMaps.push(lm);
           });
           let edge = this.canvas.cy.edges(`#${edgeData.id}`);
+          let link = edge.connectedNodes('[type="link"]');
           let edgeClasses = edge.classes();
           let groupCompare = Analyzer.groupCompare(learnerMaps);
           groupCompare.match.forEach((p) => {
@@ -204,8 +204,7 @@ class StaticAnalyzerApp {
           groupCompare.miss.forEach((p) => {
             if (!edgeClasses.includes("miss") && edge.data("type") == "right")
               return;
-            if (
-              p.lid == lid &&
+            if ((p.lid == lid || p.link == link.data('label')) && // matching id or link's label 
               ((edgeData.type == "right" && p.tid == cid) ||
                 (edgeData.type == "left" && p.sid == cid))
             )
@@ -576,12 +575,9 @@ class StaticAnalyzerApp {
      * */
 
     $('#select-kid').on('change', (e) => {
-      console.log($(e.currentTarget).val(), $(e.currentTarget).hasClass('default'));
       let index = $(e.currentTarget).prop('selectedIndex');
       let kid = $(e.currentTarget).val();
       $('#list-learnermap .learnermap').each((i, e) => {
-        console.log(i, e);
-        console.log($(e).find('.cb-learnermap'));
         $(e).find('.cb-learnermap').prop('checked', false);
         switch(index) {
           case 0: $(e).removeClass('d-none'); break;
@@ -760,15 +756,25 @@ class StaticAnalyzerApp {
         let groupCompare = Analyzer.groupCompare(learnerMaps);
         let ctype = edge ? edge.data('ctype') : null;
         if (!ctype) return;
+
+        let link = edge.connectedNodes('[type="link"]');
+        // let concept = edge.connectedNodes('[type="concept"]');
+                
         let gcType = groupCompare[ctype];
         let gclmids = [];
+        
         gcType.forEach(gc => {
+          // check matching id's
           if (gc.lid == edge.data('source') && gc.tid == edge.data('target')) {
+            gclmids = gc.lmids;
+            return;
+          } else if (gc.link == link.data('label') && gc.tid == edge.data('target')) {
+            // if student uses different link node (of same name) than expected
             gclmids = gc.lmids;
             return;
           }
         });
-        // console.log(edge.data(), groupCompare, gclmids);
+
         let authorsMap = [];
         learnerMaps.forEach(lm => {
           if (gclmids.includes(lm.map.lmid)) authorsMap.push(lm.map);
