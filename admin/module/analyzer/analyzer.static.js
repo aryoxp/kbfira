@@ -572,7 +572,7 @@ class StaticAnalyzerApp {
 
     /**
      *
-     * Learnermap List
+     * Kit List
      * */
 
     $('#select-kid').on('change', (e) => {
@@ -892,6 +892,7 @@ StaticAnalyzerApp.onCheckBoxChanged = (e) => {
     if (!checked) checked = first == $(`#cb-lm-first`).prop("checked") && first;
     if (!checked) checked = last == $(`#cb-lm-last`).prop("checked") && last;
     if (!checked) checked = $(`#cb-lm-all`).prop("checked");
+    checked = $(lm).hasClass("d-none") ? false : checked;
     $(`#cb-lm-${lmid}`).prop("checked", checked);
   });
 };
