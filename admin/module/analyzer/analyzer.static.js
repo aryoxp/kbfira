@@ -568,6 +568,24 @@ class StaticAnalyzerApp {
      * Learnermap List
      * */
 
+    $('#select-kid').on('change', (e) => {
+      console.log($(e.currentTarget).val(), $(e.currentTarget).hasClass('default'));
+      let index = $(e.currentTarget).prop('selectedIndex');
+      let kid = $(e.currentTarget).val();
+      $('#list-learnermap .learnermap').each((i, e) => {
+        console.log(i, e);
+        console.log($(e).find('.cb-learnermap'));
+        $(e).find('.cb-learnermap').prop('checked', false);
+        switch(index) {
+          case 0: $(e).removeClass('d-none'); break;
+          default: 
+            if ($(e).data('kid') == kid) $(e).removeClass('d-none');
+            else $(e).addClass('d-none');
+        }
+      });
+      StaticAnalyzerApp.onCheckBoxChanged();
+    });
+
     $("#group-map-tools").on("click", ".bt-group-map", (e) => {
       let lmids = [];
       $('#list-learnermap input[type="checkbox"]:checked').each((i, e) => {
@@ -722,11 +740,11 @@ class StaticAnalyzerApp {
 StaticAnalyzerApp.canvasId = "analyzer-canvas";
 StaticAnalyzerApp.canvasState = CanvasState.INIT;
 
-StaticAnalyzerApp.populateLearnerMaps = (cmid) => {
+StaticAnalyzerApp.populateLearnerMaps = (cmid, kid = null, type = null) => {
   return new Promise((resolve, reject) => {
     Core.instance()
       .ajax()
-      .get(`analyzerApi/getLearnerMapsOfConceptMap/${cmid}`)
+      .get(`analyzerApi/getLearnerMapsOfConceptMap/${cmid}${kid ? "/" + kid : ""}`)
       .then((learnerMaps) => {
         // console.log(learnerMaps)
         let list = "";
