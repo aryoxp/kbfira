@@ -652,6 +652,27 @@ class UI {
   static dialog(content, opts) {
     return Dialog.instance(content, opts)
   }
+  static errorDialog(content, opts) {
+    opts = Object.assign({
+      icon: 'x-circle',
+      iconStyle: 'danger'
+    }, opts);
+    return Dialog.instance(content, opts)
+  }
+  static warningDialog(content, opts) {
+    opts = Object.assign({
+      icon: 'exclamation-circle',
+      iconStyle: 'warning'
+    }, opts);
+    return Dialog.instance(content, opts)
+  }
+  static successDialog(content, opts) {
+    opts = Object.assign({
+      icon: 'check-circle',
+      iconStyle: 'success'
+    }, opts);
+    return Dialog.instance(content, opts)
+  }
   static confirm(confirmText, opts) {
     return Confirm.instance(confirmText, opts)
   }
