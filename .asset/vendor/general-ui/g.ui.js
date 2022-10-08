@@ -654,21 +654,21 @@ class UI {
   }
   static errorDialog(content, opts) {
     opts = Object.assign({
-      icon: 'x-circle',
+      icon: 'x-circle-fill',
       iconStyle: 'danger'
     }, opts);
     return Dialog.instance(content, opts)
   }
   static warningDialog(content, opts) {
     opts = Object.assign({
-      icon: 'exclamation-circle',
+      icon: 'exclamation-circle-fill',
       iconStyle: 'warning'
     }, opts);
     return Dialog.instance(content, opts)
   }
   static successDialog(content, opts) {
     opts = Object.assign({
-      icon: 'check-circle',
+      icon: 'check-circle-fill',
       iconStyle: 'success'
     }, opts);
     return Dialog.instance(content, opts)
