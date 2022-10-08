@@ -89,53 +89,35 @@ class UserApp {
     })
 
 
-    $('#form-search-user').on('submit', (e) => {
+    $('#form-search-user').on('submit', e => {
       e.preventDefault();
       e.stopPropagation();
-      let perpage = $('#form-search-user .input-perpage').val()
+      let perpage = parseInt($('#form-search-user .input-perpage').val())
       let keyword = $('#form-search-user .input-keyword').val()
-      if (keyword != this.pagination.keyword) this.pagination.page = 1
-      // perpage = 1
-      let params = {
-        keyword: keyword,
-        created: $('#input-search-date').val().trim()
-      }
-      if (!$('#input-use-date').prop("checked")) delete params.created;
-      this.ajax.post(`RBACApi/getUsers/${this.pagination.page}/${perpage}`, params).then(users => {
+      let page = (!UserApp.assignTopicPagination || 
+        keyword != UserApp.assignTopicPagination.keyword) ?
+        1 : UserApp.assignTopicPagination.page
+
+      Promise.all([
+        this.ajax.post(`RBACApi/getUsers/${page}/${perpage}`, {
+          keyword: keyword
+        }), 
         this.ajax.post(`RBACApi/getUsersCount`, {
           keyword: keyword
-        }).then(count => {
-        this.pagination.perpage = perpage
-        this.pagination.count = count
-        this.pagination.maxpage = Math.ceil(count/perpage)
-        this.pagination.keyword = keyword
+        })])
+      .then(results => {
+        let users = results[0];
+        let count = parseInt(results[1]);
         UserApp.populateUsers(users)
-        UserApp.populatePagination(count, this.pagination.page, perpage)
-        });
+        if (UserApp.assignTopicPagination) {
+          UserApp.assignTopicPagination.keyword = keyword;
+          UserApp.assignTopicPagination.update(count, perpage);  
+        } else UserApp.assignTopicPagination = 
+          Pagination.instance('#pagination-user', count, perpage).listen('#form-search-user').update(count, perpage);
       });
-    })
-    $('.bt-search').on('click', () => $('#form-search-user').trigger('submit'))
 
-
-    $('#pagination-user').on('click', '.pagination-next', (e) => {
-      if (this.pagination.page < this.pagination.maxpage) {
-        this.pagination.page++
-        $('#form-search-user').trigger('submit')
-      }
-    })
-
-    $('#pagination-user').on('click', '.pagination-prev', (e) => {
-      if (this.pagination.page > 1) {
-        this.pagination.page--
-        $('#form-search-user').trigger('submit')
-      }
-    })
-
-    $('#pagination-user').on('click', '.pagination-page', (e) => {
-      this.pagination.page = $(e.currentTarget).attr('data-page')
-      $('#form-search-user').trigger('submit')
-    })
-
+    });
+    $('#form-search-user').trigger('submit');
 
     $('#user-dialog form.form-user').on('submit', (e) => {
       e.preventDefault()

@@ -557,11 +557,11 @@ class Pagination {
   listen(formElement) {
     this.formElement = formElement;
     $(this.containerElement).off('click', '.pagination-next').on('click', '.pagination-next', (e) => {
-      console.log(this.pagination.page, this.pagination.maxpage)
+      // console.log(this.pagination.page, this.pagination.maxpage)
       if (this.pagination.page < this.pagination.maxpage) {
         this.pagination.page++
         $(formElement).trigger('submit')
-        console.log(this.pagination.page, this.pagination.maxpage)
+        // console.log(this.pagination.page, this.pagination.maxpage)
         this.update()
       }
       e.preventDefault();
