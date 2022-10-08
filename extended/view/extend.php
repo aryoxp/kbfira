@@ -23,7 +23,7 @@
       <button class="bt-clear-feedback btn btn-warning"><i class="bi bi-eye-slash-fill"></i> Clear Feedback</button>
     </div>
   
-    <div class="btn-group btn-group-sm ms-2">
+    <div class="btn-group btn-group-sm ms-2" id="recompose-extend">
       <button class="bt-extend btn btn-primary"><i class="bi bi-node-plus-fill"></i> Extend</button>
     </div>
 
@@ -34,7 +34,16 @@
     <div class="flex-fill">&nbsp;</div>
 
     <span>
-      <button class="btn btn-danger btn-sm bt-logout <?php if (!isset($_SESSION['user'])) echo 'd-none'; ?>"><i class="bi bi-power"></i> Logout</button>
+      <div class="btn-group btn-group-sm">
+        
+        <button class="btn btn-outline-secondary btn-sm dropdown-toggle bt-profile <?php if (!isset($_SESSION['user'])) echo 'd-none'; ?>" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-people-fill"></i>
+        </button>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item cgpass fs-6 text-sm" href="#"><i class="bi bi-lock-fill"></i> Change Password</a></li>
+        </ul>
+
+        <button class="btn btn-danger btn-sm bt-logout <?php if (!isset($_SESSION['user'])) echo 'd-none'; ?>"><i class="bi bi-power"></i> Logout</button>
+      </div>
       <button class="btn btn-primary btn-sm bt-sign-in <?php if (isset($_SESSION['user'])) echo 'd-none'; ?>"><i class="bi bi-power"></i> Sign In</button>
     </span>
   
@@ -146,6 +155,50 @@
     <div class="card-footer text-end">
       <button class="btn btn-sm btn-secondary bt-cancel bt-close px-3"><?php echo Lang::l('ok'); ?></button>
       <button class="btn btn-sm btn-primary bt-modify px-3 ms-1">Modify My Map</button>
+    </div>
+  </div>
+
+  <div id="cgpass-dialog" class="card shadow mx-auto d-none">
+    <div class="card-body">
+      <h5 class="card-title">Change Password</h5>
+      <h6 class="card-subtitle mb-2 text-username"><span class="text-secondary">User</span> &rsaquo; <span class="text-danger user-username"><?php echo isset($_SESSION['user']) ? $_SESSION['user']['username'] : ""; ?></span> &rsaquo; <span class="text-primary user-name"><?php echo isset($_SESSION['user']) ? $_SESSION['user']['name'] : ""; ?></span></h6>
+      <hr>
+      <form id="form-cgpass" class="text-left" class="needs-validation" novalidate>
+        <input type="hidden" name="username" value="<?php echo  isset($_SESSION['user']) ? $_SESSION['user']['username'] : ""; ?>" />
+        <div class="row">
+          <div class="col">
+            <div class="form-group">
+              <label for="password0">Current (old) Password</label>
+              <input type="password" class="form-control" id="password0" required>
+              <div class="password0 invalid-feedback">
+                You must provide your current password.
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="form-group">
+              <label for="password1">New Password</label>
+              <input type="password" class="form-control" id="password1" required>
+              <div class="password1 invalid-feedback">
+                New password cannot empty.
+              </div>
+            </div>
+            <div class="form-group mt-1">
+              <label for="password2">New Password (Repeat)</label>
+              <input type="password" class="form-control" id="password2" required>
+              <div class="password2 invalid-feedback">
+                New password must be equal.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="text-end"><small class="text-danger">New password should have minimum 8 characters alphanumeric.</small></div>
+        <hr>
+        <div class="text-end">
+          <button type="submit" class="btn btn-secondary bt-close">Cancel</button>
+          <button type="submit" class="btn btn-primary ms-2 bt-cgpass">Change Password</button>
+        </div>
+      </form>
     </div>
   </div>
 
