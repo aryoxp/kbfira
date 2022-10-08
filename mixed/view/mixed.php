@@ -192,7 +192,7 @@
         <div class="text-end"><small class="text-danger">New password should have minimum 8 characters alphanumeric.</small></div>
         <hr>
         <div class="text-end">
-          <button type="submit" class="btn btn-secondary bt-close">Cancel</button>
+          <button class="btn btn-secondary bt-close">Cancel</button>
           <button type="submit" class="btn btn-primary ms-2 bt-cgpass">Change Password</button>
         </div>
       </form>

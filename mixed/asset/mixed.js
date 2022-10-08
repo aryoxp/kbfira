@@ -1,6 +1,14 @@
-$(() => { // jQuery onReady callback
+$(() => { 
+  // jQuery onReady callback
   let app = MixedApp.instance()
-})
+});
+
+// short hand for logger class
+// so to log something, one could simply use:
+// Log.l('action', data);
+class L {
+  static log() {}
+}
 
 class MixedApp {
   constructor() {
@@ -31,6 +39,7 @@ class MixedApp {
     this.canvas = canvas
     this.session = Core.instance().session();
     this.ajax = Core.instance().ajax();
+    this.runtime = Core.instance().runtime();
     this.config = Core.instance().config();
 
     // Hack for sidebar-panel show/hide
@@ -886,35 +895,37 @@ class MixedApp {
      * 
      * Sign In
     */
-    $('.app-navbar .bt-sign-in').on('click', (e) => {
-      MixedApp.inst.modalSignIn = UI.modal('#modal-sign-in', {width: 350}).show();
-    })
-  
-    $('#modal-sign-in').on('click', '.bt-sign-in', (e) => {
-      e.preventDefault()
-      let username = $('#input-username').val();
-      let password = $('#input-password').val();
-      KitBuildRBAC.signIn(username, password).then(user => { console.log(user)
-        if (typeof user == 'object' && user) {
-          Core.instance().session().set('user', user).then(() => {
-            MixedApp.updateSignInOutButton();
-            MixedApp.enableNavbarButton();
-            this.setUser(user);
-            this.initCollab(user);
-          })
-          this.modalSignIn.hide()
-          this.user = user;
-  
-          let status = `<span class="mx-2 d-flex align-items-center status-user">`
-          + `<small class="text-dark fw-bold">${user.name}</small>`
-          + `</span>`
-          StatusBar.instance().remove('.status-user').prepend(status);
-        }
-      }).catch(error => UI.error(error).show());
-    })
+    $(".app-navbar .bt-sign-in").on("click", (e) => {
+      this.runtime.load("config.ini").then((runtimes) => {
+        let runtimeGids = runtimes["sign-in-group"];
+        // console.log(runtimes, runtimeGids);
+        this.signInDialog(runtimeGids);
+      }, (err) => this.signInDialog());
+    });
   
   }
   
+  signInDialog(runtimeGids) {
+    this.modalSignIn = SignIn.instance({
+      gids: runtimeGids ?? null,
+      success: (user) => {
+        L.log("sign-in-success", user);
+        this.session.set("user", user);
+        this.modalSignIn.hide();
+        this.setUser(user);
+        this.initCollab(user);
+        MixedApp.updateSignInOutButton();
+        MixedApp.enableNavbarButton();
+        KitBuildCollab.enableControl();
+        let status = `<span class="mx-2 d-flex align-items-center status-user">` +
+          `<small class="text-dark fw-bold">${user.name}</small>` +
+          `</span>`;
+        StatusBar.instance().remove(".status-user").prepend(status);
+        this.logger.username = user.username;
+      },
+    }).show();
+  }
+
   /**
    * 
    * Handle refresh web browser
