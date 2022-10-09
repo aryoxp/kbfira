@@ -19,7 +19,14 @@
     </span>
     <div class="flex-fill">&nbsp;</div>
     <span>
-      <button class="btn btn-danger btn-sm bt-logout <?php if (!isset($_SESSION['user'])) echo 'd-none'; ?>"><i class="bi bi-power"></i> Logout</button>
+      <div class="btn-group btn-group-sm">
+        <button class="btn btn-outline-secondary btn-sm dropdown-toggle bt-profile <?php if (!isset($_SESSION['user'])) echo 'd-none'; ?>" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-people-fill"></i>
+        </button>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item cgpass fs-6 text-sm" href="#"><i class="bi bi-lock-fill"></i> Change Password</a></li>
+        </ul>
+        <button class="btn btn-danger btn-sm bt-logout <?php if (!isset($_SESSION['user'])) echo 'd-none'; ?>"><i class="bi bi-power"></i> Logout</button>
+      </div>
       <button class="btn btn-primary btn-sm bt-sign-in <?php if (isset($_SESSION['user'])) echo 'd-none'; ?>"><i class="bi bi-power"></i> Sign In</button>
     </span>
   </div>
@@ -166,21 +173,7 @@
       <i class="bi bi-x-lg bt-close bt-x" role="button"></i>
     </h6>
     <div class="card-body position-relative overflow-hidden overflow-scroll d-flex flex-fill mb-3">
-      <div class="content text-secondary">
-        <!-- <p>Est ex sunt exercitation exercitation voluptate veniam ad minim et magna ea sint. Sint Lorem consequat ex ullamco sint irure labore nisi nulla pariatur culpa quis excepteur officia. Exercitation qui consequat ipsum labore nostrud cillum incididunt eiusmod aliquip.</p>
-  
-        <p>
-        Labore reprehenderit laborum excepteur eiusmod et. Culpa laborum excepteur irure mollit adipisicing ut anim sunt veniam. Quis laborum cupidatat id id ea do dolor velit. Aliqua aliquip exercitation proident consequat ullamco anim aute occaecat deserunt cillum deserunt. Esse magna labore dolor anim amet.</p>
-  
-        <p>
-        Et enim irure excepteur enim est proident est tempor tempor velit. Laborum ex exercitation nulla anim incididunt nisi fugiat cillum officia fugiat dolor ad proident. Ad laborum eiusmod fugiat laboris sunt labore. Enim consectetur tempor minim nisi proident nulla ex pariatur et eu Lorem do sint non. Minim adipisicing do fugiat magna fugiat veniam do veniam.</p>
-  
-        <p>
-        Dolore ipsum reprehenderit sint anim. Minim non reprehenderit quis amet est exercitation incididunt ad dolore do proident. Reprehenderit ullamco aute irure consequat sunt nulla sunt exercitation. In ullamco occaecat ipsum Lorem elit labore consectetur cillum sunt velit.</p>
-  
-        <p>
-        Non nulla exercitation consequat minim anim qui eiusmod deserunt aliquip proident ea laborum consequat amet. Nisi aliqua sit commodo commodo aliquip sunt sint qui do laboris nisi cupidatat. Occaecat proident et reprehenderit esse dolor.</p> -->
-      </div>
+      <div class="content text-secondary"></div>
     </div>
     <div class="card-footer d-flex justify-content-between align-items-center">
       <span>
@@ -216,3 +209,47 @@
     <button class="btn btn-sm btn-primary ms-1 bt-copy-paste px-3"><i class="dialog-icon bi"></i> <span class="dialog-action"><?php echo Lang::l('copy'); ?></span></button>
   </div>
 </div> -->
+
+<div id="cgpass-dialog" class="card shadow mx-auto d-none">
+  <div class="card-body">
+    <h5 class="card-title">Change Password</h5>
+    <h6 class="card-subtitle mb-2 text-username"><span class="text-secondary">User</span> &rsaquo; <span class="text-danger user-username"><?php echo isset($_SESSION['user']) ? $_SESSION['user']['username'] : ""; ?></span> &rsaquo; <span class="text-primary user-name"><?php echo isset($_SESSION['user']) ? $_SESSION['user']['name'] : ""; ?></span></h6>
+    <hr>
+    <form id="form-cgpass" class="text-left" class="needs-validation" novalidate>
+      <input type="hidden" name="username" value="<?php echo  isset($_SESSION['user']) ? $_SESSION['user']['username'] : ""; ?>" />
+      <div class="row">
+        <div class="col">
+          <div class="form-group">
+            <label for="password0">Current (old) Password</label>
+            <input type="password" class="form-control" id="password0" required>
+            <div class="password0 invalid-feedback">
+              You must provide your current password.
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label for="password1">New Password</label>
+            <input type="password" class="form-control" id="password1" required>
+            <div class="password1 invalid-feedback">
+              New password cannot empty.
+            </div>
+          </div>
+          <div class="form-group mt-1">
+            <label for="password2">New Password (Repeat)</label>
+            <input type="password" class="form-control" id="password2" required>
+            <div class="password2 invalid-feedback">
+              New password must be equal.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="text-end"><small class="text-danger">New password should have minimum 8 characters alphanumeric.</small></div>
+      <hr>
+      <div class="text-end">
+        <button class="btn btn-secondary bt-close">Cancel</button>
+        <button type="submit" class="btn btn-primary ms-2 bt-cgpass">Change Password</button>
+      </div>
+    </form>
+  </div>
+</div>
