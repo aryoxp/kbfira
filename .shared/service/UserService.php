@@ -104,6 +104,7 @@ class UserService extends CoreService {
       ->where('username', 'LIKE', "%$keyword%", QB::OR)
       ->where(QB::EG)
       ->orderBy('created', QB::DESC)
+      ->orderBy('username', QB::DESC)
       ->limit(($page-1)*$perpage, $perpage);
     if ($created) $qb = $qb->where(QB::raw('DATE(created)'), QB::esc($created));
     return $db->query($qb->get());
