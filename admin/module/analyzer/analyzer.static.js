@@ -830,6 +830,16 @@ StaticAnalyzerApp.populateLearnerMaps = (cmid, kid = null, type = null) => {
           learnerMap.compare = Analyzer.compare(learnerMap, direction);
         });
 
+        let fbSet = new Set();
+        let dSet  = new Set();
+        let fxSet = new Set();
+        let aSet  = new Set();
+
+        let fbLastMap = new Map();
+        let dLastMap = new Map();
+        let fxLastMap = new Map();
+        let aLastMap = new Map();
+
         learnerMaps.forEach((lm, i) => {
           let isFirst =
             i == 0 || (i > 0 && learnerMaps[i - 1].map.author != lm.map.author);
@@ -837,8 +847,34 @@ StaticAnalyzerApp.populateLearnerMaps = (cmid, kid = null, type = null) => {
             (learnerMaps[i + 1] &&
               learnerMaps[i + 1].map.author != lm.map.author) ||
             !learnerMaps[i + 1];
+          let isTFirst = false;
+          let isTLast = false;
+          switch (lm.map.type) {
+            case "feedback": 
+              isTFirst = fbSet.has(lm.map.author) ? false : true; 
+              if (!fbSet.has(lm.map.author)) fbSet.add(lm.map.author);
+              fbLastMap.set(lm.map.author, lm.map.lmid);
+              break;
+            case "draft": 
+              isTFirst = dSet.has(lm.map.author) ? false : true; 
+              if (!dSet.has(lm.map.author)) dSet.add(lm.map.author);
+              dLastMap.set(lm.map.author, lm.map.lmid);
+              break;
+            case "fix": 
+              isTFirst = fxSet.has(lm.map.author) ? false : true; 
+              if (!fxSet.has(lm.map.author)) fxSet.add(lm.map.author);
+              fxLastMap.set(lm.map.author, lm.map.lmid);
+              break;
+            case "auto": 
+              isTFirst = aSet.has(lm.map.author) ? false : true; 
+              if (!aSet.has(lm.map.author)) aSet.add(lm.map.author);
+              aLastMap.set(lm.map.author, lm.map.lmid);
+              break;
+          }
+
           let score = ((lm.compare.score * 1000) | 0) / 10 + "%";
           list += `<div data-lmid="${lm.map.lmid}" data-type="${lm.map.type}" data-kid="${lm.map.kid}" data-first="${isFirst}" data-last="${isLast}"`;
+          list += ` data-tfirst="${isTFirst}" data-tlast="${isTLast}"`
           list += ` class="py-1 mx-1 d-flex justify-content-between border-bottom learnermap list-item fs-6" role="button">`;
           list += `<span class="d-flex align-items-center">`;
           list += `<input type="checkbox" class="cb-learnermap" id="cb-lm-${lm.map.lmid}">`;
@@ -861,11 +897,19 @@ StaticAnalyzerApp.populateLearnerMaps = (cmid, kid = null, type = null) => {
           list += `</span>`;
           list += `</div>`;
         });
+
+        // display the list        
         $("#list-learnermap").html(
           list == ""
             ? '<em class="text-secondary p-2 d-block">No learnermaps.</em>'
             : list
         );
+
+        fbLastMap.forEach((lmid) => $(`#list-learnermap .learnermap[data-lmid="${lmid}"]`).attr('data-tlast', true));
+        fxLastMap.forEach((lmid) => $(`#list-learnermap .learnermap[data-lmid="${lmid}"]`).attr('data-tlast', true));
+        dLastMap.forEach((lmid) => $(`#list-learnermap .learnermap[data-lmid="${lmid}"]`).attr('data-tlast', true));
+        aLastMap.forEach((lmid) => $(`#list-learnermap .learnermap[data-lmid="${lmid}"]`).attr('data-tlast', true));
+
         StaticAnalyzerApp.onCheckBoxChanged();
         resolve();
       });
@@ -892,12 +936,21 @@ StaticAnalyzerApp.onCheckBoxChanged = (e) => {
   $("#list-learnermap .learnermap").each((i, lm) => {
     let lmid = $(lm).data("lmid");
     let type = $(lm).data("type");
-    let first = $(lm).data("first") == true;
-    let last = $(lm).data("last") == true;
+    // let first = $(lm).data("first") == true;
+    // let last = $(lm).data("last") == true;
+    let first = $(lm).data("tfirst") == true;
+    let last = $(lm).data("tlast") == true;
     let checked = $(`#cb-lm-${type}`).prop("checked");
-    if (!checked) checked = first == $(`#cb-lm-first`).prop("checked") && first;
-    if (!checked) checked = last == $(`#cb-lm-last`).prop("checked") && last;
-    if (!checked) checked = $(`#cb-lm-all`).prop("checked");
+    // if (!checked) checked = first == $(`#cb-lm-first`).prop("checked") && first;
+    // if (!checked) checked = last == $(`#cb-lm-last`).prop("checked") && last;
+    // if (!checked) checked = $(`#cb-lm-all`).prop("checked");
+    if (checked) {
+      let f = $(`#cb-lm-first`).prop("checked") && first;
+      let l = $(`#cb-lm-last`).prop("checked") && last;
+      let a = $(`#cb-lm-all`).prop("checked");
+      checked = (f || l || a);
+    }
+
     checked = $(lm).hasClass("d-none") ? false : checked;
     $(`#cb-lm-${lmid}`).prop("checked", checked);
   });
