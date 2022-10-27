@@ -92,13 +92,9 @@ ReviewApp.canvasId = "review-canvas"
 
 ReviewApp.handleEvent = (kbui) => {
 
-  let canvas = kbui.canvases.get(ReviewApp.canvasId)
-  let ajax = Core.instance().ajax()
-  let session = Core.instance().session()
-
-  this.canvas = canvas
-  this.ajax = ajax
-  this.session = session
+  this.canvas = kbui.canvases.get(ReviewApp.canvasId);
+  this.ajax = Core.instance().ajax();
+  this.session = Core.instance().session();
 
   let saveAsDialog = UI.modal('#kit-save-as-dialog', {
     onShow: () => { 
@@ -345,6 +341,24 @@ ReviewApp.handleEvent = (kbui) => {
         iconStyle: 'danger', icon: 'exclamation-triangle-fill'
       }).positive(() => {
         // TODO: Destroy concept map session data, go back to blank Kit-Building activity
+        Promise.all([
+          this.session.unset("cmid"),
+          this.session.unset("kid"),
+          this.session.unset("lmid"),
+          this.session.unset("flmid"),
+          this.session.unset("user")
+        ]).then(() => {
+          KitBuildCollab.enableControl(false);
+          StatusBar.instance().remove('.status-user');
+          this.canvas.cy.elements().remove();
+          this.canvas.canvasTool.clearCanvas().clearIndicatorCanvas();
+          confirm.hide()
+          UI.success("You have been signed out and will be automatically redirected to Extended KB page in 3 seconds.").show();
+          setTimeout(() => {
+            let baseurl = Core.instance().config().get('baseurl');
+            window.location.href = baseurl + "";
+          }, 3000)
+        });
         confirm.hide()
       }).show()
   })

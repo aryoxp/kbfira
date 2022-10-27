@@ -700,6 +700,11 @@ class KitBuildExtApp {
      * Extend with Next Kit Set
     */
      $('.app-navbar').on('click', '.bt-extend', () => {
+
+      if (!this.kitMap) {
+        UI.warningDialog("Please open a kit to build.").show();
+        return;
+      }
   
       let kitMapData = this.kitMap;
       let kitSet = this.kitSet;
@@ -788,9 +793,14 @@ class KitBuildExtApp {
     */
     $('.app-navbar').on('click', '.bt-submit', () => {
       if (feedbackDialog.learnerMapEdgesData) 
-        $('.app-navbar .bt-clear-feedback').trigger('click')
+        $('.app-navbar .bt-clear-feedback').trigger('click');
+      
+      if (!this.kitMap) {
+        UI.warningDialog("Please open a kit to build.").show();
+        return;
+      }
   
-      let learnerMapData = KitBuildUI.buildConceptMapData(this.canvas)
+      let learnerMapData = KitBuildUI.buildConceptMapData(this.canvas);
       let confirm = UI.confirm("Do you want to submit your concept map?<br/>This will end your concept map recomposition session.")
         .positive(() => {
           let kitMap = this.kitMap

@@ -958,8 +958,9 @@ class MixedApp {
               this.canvas.on("event", MixedApp.loggerListener)
             }
           } catch (error) { console.warn(error) }
+          MixedApp.inst.setKitMap(kitMap);
         }
-        if (learnerMap) {
+        if (kitMap && learnerMap) {
           MixedApp.inst.setKitMap(kitMap)
           MixedApp.inst.setLearnerMap(learnerMap)
           learnerMap.kitMap = kitMap
@@ -973,6 +974,7 @@ class MixedApp {
           this.canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).fit(null, {duration: 0})
           this.canvas.applyElementStyle()
         } // else UI.warning('Unable to display kit.').show()
+        MixedApp.enableNavbarButton();
       })
   
       MixedApp.enableNavbarButton(false)
