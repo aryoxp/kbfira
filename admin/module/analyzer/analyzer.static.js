@@ -951,6 +951,13 @@ StaticAnalyzerApp.onCheckBoxChanged = (e) => {
       checked = (f || l || a);
     }
 
+    // if it is not checked on the filter checkboxes, 
+    // then do not show it
+    if (checked) $(lm).removeClass("d-none");
+    else $(lm).addClass("d-none");
+
+    // if it is not shown, 
+    // then do not check the checkboxes
     checked = $(lm).hasClass("d-none") ? false : checked;
     $(`#cb-lm-${lmid}`).prop("checked", checked);
   });
