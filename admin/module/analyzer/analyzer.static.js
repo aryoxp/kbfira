@@ -555,6 +555,82 @@ class StaticAnalyzerApp {
       StaticAnalyzerApp.canvasState = CanvasState.COMPARE;
     });
 
+    $(".bt-download-xlsx").on("click", (e) => {
+      // console.error(this.learnerMaps);
+      UI.confirm('Download selected concept maps score data?').positive(() => {
+        
+        let checkedMaps = new Set();
+
+        $("#list-learnermap .learnermap").each((i, lm) => {
+          let lmid = $(lm).data("lmid");
+          let checked = $(`#cb-lm-${lmid}`).prop("checked");
+          if (checked) checkedMaps.add(lmid);
+        });
+
+        let rows = [];
+        for (const [ key, value ] of this.learnerMaps) {
+          if (checkedMaps.has(parseInt(key))){
+            let unordered = Object.assign({}, value.map, {score: value.score});
+            const ordered = Object.keys(unordered).sort().reduce(
+              (obj, key) => { 
+                obj[key] = unordered[key]; 
+                return obj;
+              }, 
+              {}
+            );            
+            rows.push(ordered);
+          }
+        }
+        
+        /* generate worksheet and workbook */
+        const worksheet = XLSX.utils.json_to_sheet(rows);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Learner Maps");
+
+        /* fix headers */
+        XLSX.utils.sheet_add_aoa(worksheet, [["Username", "Name", "DateTime", "Data", "KitID", "LearnerMapID", "Score", "MapType"]], { origin: "A1" });
+
+        /* calculate column width */
+        function ln(w, d, min = 10) {
+          return Math.max(w, d ? d.toString().length : min, min);
+        }
+        const mx0 = rows.reduce((w, c) => ln(w, c.author), 10);
+        const mx1 = rows.reduce((w, c) => ln(w, c.authorname), 10);
+        const mx2 = rows.reduce((w, c) => ln(w, c.create_time), 10);
+        const mx3 = rows.reduce((w, c) => ln(w, c.data, 5), 5);
+        const mx4 = rows.reduce((w, c) => ln(w, c.kid), 10);
+        const mx5 = rows.reduce((w, c) => ln(w, c.lmid, 13), 10);
+        const mx6 = rows.reduce((w, c) => ln(w, c.score), 10);
+        const mx7 = rows.reduce((w, c) => ln(w, c.type), 10);
+
+        worksheet["!cols"] = [ 
+          { wch: mx0 }, { wch: mx1 }, { wch: mx2 }, { wch: mx3 }, 
+          { wch: mx4 }, { wch: mx5 }, { wch: mx6 }, { wch: mx7 } ];
+
+        /* create an XLSX file and try to save into xlsx file */
+        
+        function toIsoString(date) {
+          var tzo = -date.getTimezoneOffset(),
+              dif = tzo >= 0 ? '+' : '-',
+              pad = function(num) {
+                  return (num < 10 ? '0' : '') + num;
+              };
+
+          return date.getFullYear() +
+            '-' + pad(date.getMonth() + 1) +
+            '-' + pad(date.getDate()) +
+            'T' + pad(date.getHours()) +
+            ':' + pad(date.getMinutes()) +
+            ':' + pad(date.getSeconds()) +
+            dif + pad(Math.floor(Math.abs(tzo) / 60)) +
+            ':' + pad(Math.abs(tzo) % 60);
+        }
+
+        let ts = toIsoString(new Date()).replaceAll(/[\:\-]/ig, '').replace('T', '-').substring(0, 15);
+        XLSX.writeFile(workbook, `KB-LearnerMaps-${ts}.xlsx`, { compression: true });
+      }).show();
+    });      
+
     $("#cb-lm-score").on("change", (e) => {
       if ($("#cb-lm-score").prop("checked"))
         $("#list-learnermap .score").removeClass("d-none");
@@ -873,6 +949,7 @@ StaticAnalyzerApp.populateLearnerMaps = (cmid, kid = null, type = null) => {
           }
 
           let score = ((lm.compare.score * 1000) | 0) / 10 + "%";
+          lm.score = ((lm.compare.score * 1000) | 0) / 10;
           list += `<div data-lmid="${lm.map.lmid}" data-type="${lm.map.type}" data-kid="${lm.map.kid}" data-first="${isFirst}" data-last="${isLast}"`;
           list += ` data-tfirst="${isTFirst}" data-tlast="${isTLast}"`
           list += ` class="py-1 mx-1 d-flex justify-content-between border-bottom learnermap list-item fs-6" role="button">`;

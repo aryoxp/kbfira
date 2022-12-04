@@ -25,7 +25,13 @@
       <input type="checkbox" class="cb-score ms-1" id="cb-lm-last" checked> <label for="cb-lm-last" class="mx-1">Last</label>
     </div>
     <div class="d-flex justify-content-between align-items-center p-1 border-bottom text-smaller">
-      <span class="ms-1">Concept Map</span>
+      <span>
+        <span class="ms-1">Concept Map</span>
+        <span class="ms-2 bt-download-xlsx" role="button">
+          <i class="bi bi-download text-primary"></i>
+          <span class="btn-link">Download (XLSX)</span>
+        </span>
+      </span>
       <span class="d-flex align-items-center">
         <input type="checkbox" id="cb-lm-score" class="me-1">
         <label for="cb-lm-score" class="me-1" role="button">Score</label>
