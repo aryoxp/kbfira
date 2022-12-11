@@ -154,58 +154,74 @@
       Options for Kit-Building activity of using this Kit
     </div></div>
     <div class="row">
-      <div class="col-sm-12">
-        <label class="form-label">Feedback given during recomposition.</label>
-      </div>
-      <div class="col-sm-2 mb-3"></div>
-      <div class="col-sm-10 mb-3">
-        <select class="form-select form-select-sm" name="feedbacklevel">
-          <option value="0">Level 0 - No Feedback</option>
-          <option value="1">Level 1 - Count Only</option>
-          <option class="default" value="2">Level 2 - Count and Edge Visual</option>
-          <option value="3">Level 3 - Count, Edge Visual, and Expected Edge</option>
-        </select>
-      </div> 
-      <div class="col-sm-12 mb-2">  
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" name="fullfeedback" id="input-fullfeedback">
-          <label class="form-check-label" for="input-fullfeedback">Provide full feedback after submit.</label>
+      <div class="col-sm-6">
+        <div class="col-sm-12">
+          <label class="form-label">Feedback given during recomposition.</label>
+        </div>
+        <div class="col-sm-10 mb-3">
+          <select class="form-select form-select-sm" name="feedbacklevel">
+            <option value="0">Level 0 - No Feedback</option>
+            <option value="1">Level 1 - Count Only</option>
+            <option class="default" value="2">Level 2 - Count and Edge Visual</option>
+            <option value="3">Level 3 - Count, Edge Visual, and Expected Edge</option>
+          </select>
+        </div> 
+
+        <div class="col-sm-12 mb-2">  
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="modification" id="input-modification">
+            <label class="form-check-label" for="input-modification">Allow modification of concept map after submit.</label>
+          </div>
+        </div>
+        <div class="col-sm-12 mb-2">  
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="readcontent" id="input-readcontent">
+            <label class="form-check-label" for="input-readcontent">Allow read topic/kit content.</label>
+          </div>
+        </div>
+        <div class="col-sm-12 mb-2">  
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="saveload" id="input-saveload">
+            <label class="form-check-label" for="input-saveload">Allow save and load recomposed concept map.</label>
+          </div>
+        </div>
+        <div class="col-sm-12 mb-2">  
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="reset" id="input-reset">
+            <label class="form-check-label" for="input-reset">Allow reset concept map to initial kit.</label>
+          </div>
         </div>
       </div>
-      <div class="col-sm-12 mb-2">  
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" name="modification" id="input-modification">
-          <label class="form-check-label" for="input-modification">Allow modification of concept map after submit.</label>
+      <div class="col-sm-6">
+        <div class="col-sm-12 mb-2">  
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="fullfeedback" id="input-fullfeedback">
+            <label class="form-check-label" for="input-fullfeedback">Provide full feedback after submit.</label>
+          </div>
         </div>
-      </div>
-      <div class="col-sm-12 mb-2">  
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" name="readcontent" id="input-readcontent">
-          <label class="form-check-label" for="input-readcontent">Allow read topic/kit content.</label>
+        <div class="col-sm-12 mb-2">  
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="feedbacksave" id="input-feedbacksave">
+            <label class="form-check-label" for="input-feedbacksave">Capture concept map state when feedback is requested.</label>
+          </div>
         </div>
-      </div>
-      <div class="col-sm-12 mb-2">  
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" name="saveload" id="input-saveload">
-          <label class="form-check-label" for="input-saveload">Allow save and load recomposed concept map.</label>
+        <div class="col-sm-12 mb-2">  
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="countfb" id="input-countfb">
+            <label class="form-check-label" for="input-countfb">Show the number of feedback given.</label>
+          </div>
         </div>
-      </div>
-      <div class="col-sm-12 mb-2">  
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" name="reset" id="input-reset">
-          <label class="form-check-label" for="input-reset">Allow reset concept map to initial kit.</label>
+        <div class="col-sm-12 mb-2">  
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="countsubmit" id="input-countsubmit">
+            <label class="form-check-label" for="input-countsubmit">Show the number of submission performed.</label>
+          </div>
         </div>
-      </div>  
-      <div class="col-sm-12 mb-2">  
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" name="feedbacksave" id="input-feedbacksave">
-          <label class="form-check-label" for="input-feedbacksave">Capture concept map state when feedback is requested.</label>
-        </div>
-      </div>
-      <div class="col-sm-12 mb-2">  
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" name="log" id="input-log">
-          <label class="form-check-label" for="input-log">Log concept mapping activity of this kit for analysis.</label>
+        <div class="col-sm-12 mb-2">  
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="log" id="input-log">
+            <label class="form-check-label" for="input-log">Log concept mapping activity of this kit for analysis.</label>
+          </div>
         </div>
       </div>
       <div class="col-sm-12 mt-2">

@@ -532,6 +532,7 @@ class MakeKitApp {
   
     let optionDialog = UI.modal('#kit-option-dialog', {
       hideElement: '.bt-cancel',
+      width: '750px',
       onShow: () => { 
         let kitMapOptions = optionDialog.kitMap.map.options ?
           JSON.parse(optionDialog.kitMap.map.options) : null
@@ -548,6 +549,8 @@ class MakeKitApp {
         let saveload = $('#kit-option-dialog input[name="saveload"]')
         let reset = $('#kit-option-dialog input[name="reset"]')
         let feedbacksave = $('#kit-option-dialog input[name="feedbacksave"]')
+        let countfb = $('#kit-option-dialog input[name="countfb"]')
+        let countsubmit = $('#kit-option-dialog input[name="countsubmit"]')
         let log = $('#kit-option-dialog input[name="log"]')
   
         if (kitMapOptions.feedbacklevel) feedbacklevel.val(kitMapOptions.feedbacklevel).change()
@@ -576,6 +579,14 @@ class MakeKitApp {
         if (typeof kitMapOptions.feedbacksave != 'undefined')
         feedbacksave.prop('checked', parseInt(kitMapOptions.feedbacksave) == 1 ? true : false)
         else feedbacksave.prop('checked', true)
+
+        if (typeof kitMapOptions.countfb != 'undefined')
+        countfb.prop('checked', parseInt(kitMapOptions.countfb) == 1 ? true : false)
+        else countfb.prop('checked', true);
+
+        if (typeof kitMapOptions.countsubmit != 'undefined')
+        countsubmit.prop('checked', parseInt(kitMapOptions.countsubmit) == 1 ? true : false)
+        else countsubmit.prop('checked', true);
   
         if (typeof kitMapOptions.log != 'undefined')
         log.prop('checked', parseInt(kitMapOptions.log) == 1 ? true : false)
@@ -594,6 +605,8 @@ class MakeKitApp {
       let saveload = $('#kit-option-dialog input[name="saveload"]')
       let reset = $('#kit-option-dialog input[name="reset"]')
       let feedbacksave = $('#kit-option-dialog input[name="feedbacksave"]')
+      let countfb = $('#kit-option-dialog input[name="countfb"]');
+      let countsubmit = $('#kit-option-dialog input[name="countsubmit"]');
       let log = $('#kit-option-dialog input[name="log"]')
   
       feedbackleveldefault.prop('selected', true)
@@ -603,6 +616,8 @@ class MakeKitApp {
       saveload.prop('checked', true)
       reset.prop('checked', true)
       feedbacksave.prop('checked', true)
+      countfb.prop('checked', true);
+      countsubmit.prop('checked', true);
       log.prop('checked', false)
     }
     optionDialog.enableAll = () => {
@@ -613,6 +628,8 @@ class MakeKitApp {
       let saveload = $('#kit-option-dialog input[name="saveload"]')
       let reset = $('#kit-option-dialog input[name="reset"]')
       let feedbacksave = $('#kit-option-dialog input[name="feedbacksave"]')
+      let countfb = $('#kit-option-dialog input[name="countfb"]');
+      let countsubmit = $('#kit-option-dialog input[name="countsubmit"]');
       let log = $('#kit-option-dialog input[name="log"]')
   
       feedbacklevel.val(3).change()
@@ -622,6 +639,8 @@ class MakeKitApp {
       saveload.prop('checked', true)
       reset.prop('checked', true)
       feedbacksave.prop('checked', true)
+      countfb.prop('checked', true);
+      countsubmit.prop('checked', true);
       log.prop('checked', true)
     }
     optionDialog.disableAll = () => {
@@ -632,6 +651,8 @@ class MakeKitApp {
       let saveload = $('#kit-option-dialog input[name="saveload"]')
       let reset = $('#kit-option-dialog input[name="reset"]')
       let feedbacksave = $('#kit-option-dialog input[name="feedbacksave"]')
+      let countfb = $('#kit-option-dialog input[name="countfb"]');
+      let countsubmit = $('#kit-option-dialog input[name="countsubmit"]');
       let log = $('#kit-option-dialog input[name="log"]')
   
       feedbacklevel.val(0).change()
@@ -641,6 +662,8 @@ class MakeKitApp {
       saveload.prop('checked', false)
       reset.prop('checked', false)
       feedbacksave.prop('checked', false)
+      countfb.prop('checked', false);
+      countsubmit.prop('checked', false);
       log.prop('checked', false)
     }
   
@@ -934,6 +957,8 @@ class MakeKitApp {
         saveload: $('#kit-option-dialog input[name="saveload"]').prop('checked') ? 1 : 0,
         reset: $('#kit-option-dialog input[name="reset"]').prop('checked') ? 1 : 0,
         feedbacksave: $('#kit-option-dialog input[name="feedbacksave"]').prop('checked') ? 1 : 0,
+        countfb: $('#kit-option-dialog input[name="countfb"]').prop('checked') ? 1 : 0,
+        countsubmit: $('#kit-option-dialog input[name="countsubmit"]').prop('checked') ? 1 : 0,
         log: $('#kit-option-dialog input[name="log"]').prop('checked') ? 1 : 0,
       }
   
@@ -945,6 +970,8 @@ class MakeKitApp {
       if (option.saveload) delete option.saveload
       if (option.reset) delete option.reset
       if (option.feedbacksave) delete option.feedbacksave
+      if (option.countfb) delete option.countfb;
+      if (option.countsubmit) delete option.countsubmit;
       if (!option.log) delete option.log
   
       KitBuild.updateKitOption(optionDialog.kitMap.map.kid, 

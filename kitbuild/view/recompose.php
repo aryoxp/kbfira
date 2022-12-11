@@ -15,11 +15,11 @@
       <button class="bt-reset btn btn-danger"><i class="bi bi-arrow-counterclockwise"></i> <?php echo Lang::l('reset'); ?></button>
     </div>
     <div class="btn-group btn-group-sm ms-2" id="recompose-feedbacklevel">
-      <button class="bt-feedback btn btn-warning"><i class="bi bi-eye-fill"></i> Feedback</button>
+      <button class="bt-feedback btn btn-warning"><i class="bi bi-eye-fill"></i> Feedback <span class="count"></span></button>
       <button class="bt-clear-feedback btn btn-warning"><i class="bi bi-eye-slash-fill"></i> Clear Feedback</button>
     </div>
     <div class="btn-group btn-group-sm ms-2">
-      <button class="bt-submit btn btn-danger"><i class="bi bi-send"></i> Submit</button>
+      <button class="bt-submit btn btn-danger"><i class="bi bi-send"></i> Submit <span class="count"></span></button>
     </div>
     <div class="flex-fill">&nbsp;</div>
     <span>
@@ -44,7 +44,7 @@
 </div>
     
 <form id="concept-map-open-dialog" class="card d-none">
-  <h6 class="card-header"><i class="bi bi-folder2-open"></i> Open/Create Kit of a Concept Map</h6>
+  <h6 class="card-header"><i class="bi bi-folder2-open"></i> Open Kit of a Concept Map</h6>
   <div class="card-body">
     <div class="tab-content" id="myTabContent">
       <div class="tab-pane fade show active" id="database" role="tabpanel" aria-labelledby="database-tab">
@@ -79,6 +79,8 @@
     <div class="row">
       <div class="col text-end">
         <button class="bt-cancel btn btn-sm btn-secondary" style="min-width: 6rem;"><?php echo Lang::l('cancel'); ?></button>
+        <button class="bt-continue btn btn-sm btn-success ms-1 ps-3 pe-3" style="min-width: 6rem;">
+          <i class="bi bi-upload"></i> Continue My Map</button>
         <button class="bt-open btn btn-sm btn-primary ms-1" style="min-width: 6rem;">
           <i class="bi bi-folder2-open"></i> <?php echo Lang::l('open'); ?></button>
       </div>
@@ -128,6 +130,20 @@
   <div class="card-footer text-end">
     <button class="btn btn-sm btn-secondary bt-cancel bt-close px-3"><?php echo Lang::l('ok'); ?></button>
     <button class="btn btn-sm btn-primary bt-modify px-3 ms-1">Modify My Map</button>
+  </div>
+</div>
+
+<div id="continue-dialog" class="card d-none">
+  <h6 class="card-header d-flex">
+    <span class="drag-handle flex-fill"><i class="dialog-icon bi bi-upload me-2"></i> <span class="dialog-title">Continue Previous Map</span></span>
+    <i class="bi bi-x-lg bt-close bt-x" role="button"></i>
+  </h6>
+  <div class="card-body">
+    <div class="draft-content"></div>
+  </div>
+  <div class="card-footer text-end">
+    <button class="btn btn-sm btn-secondary bt-cancel bt-close px-3"><?php echo Lang::l('cancel'); ?></button>
+    <button class="btn btn-sm btn-primary bt-continue px-3 ms-1">Continue</button>
   </div>
 </div>
 
