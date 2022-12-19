@@ -158,6 +158,7 @@ class KitBuildApp {
       return;
     }
     this.setKitMap(kitMap);
+    KitBuildApp.parseKitMapOptions(kitMap);
     this.logger.setConceptMap(kitMap.conceptMap);
     this.setLearnerMap(learnerMap ?? undefined);
     L.log("open-kit", kitMap.map);
@@ -192,6 +193,7 @@ class KitBuildApp {
       // });
       // UI.info("Concept map loaded.").show();
       // confirm.hide();
+      this.getFeedbackAndSubmitCount(learnerMap.map.author, learnerMap.map.kid, kitMap.parsedOptions);
       UI.success("Saved concept map has been loaded.").show();
     } else {
       this.logger.reset();
@@ -227,6 +229,7 @@ class KitBuildApp {
             lmid: learnerMap.map.lmid,
             includeMapData: true,
           });
+          this.getFeedbackAndSubmitCount(learnerMap.map.author, learnerMap.map.kid, kitMap.parsedOptions);
         })
         .catch((error) => {
           UI.error(error).show();
@@ -1877,7 +1880,7 @@ KitBuildApp.resetMapToKit = (kitMap, canvas) => {
     // console.log(kitMap)
 
     let feedbacklevelFeature =
-      '<button class="bt-feedback btn btn-warning"><i class="bi bi-eye-fill"></i> Feedback</button>';
+      '<button class="bt-feedback btn btn-warning"><i class="bi bi-eye-fill"></i> Feedback <span class="count"></span></button>';
     feedbacklevelFeature +=
       '<button class="bt-clear-feedback btn btn-warning"><i class="bi bi-eye-slash-fill"></i> Clear Feedback</button>';
     let saveloadFeature =
