@@ -201,44 +201,49 @@ class KitBuildApp {
       KitBuildApp.resetMapToKit(kitMap, this.canvas).then(() => {
         let cyData = this.canvas.cy.elements().jsons();
         KitBuildApp.collab("command", "set-kit-map", kitMap, cyData);
+        this.saveInitialLearnerMap(kitMap);
       });
-      let data = Object.assign(
-        {
-          lmid: null,
-          kid: kitMap.map.kid,
-          author: KitBuildApp.inst.user
-            ? KitBuildApp.inst.user.username
-            : null,
-          type: "draft",
-          cmid: kitMap.map.cmid,
-          create_time: null,
-          data: null,
-        },
-        KitBuildUI.buildConceptMapData(this.canvas)
-      ); // console.log(data); // return
-      this.ajax
-        .post("kitBuildApi/saveLearnerMap", {
-          data: Core.compress(data),
-        })
-        .then((learnerMap) => {
-          // console.log(kitMap);
-          this.setLearnerMap(learnerMap);
-          this.logger.setLearnerMapId(learnerMap.map.lmid);
-          UI.success("Concept map has been initialized.").show();
-          L.log("learnermap-initialized", learnerMap.map, null, {
-            lmid: learnerMap.map.lmid,
-            includeMapData: true,
-          });
-          this.getFeedbackAndSubmitCount(learnerMap.map.author, learnerMap.map.kid, kitMap.parsedOptions);
-        })
-        .catch((error) => {
-          UI.error(error).show();
-        });
     }
   }
 
+  saveInitialLearnerMap(kitMap) {
+    let data = Object.assign(
+      {
+        lmid: null,
+        kid: kitMap.map.kid,
+        author: KitBuildApp.inst.user
+          ? KitBuildApp.inst.user.username
+          : null,
+        type: "draft",
+        cmid: kitMap.map.cmid,
+        create_time: null,
+        data: null,
+      },
+      KitBuildUI.buildConceptMapData(this.canvas)
+    ); // console.log(data); // return
+    this.ajax
+      .post("kitBuildApi/saveLearnerMap", {
+        data: Core.compress(data),
+      })
+      .then((learnerMap) => {
+        // console.log(kitMap);
+        this.setLearnerMap(learnerMap);
+        this.logger.setLearnerMapId(learnerMap.map.lmid);
+        UI.success("Concept map has been initialized.").show();
+        L.log("learnermap-initialized", learnerMap.map, null, {
+          lmid: learnerMap.map.lmid,
+          includeMapData: true,
+        });
+        this.getFeedbackAndSubmitCount(learnerMap.map.author, learnerMap.map.kid, kitMap.parsedOptions);
+      })
+      .catch((error) => {
+        UI.error(error).show();
+      });
+  }
+
   getFeedbackAndSubmitCount(username, kid, options = null) {
-    // console.log(username, kid, options);
+    $('.bt-feedback .count').html(``);
+    $('.bt-submit .count').html(``);
     if (username && kid) {
       this.ajax.post('kitBuildApi/getFeedbackAndSubmitCount', {
         username: username,
@@ -1274,6 +1279,7 @@ class KitBuildApp {
       if (lmid) promises.push(KitBuild.openLearnerMap(lmid));
       Promise.all(promises).then((maps) => {
         let [kitMap, learnerMap] = maps;
+        // console.error(kitMap, learnerMap);
         KitBuildApp.parseKitMapOptions(kitMap);
         if (kitMap && !learnerMap)
           KitBuildApp.resetMapToKit(kitMap, this.canvas).then(() => {
