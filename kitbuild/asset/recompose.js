@@ -153,92 +153,104 @@ class KitBuildApp {
   }
 
   openLearnerMap(kitMap, learnerMap = null) {
-    if (!kitMap) {
-      UI.errorDialog('Invalid Kit!').show();
-      return;
-    }
-    this.setKitMap(kitMap);
-    KitBuildApp.parseKitMapOptions(kitMap);
-    this.logger.setConceptMap(kitMap.conceptMap);
-    this.setLearnerMap(learnerMap ?? undefined);
-    L.log("open-kit", kitMap.map);
-    if (learnerMap) {
-      L.log("continue-recompose", learnerMap.map, null, {
-        lmid: learnerMap.map.lmid,
-        kid: kitMap.map.kid,
-        includeMapData: true,
-      });
-      this.logger.setLearnerMapId(learnerMap.map.lmid);
-      learnerMap.kitMap = kitMap;
-      learnerMap.conceptMap = kitMap.conceptMap;
-      this.canvas.cy.elements().remove();
-      this.canvas.cy.add(KitBuildUI.composeLearnerMap(learnerMap));
-      this.canvas.applyElementStyle();
-      this.canvas.toolbar.tools
-        .get(KitBuildToolbar.CAMERA)
-        .fit(null, { duration: 0 })
-        .then(() => {
-          KitBuildApp.collab(
-            "command",
-            "set-kit-map",
-            kitMap,
-            this.canvas.cy.elements().jsons()
-          );
+    let promise = new Promise((resolve, reject) => {
+      if (!kitMap) {
+        UI.errorDialog('Invalid Kit!').show();
+        return;
+      }
+      this.setKitMap(kitMap);
+      KitBuildApp.parseKitMapOptions(kitMap);
+      this.logger.setConceptMap(kitMap.conceptMap);
+      this.setLearnerMap(learnerMap ?? undefined);
+      L.log("open-kit", kitMap.map);
+      if (learnerMap) {
+        L.log("continue-recompose", learnerMap.map, null, {
+          lmid: learnerMap.map.lmid,
+          kid: kitMap.map.kid,
+          includeMapData: true,
         });
-      // this.setLearnerMap(learnerMap);
-      // this.logger.setLearnerMapId(learnerMap.map.lmid);
-      // L.log("load-learner-map", learnerMap.map, null, {
-      //   includeMapData: true,
-      //   lmid: learnerMap.map.lmid,
-      // });
-      // UI.info("Concept map loaded.").show();
-      // confirm.hide();
-      this.getFeedbackAndSubmitCount(learnerMap.map.author, learnerMap.map.kid, kitMap.parsedOptions);
-      UI.success("Saved concept map has been loaded.").show();
-    } else {
-      this.logger.reset();
-      L.log("begin-recompose");
-      KitBuildApp.resetMapToKit(kitMap, this.canvas).then(() => {
-        let cyData = this.canvas.cy.elements().jsons();
-        KitBuildApp.collab("command", "set-kit-map", kitMap, cyData);
-        this.saveInitialLearnerMap(kitMap);
-      });
-    }
+        this.logger.setLearnerMapId(learnerMap.map.lmid);
+        learnerMap.kitMap = kitMap;
+        learnerMap.conceptMap = kitMap.conceptMap;
+        this.canvas.cy.elements().remove();
+        this.canvas.cy.add(KitBuildUI.composeLearnerMap(learnerMap));
+        this.canvas.applyElementStyle();
+        this.canvas.toolbar.tools
+          .get(KitBuildToolbar.CAMERA)
+          .fit(null, { duration: 0 })
+          .then(() => {
+            KitBuildApp.collab(
+              "command",
+              "set-kit-map",
+              kitMap,
+              this.canvas.cy.elements().jsons()
+            );
+          });
+        // this.setLearnerMap(learnerMap);
+        // this.logger.setLearnerMapId(learnerMap.map.lmid);
+        // L.log("load-learner-map", learnerMap.map, null, {
+        //   includeMapData: true,
+        //   lmid: learnerMap.map.lmid,
+        // });
+        // UI.info("Concept map loaded.").show();
+        // confirm.hide();
+        this.getFeedbackAndSubmitCount(learnerMap.map.author, learnerMap.map.kid, kitMap.parsedOptions);
+        UI.success("Saved concept map has been loaded.").show();
+        resolve(learnerMap);
+      } else {
+        this.logger.reset();
+        L.log("begin-recompose");
+        KitBuildApp.resetMapToKit(kitMap, this.canvas).then(() => {
+          let cyData = this.canvas.cy.elements().jsons();
+          KitBuildApp.collab("command", "set-kit-map", kitMap, cyData);
+          this.saveInitialLearnerMap(kitMap).then((learnerMap) => {
+            resolve(learnerMap);
+            this.getFeedbackAndSubmitCount(learnerMap.map.author, learnerMap.map.kid, kitMap.parsedOptions);
+          }, err => reject(err));
+        });
+      }
+    });
+    return promise;
   }
 
   saveInitialLearnerMap(kitMap) {
-    let data = Object.assign(
-      {
-        lmid: null,
-        kid: kitMap.map.kid,
-        author: KitBuildApp.inst.user
-          ? KitBuildApp.inst.user.username
-          : null,
-        type: "draft",
-        cmid: kitMap.map.cmid,
-        create_time: null,
-        data: null,
-      },
-      KitBuildUI.buildConceptMapData(this.canvas)
-    ); // console.log(data); // return
-    this.ajax
-      .post("kitBuildApi/saveLearnerMap", {
-        data: Core.compress(data),
-      })
-      .then((learnerMap) => {
-        // console.log(kitMap);
-        this.setLearnerMap(learnerMap);
-        this.logger.setLearnerMapId(learnerMap.map.lmid);
-        UI.success("Concept map has been initialized.").show();
-        L.log("learnermap-initialized", learnerMap.map, null, {
-          lmid: learnerMap.map.lmid,
-          includeMapData: true,
+    let promise = new Promise((resolve, reject) => {
+      let data = Object.assign(
+        {
+          lmid: null,
+          kid: kitMap.map.kid,
+          author: KitBuildApp.inst.user
+            ? KitBuildApp.inst.user.username
+            : null,
+          type: "draft",
+          cmid: kitMap.map.cmid,
+          create_time: null,
+          data: null,
+        },
+        KitBuildUI.buildConceptMapData(this.canvas)
+      ); // console.log(data); // return
+      this.ajax
+        .post("kitBuildApi/saveLearnerMap", {
+          data: Core.compress(data),
+        })
+        .then((learnerMap) => {
+          // console.log(kitMap);
+          this.setLearnerMap(learnerMap);
+          this.logger.setLearnerMapId(learnerMap.map.lmid);
+          UI.success("Concept map has been initialized.").show();
+          L.log("learnermap-initialized", learnerMap.map, null, {
+            lmid: learnerMap.map.lmid,
+            includeMapData: true,
+          });
+          this.getFeedbackAndSubmitCount(learnerMap.map.author, learnerMap.map.kid, kitMap.parsedOptions);
+          resolve(learnerMap);
+        })
+        .catch((error) => {
+          UI.error(error).show();
+          reject(error);
         });
-        this.getFeedbackAndSubmitCount(learnerMap.map.author, learnerMap.map.kid, kitMap.parsedOptions);
-      })
-      .catch((error) => {
-        UI.error(error).show();
-      });
+    });
+    return promise;
   }
 
   getFeedbackAndSubmitCount(username, kid, options = null) {
@@ -599,7 +611,7 @@ class KitBuildApp {
         username: username,
         kid: openDialog.kid
       }).then((draftlms) => {
-        console.error(draftlms);
+        // console.error(draftlms);
         let list = '';
         draftlms.forEach(lm => {
           let icon = lm.type == 'draft' ? `D <i class="bi bi-download"></i>` : 'S <i class="bi bi-send"></i>';
@@ -617,6 +629,7 @@ class KitBuildApp {
           list += `<span><i class="bi bi-check-lg text-primary d-none"></i></span>`;
           list += `</div>`;
         });
+        list = list == '' ? '<small class="text-danger"><em>No previous concept maps were found for this kit.</em><small>' : list;
         $('#continue-dialog .draft-content').html(list);
       });
     });
@@ -645,7 +658,12 @@ class KitBuildApp {
         let kitMap = maps[0];
         let learnerMap = maps[1];
         KitBuildApp.parseKitMapOptions(kitMap);
-        this.openLearnerMap(kitMap, learnerMap);
+        this.openLearnerMap(kitMap, learnerMap).then((learnerMap) => {
+          if (learnerMap.map.type == 'fix') {
+            this.setLearnerMap(null);
+            $(".app-navbar .bt-save").trigger('click');
+          }
+        }, err => UI.errorDialog(err).show());
         continueDialog.hide();
         openDialog.hide();
       }, (err) => UI.errorDialog(err).show());
