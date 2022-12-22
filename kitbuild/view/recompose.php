@@ -139,7 +139,7 @@
     <i class="bi bi-x-lg bt-close bt-x" role="button"></i>
   </h6>
   <div class="card-body">
-    <div class="draft-content"></div>
+    <div class="draft-content d-flex flex-column overflow-auto thin-scroll" style="min-height:0; max-height: 200px;"></div>
   </div>
   <div class="card-footer text-end">
     <button class="btn btn-sm btn-secondary bt-cancel bt-close px-3"><?php echo Lang::l('cancel'); ?></button>

@@ -595,18 +595,24 @@ class KitBuildApp {
       }
       continueDialog.show();
       $('#draft-content').html('Loading...');
-      this.ajax.post('kitBuildApi/getDraftLearnerMapListOfKit', {
+      this.ajax.post('kitBuildApi/getDraftAndFixLearnerMapListOfKit', {
         username: username,
         kid: openDialog.kid
       }).then((draftlms) => {
         console.error(draftlms);
         let list = '';
         draftlms.forEach(lm => {
+          let icon = lm.type == 'draft' ? `D <i class="bi bi-download"></i>` : 'S <i class="bi bi-send"></i>';
+          let type = lm.type == 'draft' ? `Draft` : 'Submitted';
+          let color = lm.type == 'draft' ? 'secondary' : 'danger';
+          let create_time = lm.create_time.replaceAll("-", "/");
+          let [date, time] = create_time.split(" ", 2);
           list += `<div class="item-draft-learnermap list-item p-1" role="button" `
           list += `  data-lmid="${lm.lmid}" data-kid="${lm.kid}" data-author="${lm.author}">`;
           list += `<span>`;
-          list += `<span class="badge rounded-pill bg-secondary me-2">${lm.lmid}</span>`;
-          list += `<span>${lm.create_time}</span>`;
+          list += `<span class="badge rounded-pill bg-${color}" title="${type}">${icon}</span>`;
+          list += `<span class="ms-2"><i class="bi bi-calendar-date"></i> ${date} <i class="bi bi-clock ms-3"></i> ${time}</span>`;
+          list += `<span class="badge rounded-pill bg-warning text-dark ms-2">ID: ${lm.lmid}</span>`;
           list += `</span>`;
           list += `<span><i class="bi bi-check-lg text-primary d-none"></i></span>`;
           list += `</div>`;

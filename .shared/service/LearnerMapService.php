@@ -594,6 +594,24 @@ class LearnerMapService extends CoreService {
     }
   }
 
+  function getDraftAndFixLearnerMapListOfKit($username, $kid) {
+    try {
+      $db = self::instance();
+      $qb = QB::instance('learnermap');
+      $qb->select()
+        ->where('author', QB::esc($username))
+        ->where('kid', $kid === null ? QB::IS : QB::EQ, $kid)
+        ->where(QB::OG, QB::AND)
+        ->where('type', 'draft')
+        ->where('type', QB::EQ, 'fix', QB::OR)
+        ->where(QB::EG)
+        ->orderBy('create_time', QB::DESC); // echo $qb->get(); exit;
+      return $db->query($qb->get());
+    } catch (Exception $ex) {
+      throw CoreError::instance($ex->getMessage());
+    }
+  }
+
   function getFeedbackAndSubmitCount($username, $kid) {
     try {
       $db = self::instance();
