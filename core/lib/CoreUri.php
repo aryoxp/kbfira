@@ -20,6 +20,7 @@ class CoreUri {
 
   private $app;
   private $controller;
+  private $controllerId;
   private $method;
   private $args;
 
