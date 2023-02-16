@@ -5,6 +5,8 @@ defined('CORE') or die();
 
 class CoreRuntimeController extends CoreApi {
 
+  private $coreRuntime;
+
   function __construct($path = null) {
     $this->coreRuntime = CoreRuntime::instance($path);
     // $this->runtimeFile = CORE_APP_PATH . CORE_APP_RUNTIME . "runtime.ini";

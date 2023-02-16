@@ -17,6 +17,8 @@ class Core {
   private $uri;
   private $language;
 
+  private $runtime;
+
   const AUTOLOADER = "autoloader";
   const CONFIG     = "config";
   const URI        = "uri";

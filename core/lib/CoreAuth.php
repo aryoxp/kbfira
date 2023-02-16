@@ -6,6 +6,10 @@ defined('CORE') or die();
 class CoreAuth extends CoreService {
 
 	private static $instance;
+
+  private $app;
+  private $db;
+  private $rids = [];
   
   const AUTH_APP = 'app';
   const AUTH_MENU = 'menu';

@@ -10,6 +10,10 @@ class ModuleController extends CoreController {
   protected $styles  = [];
   protected $plugins = [];
 
+  private $module;
+  private $controller;
+  private $method;
+
   public function __construct() {
     parent::__construct();
     // should be read from runtime file

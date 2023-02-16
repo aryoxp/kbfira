@@ -8,6 +8,11 @@ class CoreRuntime {
   const PATH_MODULE = 'module';
 
   private $runtimes = array();
+  private $settings;
+  private $config;
+
+  private $location;
+  private $module;
 
   public $path;
   public $file;
