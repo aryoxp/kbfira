@@ -323,6 +323,12 @@ class MakeKitApp {
       partitionTool: partitionTool
     }));
 
+    let textSelectionTool = new KitBuildTextSelectionTool(canvas, {
+      element: '#kit-content-dialog .content'
+    });
+    textSelectionTool.on('event', this.onTextSelectionToolEvent.bind(this));
+    canvas.canvasTool.addTool("text-select", textSelectionTool);
+
     this.canvas = canvas;
     this.session = Core.instance().session();
     this.ajax = Core.instance().ajax();
@@ -361,8 +367,13 @@ class MakeKitApp {
   setKitMap(kitMap) { console.warn("KIT MAP SET:", kitMap)
     this.kitMap = kitMap
     if (kitMap) {
-      this.setConceptMap(kitMap.conceptMap)
-      this.session.set('kid', kitMap.map.kid)
+      this.setConceptMap(kitMap.conceptMap);
+      this.session.set('kid', kitMap.map.kid);
+      if (kitMap && kitMap.map && kitMap.map.text) {
+        this.ajax.get(`contentApi/getText/${kitMap.map.text}`).then(text => {
+          this.contentDialog.setContent(text);
+        });
+      }
       let status = `<span class="mx-2 d-flex align-items-center status-kit">`
         + `<span class="badge rounded-pill bg-primary">ID: ${kitMap.map.kid}</span>`
         + `<span class="text-secondary ms-2 text-truncate"><small>${kitMap.map.name}</small></span>`
@@ -686,8 +697,36 @@ class MakeKitApp {
       textDialog.kitMap = kitMap;
       return textDialog
     }
-  
-  
+
+    this.contentDialog = UI.modal('#kit-content-dialog', {
+      hideElement: '.bt-close',
+      backdrop: false,
+      get height() { return $('body').height() * .7 | 0 },
+      get offset() { return { left: ($('body').width() * .1 | 0) } },
+      draggable: true,
+      dragHandle: '.drag-handle',
+      resizable: true,
+      resizeHandle: '.resize-handle',
+      minWidth: 375,
+      minHeight: 200,
+      onShow: () => {
+        let sdown = new showdown.Converter({
+          strikethrough: true,
+          tables: true,
+          simplifiedAutoLink: true
+        });
+        sdown.setFlavor('github');
+        let htmlText = this.contentDialog.text && this.contentDialog.text.content ? 
+          sdown.makeHtml(this.contentDialog.text.content) : 
+          "<em>Content text unavailable.</em>";
+        $('#kit-content-dialog .content').html(htmlText);
+        if (typeof hljs != "undefined") hljs.highlightAll();
+      }
+    });
+    this.contentDialog.setContent = (text, type = 'md') => {
+      this.contentDialog.text = text;
+      return this.contentDialog;
+    }
   
   
   
@@ -1039,8 +1078,9 @@ class MakeKitApp {
         this.ajax.get(`contentApi/getText/${kitMap.map.text}`).then(text => {
           let assignedTextHtml = `<span class="text-danger">Text:</span> ${text.title} <span class="badge rounded-pill bg-danger bt-unassign px-3 ms-3" role="button" data-text="${text.tid}" data-kid="${textDialog.kitMap.map.kid}">Unassign</span>`
           $("#assigned-text").html(assignedTextHtml)
-        })
-        this.setKitMap(kitMap)
+          this.contentDialog.setContent(text);
+        });
+        this.setKitMap(kitMap);
       }).catch(error => console.error(error))
     })
   
@@ -1053,6 +1093,36 @@ class MakeKitApp {
         $("#assigned-text").html('<em class="text-danger px-3">This kit has no text assigned.</em>')
         this.setKitMap(kitMap)
       }).catch(error => console.error(error))
+    })
+
+
+
+
+
+
+
+
+  
+    /** 
+     * Content
+     * */
+  
+    $('.app-navbar').on('click', '.bt-text', () => { // console.log(RecomposeApp.inst)
+      if (!MakeKitApp.inst.kitMap) {
+        UI.dialog('Please open a kit to see its content.').show();
+        return;
+      }
+      this.contentDialog.show();
+    })
+  
+    $('#kit-content-dialog .bt-scroll-top').on('click', (e) => {
+      $('#kit-content-dialog .content').parent().animate({scrollTop: 0}, 200)
+    })
+  
+    $('#kit-content-dialog .bt-scroll-more').on('click', (e) => {
+      let height = $('#kit-content-dialog .content').parent().height()
+      let scrollTop = $('#kit-content-dialog .content').parent().scrollTop()
+      $('#kit-content-dialog .content').parent().animate({scrollTop: scrollTop + height - 16}, 200)
     })
   
   
@@ -1212,6 +1282,37 @@ class MakeKitApp {
       }).show()
     })
   
+  }
+
+  onTextSelectionToolEvent(canvasId, event, data, options) {
+    // console.log(this, canvasId, event, data, options);
+    switch(event) {
+      case 'action':
+        this.contentDialog.show();
+        let element = $('#kit-content-dialog .content').get(0);
+        if (data.start && data.end) {
+          let textSelectionTool = this.canvas.canvasTool.tools.get("text-select");
+          textSelectionTool.restoreSelection(element, {
+            start: data.start,
+            end: data.end
+          });
+        }
+        break;
+      case 'select':
+        if (data.node) {
+          let node = data.node;
+          let sel = data.selection;
+          if (sel.start == sel.end) {
+            node.removeData('selectStart selectEnd');
+            UI.error('Text selection has been removed from the selected node.').show();
+          } else {
+            node.data('selectStart', sel.start);
+            node.data('selectEnd', sel.end);
+            UI.success('Text selection has been saved to the selected node.').show();
+          }
+        } 
+        break;
+    }
   }
   
   

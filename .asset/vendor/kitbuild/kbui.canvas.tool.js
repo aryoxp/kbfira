@@ -1090,6 +1090,95 @@ class KitBuildPropositionAuthorTool extends KitBuildCanvasTool {
   }
 }
 
+class KitBuildTextSelectionTool extends KitBuildCanvasTool {
+  constructor(canvas, options) {
+    super(
+      canvas,
+      Object.assign(
+        {
+          showOn: KitBuildCanvasTool.SH_CONCEPT | KitBuildCanvasTool.SH_LINK,
+          color: "#24b381",
+          icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-input-cursor-text" viewBox="-4 -4 24 24"><path fill-rule="evenodd" d="M5 2a.5.5 0 0 1 .5-.5c.862 0 1.573.287 2.06.566.174.099.321.198.44.286.119-.088.266-.187.44-.286A4.165 4.165 0 0 1 10.5 1.5a.5.5 0 0 1 0 1c-.638 0-1.177.213-1.564.434a3.49 3.49 0 0 0-.436.294V7.5H9a.5.5 0 0 1 0 1h-.5v4.272c.1.08.248.187.436.294.387.221.926.434 1.564.434a.5.5 0 0 1 0 1 4.165 4.165 0 0 1-2.06-.566A4.561 4.561 0 0 1 8 13.65a4.561 4.561 0 0 1-.44.285 4.165 4.165 0 0 1-2.06.566.5.5 0 0 1 0-1c.638 0 1.177-.213 1.564-.434.188-.107.335-.214.436-.294V8.5H7a.5.5 0 0 1 0-1h.5V3.228a3.49 3.49 0 0 0-.436-.294A3.166 3.166 0 0 0 5.5 2.5.5.5 0 0 1 5 2z"/><path d="M10 5h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-4v1h4a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-4v1zM6 5V4H2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h4v-1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h4z"/></svg>',
+          gridPos: { x: 0, y: -1 },
+        },
+        options
+      )
+    );
+    if (!options.element) console.warning('KitBuildSelectTextTool: Required selection element container selector is not set, e.g., #content');
+    else {
+      let el = $(options.element).get(0);
+      $(options.element).on('mouseup', (e) => {
+        let sel = this.saveSelection(el);
+        this.broadcastEvent('select', {selection: sel, node: this.node});
+      });
+    }
+  }
+
+  action(event, e, nodes) {
+    // console.error(event, e, nodes, this);
+    this.node = nodes[0];
+    let ss = this.node.data('selectStart');
+    let se = this.node.data('selectEnd');
+    this.broadcastEvent(`action`, {event: event, cyEvent: e, nodes: nodes, start: ss, end: se});
+    return;
+  }
+
+  saveSelection(containerEl) {
+    var range = window.getSelection().getRangeAt(0);
+    var preSelectionRange = range.cloneRange();
+    preSelectionRange.selectNodeContents(containerEl);
+    preSelectionRange.setEnd(range.startContainer, range.startOffset);
+    var start = preSelectionRange.toString().length;
+    return {
+      start: start,
+      end: start + range.toString().length,
+    };
+  };
+
+  restoreSelection(containerEl, savedSel) {
+    var charIndex = 0,
+      range = document.createRange();
+    range.setStart(containerEl, 0);
+    range.collapse(true);
+    var nodeStack = [containerEl],
+      node,
+      foundStart = false,
+      stop = false;
+
+    while (!stop && (node = nodeStack.pop())) {
+      if (node.nodeType == 3) {
+        var nextCharIndex = charIndex + node.length;
+        if (
+          !foundStart &&
+          savedSel.start >= charIndex &&
+          savedSel.start <= nextCharIndex
+        ) {
+          range.setStart(node, savedSel.start - charIndex);
+          foundStart = true;
+        }
+        if (
+          foundStart &&
+          savedSel.end >= charIndex &&
+          savedSel.end <= nextCharIndex
+        ) {
+          range.setEnd(node, savedSel.end - charIndex);
+          stop = true;
+        }
+        charIndex = nextCharIndex;
+      } else {
+        var i = node.childNodes.length;
+        while (i--) {
+          nodeStack.push(node.childNodes[i]);
+        }
+      }
+    }
+
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  };
+}
+
 class KitBuildCanvasToolCanvas {
   constructor(canvas, options) {
     // cache the Cytoscape canvas
@@ -2451,6 +2540,7 @@ class UndoRedoMove {
     });
   }
 }
+
 class UndoRedoMoves {
   constructor(data) {
     Object.assign(this, data);
