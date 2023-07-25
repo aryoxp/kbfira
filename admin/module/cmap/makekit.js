@@ -329,6 +329,21 @@ class MakeKitApp {
     textSelectionTool.on('event', this.onTextSelectionToolEvent.bind(this));
     canvas.canvasTool.addTool("text-select", textSelectionTool);
 
+    let distanceColorTool = new KitBuildDistanceColorTool(canvas, {});
+    distanceColorTool.on('event', this.onDistanceColorToolEvent.bind(this));
+    canvas.canvasTool.addTool("distance-color", distanceColorTool);
+    canvas.cy.on('drag', 'node', (e) => {
+      let node = e.target;
+      if (node.data('type') != 'concept') return;
+      if (this.conceptMap) {
+        distanceColorTool.showColor(node, this.conceptMap, canvas);
+      }
+    })
+    canvas.cy.on('dragfree', (e) => {
+      let node = e.target;
+      node.removeStyle('border-color border-opacity');
+    })
+
     this.canvas = canvas;
     this.session = Core.instance().session();
     this.ajax = Core.instance().ajax();
@@ -1311,6 +1326,50 @@ class MakeKitApp {
             UI.success('Text selection has been saved to the selected node.').show();
           }
         } 
+        break;
+    }
+  }
+
+  onDistanceColorToolEvent(canvasId, event, data, options) {
+    // console.log(canvasId, event, data, options);
+    switch(event) {
+      case 'action':
+        let cid = data.node.id();
+        let lids = new Set();
+        let cids = new Set();
+        cids.add(cid);
+
+        // find connected links
+        for(let lt of this.conceptMap.linktargets) {
+          if (lt.target_cid == cid) lids.add(lt.lid);
+        }
+        for(let l of this.conceptMap.links) {
+          if (l.source_cid == cid) lids.add(l.lid);
+        } 
+
+        // find all concepts connected to the link
+        for(let l of this.conceptMap.links) {
+          if (lids.has(l.lid)) cids.add(l.source_cid);
+        }
+        for(let l of this.conceptMap.linktargets) {
+          if (lids.has(l.lid)) cids.add(l.target_cid);
+        }
+        
+        // build selection filter
+        let filter = ''
+        cids.forEach(x => filter += filter ? `,[id="${x}"]`: `[id="${x}"]`);
+        let concepts = this.canvas.cy.nodes().filter(filter);
+
+        // select all related concepts.
+        setTimeout(() => {
+          concepts.select().trigger("select");
+          concepts.selectify();
+          if (this.canvas.cy.nodes(":selected").length > 1) {
+            this.canvas.canvasTool.activeTools = [];
+            this.canvas.canvasTool.clearCanvas();
+            this.canvas.canvasTool.drawSelectedNodesBoundingBox();
+          }
+        }, 50);
         break;
     }
   }

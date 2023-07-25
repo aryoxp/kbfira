@@ -1179,6 +1179,134 @@ class KitBuildTextSelectionTool extends KitBuildCanvasTool {
   };
 }
 
+class KitBuildDistanceColorTool extends KitBuildCanvasTool {
+  constructor(canvas, options) {
+    super(
+      canvas,
+      Object.assign(
+        {
+          showOn: KitBuildCanvasTool.SH_CONCEPT,
+          color: "#b32448",
+          nearColor: "#00db63",
+          farColor: "#b32448",
+          range: 500,
+          distanceReference: 300,
+          useDistanceReference: true,
+          icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-input-cursor-text" viewBox="-6 -6 28 28"><path d="M15 12h-4v3h4v-3ZM5 12H1v3h4v-3ZM0 8a8 8 0 1 1 16 0v8h-6V8a2 2 0 1 0-4 0v8H0V8Z"/></svg>',
+          gridPos: { x: 1, y: -1 },
+        },
+        options
+      )
+    );
+  }
+
+  action(event, e, nodes) {
+    // console.error(event, e, nodes, this);
+    this.node = nodes[0];
+    this.broadcastEvent(`action`, {node: this.node});
+    return;
+  }
+
+  distance(posA, posB) {
+    return parseInt(Math.sqrt(Math.pow((posA.x - posB.x), 2) + Math.pow((posA.y - posB.y), 2)));
+  }
+
+  hexToRgb(hex) {
+    // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+    var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+    hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+      return r + r + g + g + b + b;
+    });
+  
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
+  }
+
+  rgbToHex(r, g, b) {
+    return "#" + (1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1);
+  }
+
+  getColor(distanceCurrent, distanceReference, colorRange) {
+
+    // get near and far color
+    let near = colorRange ? colorRange.nearColor : this.settings.nearColor;
+    let far = colorRange ? colorRange.farColor : this.settings.farColor;
+    near = this.hexToRgb(near);
+    far = this.hexToRgb(far);
+
+    // normalize range value to 0~255 
+    let distance = parseInt(((distanceCurrent - distanceReference) / this.settings.range) * 255);
+
+    // truncate invalid distance
+    if (distance < 0) distance = 0;
+    if (distance > 255) distance = 255;
+
+    // console.log(distance, distanceCurrent, distanceReference);
+    let r = near.r + (distance * (far.r - near.r))/255;
+    let g = near.g + (distance * (far.g - near.g))/255;
+    let b = near.b + (distance * (far.b - near.b))/255;
+    return this.rgbToHex(r, g, b);
+
+  }
+
+  showColor(node, conceptMap, canvas) {
+    // get associated link of this concept.
+    let cid = node.id();
+    let lid = null;
+    for(let lt of conceptMap.linktargets) {
+      if (lt.target_cid == cid) lid = lt.lid;
+    }
+    if (lid == null) {
+      for(let l of conceptMap.links) {
+        if (l.source_cid == cid) lid = l.lid;
+      } 
+    }
+
+    let distanceReference = 0; 
+    if (this.settings.useDistanceReference) 
+      distanceReference = this.settings.distanceReference;
+    else {
+      //calculate distance reference from goalmap
+      let refLink = null;
+      for(let l of conceptMap.links) {
+        // console.warn(l, lid);
+        if (l.lid == lid) refLink = l;
+      }
+      let refConcept = null;
+      for(let c of conceptMap.concepts) {
+        if (c.cid == cid) refConcept = c;
+      }
+      // console.error(refLink, refConcept);
+      distanceReference = this.distance({
+        x: parseInt(refLink.x),
+        y: parseInt(refLink.y)
+      },{
+        x: parseInt(refConcept.x),
+        y: parseInt(refConcept.y)
+      });
+    }
+
+    let link = canvas.cy.nodes(`#${lid}`);
+    let concept = node;
+    let distance = this.distance({
+      x: link.position().x,
+      y: link.position().y
+    },{
+      x: concept.position().x,
+      y: concept.position().y
+    });
+    let color = this.getColor(distance, distanceReference);
+    // console.warn(node, color, distance, distanceReference);
+    node.style('border-color', color);
+    node.style('border-opacity', 1.0);
+  }
+
+}
+
 class KitBuildCanvasToolCanvas {
   constructor(canvas, options) {
     // cache the Cytoscape canvas
