@@ -18,7 +18,7 @@
       <i class="bi bi-arrow-left-square h4 m-2 text-secondary"></i>
     </a>
   </div>
-  <div class="status-panel bg-white flex-fill d-flex align-items-center" style="overflow-x: scroll;"></div>
+  <div class="status-panel bg-white flex-fill d-flex align-items-center scroll-x me-2 ms-2" style="overflow-x: auto;"></div>
   <div class="status-control d-flex align-items-center me-2"></div>
 </div>
 </div>

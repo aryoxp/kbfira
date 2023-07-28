@@ -836,24 +836,22 @@ class KitBuildUI {
       || !kitMapData.links || !kitMapData.linktargets)
       throw "Invalid kit data.";
     try {
-      let kitMap = []
+      let kitMap = [];
+      let conceptsMap = new Map();
+      let linksMap = new Map();
+      for(let c of kitMapData.concepts) conceptsMap.set(c.cid, c);
+      for(let l of kitMapData.links) linksMap.set(l.lid, l);
       let getConceptPosition = (cid) => {
-        for(let c of kitMapData.concepts) {
-          if (c.cid == cid) return {x: parseInt(c.x), y: parseInt(c.y)};
-        }
-        return false;
+        let c = conceptsMap.get(cid);
+        return c ? {x: parseInt(c.x), y: parseInt(c.y)} : false;
       }
       let getLinkPosition = (lid) => {
-        for(let l of kitMapData.links) {
-          if (l.lid == lid) return {x: parseInt(l.x), y: parseInt(l.y)};
-        }
-        return false;
+        let l = linksMap.get(lid);
+        return l ? {x: parseInt(l.x), y: parseInt(l.y)} : false;
       }
       let getLink = (lid) => {
-        for(let l of kitMapData.links) {
-          if (l.lid == lid) return l
-        }
-        return false;
+        let l = linksMap.get(lid);
+        return l ? linksMap.get(lid) : false;
       }
       let countLinkTargets = (lid) => {
         let count = 0
@@ -867,7 +865,7 @@ class KitBuildUI {
         kitMap.push({
           group: 'nodes',
           position: position === false ? {x: parseInt(c.x), y: parseInt(c.y)} : position,
-          data: Object.assign(JSON.parse(c.data), { 
+          data: Object.assign(JSON.parse(c.data), JSON.parse(conceptsMap.get(c.cid).data), { 
             id: c.cid,
             label: c.label,
           }),
@@ -879,7 +877,7 @@ class KitBuildUI {
         kitMap.push({
           group: 'nodes',
           position: position === false ? {x: parseInt(l.x), y: parseInt(l.y)} : position,
-          data: Object.assign(JSON.parse(l.data), { 
+          data: Object.assign(JSON.parse(l.data), JSON.parse(linksMap.get(l.lid).data), { 
             id: l.lid,
             label: l.label,
             limit: countLinkTargets(l.lid)
@@ -918,26 +916,27 @@ class KitBuildUI {
       // console.log(kitSet);
       let kitMap = [];
       let setids = [];
+      
+      let conceptsMap = new Map();
+      let linksMap = new Map();
+      for(let c of kitMapData.concepts) conceptsMap.set(c.cid, c);
+      for(let l of kitMapData.links) linksMap.set(l.lid, l);
+
       kitSet.sets.forEach(set => {
         if (parseInt(set.order) <= order) setids.push(set.setid);
       })
+
       let getConceptPosition = (cid) => {
-        for(let c of kitMapData.concepts) {
-          if (c.cid == cid) return {x: parseInt(c.x), y: parseInt(c.y)};
-        }
-        return false;
+        let c = conceptsMap.get(cid);
+        return c ? {x: parseInt(c.x), y: parseInt(c.y)} : false;
       }
       let getLinkPosition = (lid) => {
-        for(let l of kitMapData.links) {
-          if (l.lid == lid) return {x: parseInt(l.x), y: parseInt(l.y)};
-        }
-        return false;
+        let l = linksMap.get(lid);
+        return l ? {x: parseInt(l.x), y: parseInt(l.y)} : false;
       }
       let getLink = (lid) => {
-        for(let l of kitMapData.links) {
-          if (l.lid == lid) return l
-        }
-        return false;
+        let l = linksMap.get(lid);
+        return l ? linksMap.get(lid) : false;
       }
       let countLinkTargets = (lid) => {
         let count = 0
@@ -960,7 +959,7 @@ class KitBuildUI {
         kitMap.push({
           group: 'nodes',
           position: position === false ? {x: parseInt(c.x), y: parseInt(c.y)} : position,
-          data: Object.assign(JSON.parse(c.data), { 
+          data: Object.assign(JSON.parse(c.data), JSON.parse(conceptsMap.get(c.cid).data), { 
             id: c.cid,
             label: c.label,
           }),
@@ -980,7 +979,7 @@ class KitBuildUI {
         kitMap.push({
           group: 'nodes',
           position: position === false ? {x: parseInt(l.x), y: parseInt(l.y)} : position,
-          data: Object.assign(JSON.parse(l.data), { 
+          data: Object.assign(JSON.parse(l.data), JSON.parse(linksMap.get(l.lid).data), { 
             id: l.lid,
             label: l.label,
             limit: countLinkTargets(l.lid)
@@ -1039,6 +1038,12 @@ class KitBuildUI {
       // console.log(kitSet);
       let kitMap = [];
       let setids = [];
+
+      let conceptsMap = new Map();
+      let linksMap = new Map();
+      for(let c of kitMapData.concepts) conceptsMap.set(c.cid, c);
+      for(let l of kitMapData.links) linksMap.set(l.lid, l);
+
       for (let set of kitSet.sets) {
         if (parseInt(set.order) == order) {
           setids.push(set.setid);
@@ -1046,22 +1051,16 @@ class KitBuildUI {
         }
       }
       let getConceptPosition = (cid) => {
-        for(let c of kitMapData.concepts) {
-          if (c.cid == cid) return {x: parseInt(c.x), y: parseInt(c.y)};
-        }
-        return false;
+        let c = conceptsMap.get(cid);
+        return c ? {x: parseInt(c.x), y: parseInt(c.y)} : false;
       }
       let getLinkPosition = (lid) => {
-        for(let l of kitMapData.links) {
-          if (l.lid == lid) return {x: parseInt(l.x), y: parseInt(l.y)};
-        }
-        return false;
+        let l = linksMap.get(lid);
+        return l ? {x: parseInt(l.x), y: parseInt(l.y)} : false;
       }
       let getLink = (lid) => {
-        for(let l of kitMapData.links) {
-          if (l.lid == lid) return l
-        }
-        return false;
+        let l = linksMap.get(lid);
+        return l ? linksMap.get(lid) : false;
       }
       let countLinkTargets = (lid) => {
         let count = 0
@@ -1084,7 +1083,7 @@ class KitBuildUI {
         kitMap.push({
           group: 'nodes',
           position: position === false ? {x: parseInt(c.x), y: parseInt(c.y)} : position,
-          data: Object.assign(JSON.parse(c.data), { 
+          data: Object.assign(JSON.parse(c.data), JSON.parse(conceptsMap.get(c.cid).data), { 
             id: c.cid,
             label: c.label,
           }),
@@ -1104,7 +1103,7 @@ class KitBuildUI {
         kitMap.push({
           group: 'nodes',
           position: position === false ? {x: parseInt(l.x), y: parseInt(l.y)} : position,
-          data: Object.assign(JSON.parse(l.data), { 
+          data: Object.assign(JSON.parse(l.data), JSON.parse(linksMap.get(l.lid).data), { 
             id: l.lid,
             label: l.label,
             limit: countLinkTargets(l.lid)
