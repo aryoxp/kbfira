@@ -1109,7 +1109,7 @@ class KitBuildTextSelectionTool extends KitBuildCanvasTool {
       let el = $(options.element).get(0);
       $(options.element).on('mouseup', (e) => {
         let sel = this.saveSelection(el);
-        this.broadcastEvent('select', {selection: sel, node: this.node});
+        this.broadcastEvent('select', {selection: sel, node: this.node ? this.node.data() : undefined});
       });
     }
   }
@@ -1119,7 +1119,7 @@ class KitBuildTextSelectionTool extends KitBuildCanvasTool {
     this.node = nodes[0];
     let ss = this.node.data('selectStart');
     let se = this.node.data('selectEnd');
-    this.broadcastEvent(`action`, {event: event, cyEvent: e, nodes: nodes, start: ss, end: se});
+    this.broadcastEvent(`action`, {event: event, node: this.node.data(), start: ss, end: se});
     return;
   }
 
@@ -1192,6 +1192,7 @@ class KitBuildDistanceColorTool extends KitBuildCanvasTool {
           range: 500,
           distanceReference: 300,
           useDistanceReference: true,
+          useMagnet: true,
           icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-input-cursor-text" viewBox="-6 -6 28 28"><path d="M15 12h-4v3h4v-3ZM5 12H1v3h4v-3ZM0 8a8 8 0 1 1 16 0v8h-6V8a2 2 0 1 0-4 0v8H0V8Z"/></svg>',
           gridPos: { x: 1, y: -1 },
         },
@@ -1200,10 +1201,14 @@ class KitBuildDistanceColorTool extends KitBuildCanvasTool {
     );
   }
 
+  showOn(what, node) {
+    return super.showOn(what, node) & this.settings.useMagnet;
+  }
+
   action(event, e, nodes) {
     // console.error(event, e, nodes, this);
     this.node = nodes[0];
-    this.broadcastEvent(`action`, {node: this.node});
+    this.broadcastEvent(`action`, {node: this.node.data()});
     return;
   }
 
@@ -1305,6 +1310,56 @@ class KitBuildDistanceColorTool extends KitBuildCanvasTool {
     node.style('border-opacity', 1.0);
   }
 
+}
+
+class KitBuildBugTool extends KitBuildCanvasTool {
+  constructor(canvas, options) {
+    super(
+      canvas,
+      Object.assign(
+        {
+          showOn: KitBuildCanvasTool.SH_CONCEPT | KitBuildCanvasTool.SH_LINK,
+          dialogContainerSelector: 'body',
+          color: "#dc3545",
+          width: '300px',
+          icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-input-cursor-text" viewBox="-6 -6 28 28">  <path d="M4.355.522a.5.5 0 0 1 .623.333l.291.956A4.979 4.979 0 0 1 8 1c1.007 0 1.946.298 2.731.811l.29-.956a.5.5 0 1 1 .957.29l-.41 1.352A4.985 4.985 0 0 1 13 6h.5a.5.5 0 0 0 .5-.5V5a.5.5 0 0 1 1 0v.5A1.5 1.5 0 0 1 13.5 7H13v1h1.5a.5.5 0 0 1 0 1H13v1h.5a1.5 1.5 0 0 1 1.5 1.5v.5a.5.5 0 1 1-1 0v-.5a.5.5 0 0 0-.5-.5H13a5 5 0 0 1-10 0h-.5a.5.5 0 0 0-.5.5v.5a.5.5 0 1 1-1 0v-.5A1.5 1.5 0 0 1 2.5 10H3V9H1.5a.5.5 0 0 1 0-1H3V7h-.5A1.5 1.5 0 0 1 1 5.5V5a.5.5 0 0 1 1 0v.5a.5.5 0 0 0 .5.5H3c0-1.364.547-2.601 1.432-3.503l-.41-1.352a.5.5 0 0 1 .333-.623zM4 7v4a4 4 0 0 0 3.5 3.97V7H4zm4.5 0v7.97A4 4 0 0 0 12 11V7H8.5zM12 6a3.989 3.989 0 0 0-1.334-2.982A3.983 3.983 0 0 0 8 2a3.983 3.983 0 0 0-2.667 1.018A3.989 3.989 0 0 0 4 6h8z"/></svg>',
+          gridPos: { x: -1, y: -1 },
+        },
+        options
+      )
+    );
+    this.handleEvent();
+  }
+
+  action(event, e, nodes) {
+    // console.error(event, e, nodes, this);
+    this.node = nodes[0];
+    this.broadcastEvent(`action`, {node: this.node.data()});
+    return;
+  }
+
+  handleEvent() {
+    $('#bug-dialog').on('click', '.bt-set-bug', (e) => {
+      let bugLabel = $('#bug-dialog .input-bug-label').val();
+      let correctLabel = $('#bug-dialog .input-correct-label').val();
+      this.node.data('correct-label', correctLabel);
+      this.node.data('bug-label', bugLabel);
+      UI.info('Bug information has been set.').show();
+      console.log(this.node.data(), correctLabel, bugLabel, this, this.dialog);
+      if (this.dialog) this.dialog.hide();
+    });
+
+    $('#bug-dialog').on('click', '.bt-remove-bug', (e) => {
+      let correctLabel = this.node.data('correct-label');
+      if (correctLabel) {
+        $('#bug-dialog .input-correct-label').val(correctLabel);
+        this.node.data('label', correctLabel);
+      }
+      $('#bug-dialog .input-bug-label').val('');
+      this.node.removeData('correct-label bug-label');
+      console.log(this.node.data(), correctLabel);
+    });
+  }
 }
 
 class KitBuildCanvasToolCanvas {
