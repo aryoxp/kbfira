@@ -341,7 +341,7 @@ class KitBuildDuplicateTool extends KitBuildCanvasTool {
   }
 
   actionMulti(event, e, nodes) {
-    console.log(nodes.length);
+    // console.log(nodes.length);
     if (!nodes) return;
     let duplicates = nodes.unselect().jsons();
     let duplicateNodes = [];
@@ -637,7 +637,7 @@ class KitBuildCreateConceptTool extends KitBuildCanvasTool {
     let color = nodeCreateTool
       ? nodeCreateTool.textColor(backgroundColor)
       : "#000000";
-    console.log(backgroundColor, color);
+    // console.log(backgroundColor, color);
     let floatingLabel = `<form class="kb-floating-label position-absolute border rounded d-flex align-items-center justify-content-center" style="width: 180px; height: 64px; background-color: ${backgroundColor}; color: ${color};"><input class="kb-node-label text-center border-0 flex-fill" value="${content}" style="background-color:transparent; height:100%;  color: ${color};"></form>`;
     $(".kb-floating-label").remove();
     $(floatingLabel)
@@ -1345,8 +1345,8 @@ class KitBuildBugTool extends KitBuildCanvasTool {
       this.node.data('correct-label', correctLabel);
       this.node.data('bug-label', bugLabel);
       UI.info('Bug information has been set.').show();
-      console.log(this.node.data(), correctLabel, bugLabel, this, this.dialog);
       if (this.dialog) this.dialog.hide();
+      // console.log(this.node.data(), correctLabel, bugLabel, this, this.dialog);
     });
 
     $('#bug-dialog').on('click', '.bt-remove-bug', (e) => {
@@ -1357,7 +1357,7 @@ class KitBuildBugTool extends KitBuildCanvasTool {
       }
       $('#bug-dialog .input-bug-label').val('');
       this.node.removeData('correct-label bug-label');
-      console.log(this.node.data(), correctLabel);
+      // console.log(this.node.data(), correctLabel);
     });
   }
 }
