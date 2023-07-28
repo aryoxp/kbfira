@@ -124,3 +124,27 @@
     <button class="btn btn-sm btn-primary bt-modify px-3 ms-1">Modify My Map</button>
   </div>
 </div>
+
+<div id="feedback-mode-dialog" class="card d-none">
+  <div class="card-body text-center">
+    <div class="feedback-content text-center d-flex align-items-center justify-content-center">
+      <i class="bi bi-exclamation-triangle fs-3 text-danger mx-3"></i> You are in Feedback mode.
+    </div>
+    <button class="btn bt-modify btn-warning btn-sm mt-2">Continue Kit-Building</button>
+  </div>
+</div>
+
+<div id="bug-dialog" class="card d-none">
+  <h6 class="card-header d-flex">
+    <span class="drag-handle flex-fill">
+      <i class="dialog-icon bi bi-bug-fill me-2 text-danger"></i> 
+      <span class="dialog-title text-small"><small>Bug: Select Correct Concept</small></span></span>
+    <i class="bi bi-x-lg bt-close bt-x" role="button"></i>
+  </h6>
+  <div class="card-body">
+    <div class="bug-options"></div>
+  </div>
+  <div class="card-footer text-end">
+    <button class="btn btn-sm btn-secondary bt-cancel bt-close px-3"><?php echo Lang::l('ok'); ?></button>
+  </div>
+</div>

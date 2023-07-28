@@ -13,6 +13,37 @@ class RecomposeApp {
     canvas.toolbar.render()
 
     canvas.addCanvasTool(KitBuildCanvasTool.CENTROID)
+
+    let textSelectionTool = new KitBuildTextSelectionTool(canvas, {
+      element: '#kit-content-dialog .content',
+      gridPos: {x: 0, y: 1}
+    });
+    textSelectionTool.on('event', this.onTextSelectionToolEvent.bind(this));
+    canvas.canvasTool.addTool("text-select", textSelectionTool);
+
+    let distanceColorTool = new KitBuildDistanceColorTool(canvas, {useMagnet: true});
+    distanceColorTool.on('event', this.onDistanceColorToolEvent.bind(this));
+    canvas.canvasTool.addTool("distance-color", distanceColorTool);
+    canvas.cy.on('drag', 'node', (e) => {
+      let node = e.target;
+      if (node.data('type') != 'concept') return;
+      if (this.conceptMap) {
+        distanceColorTool.showColor(node, this.conceptMap, canvas);
+      }
+    })
+    canvas.cy.on('dragfree', (e) => {
+      let node = e.target;
+      node.removeStyle('border-color border-opacity');
+    })
+
+    this.bugTool = new KitBuildBugTool(canvas, {
+      dialogContainerSelector: '#admin-content-panel'
+    });
+    this.bugTool.on('event', this.onBugToolEvent.bind(this));
+    this.bugTool.showOn = (what, node) => {
+      return (what & this.bugTool.settings.showOn) && node.data('bug-label');
+    }
+    canvas.canvasTool.addTool("bug", this.bugTool);
     
     this.canvas = canvas;
     this.session = Core.instance().session();
@@ -85,6 +116,7 @@ class RecomposeApp {
         + `</span>`;
       KitBuild.getTextOfKit(kitMap.map.kid).then(text => {
         this.text = text;
+        this.contentDialog.setContent(text);
         let statusText = `<span class="mx-2 d-flex align-items-center status-text">`
         statusText += `<span class="badge rounded-pill bg-warning text-dark">Text: ${text.title}</span>`;
         statusText += `</span>`;
@@ -94,6 +126,7 @@ class RecomposeApp {
     } else {
       this.setConceptMap();
       this.text = null;
+      this.contentDialog.setContent(null);
       this.session.unset('kid')
       StatusBar.instance().remove('.status-kit');
       StatusBar.instance().remove('.status-text');
@@ -156,7 +189,7 @@ class RecomposeApp {
       width: '700px',
     })
   
-    let contentDialog = UI.modal('#kit-content-dialog', {
+    this.contentDialog = UI.modal('#kit-content-dialog', {
       hideElement: '.bt-close',
       backdrop: false,
       get height() { return $('body').height() * .7 | 0 },
@@ -174,16 +207,16 @@ class RecomposeApp {
           simplifiedAutoLink: true
         });
         sdown.setFlavor('github');
-        let htmlText = contentDialog.text.content ? 
-          sdown.makeHtml(contentDialog.text.content) : 
+        let htmlText = this.contentDialog && this.contentDialog.text && this.contentDialog.text.content ? 
+          sdown.makeHtml(this.contentDialog.text.content) : 
           "<em>Content text unavailable.</em>";
         $('#kit-content-dialog .content').html(htmlText);
         hljs.highlightAll();
       }
     })
-    contentDialog.setContent = (text, type = 'md') => {
-      contentDialog.text = text
-      return contentDialog
+    this.contentDialog.setContent = (text, type = 'md') => {
+      this.contentDialog.text = text;
+      return this.contentDialog;
     }
   
     let feedbackDialog = UI.modal('#feedback-dialog', {
@@ -194,14 +227,15 @@ class RecomposeApp {
       width: 375,
       onShow: () => {
         $('#feedback-dialog').off('click').on('click', '.bt-modify', (e) => {
-          $('.app-navbar .bt-clear-feedback').trigger('click')
-          feedbackDialog.hide()
+          $('.app-navbar .bt-clear-feedback').trigger('click');
+          feedbackDialog.hide();
+          feedbackModeDialog.hide();
         })
       }
     })
     feedbackDialog.setCompare = (compare, level = Analyzer.MATCH | Analyzer.EXCESS) => {
       feedbackDialog.compare = compare
-      console.log(compare, level)
+      // console.log(compare, level)
       let content = ''
       if (compare.match.length && (level & Analyzer.MATCH)) {
         content += `<div class="d-flex align-items-center"><i class="bi bi-check-circle-fill text-success fs-1 mx-3"></i> `
@@ -224,9 +258,37 @@ class RecomposeApp {
       $('#feedback-dialog .feedback-content').html(content)
       return feedbackDialog
     }
+
+    let feedbackModeDialog = UI.modal("#feedback-mode-dialog", {
+      backdrop: false,
+      width: 300,
+      onShow: () => {
+        $("#feedback-mode-dialog").css('top', '4em').css('right', '1em');
+        $("#feedback-mode-dialog")
+          .off("click")
+          .on("click", ".bt-modify", (e) => {
+            $(".app-navbar .bt-clear-feedback").trigger("click");
+            feedbackDialog.hide();
+            feedbackModeDialog.hide();
+          });
+      }
+    });
   
-  
-  
+    this.nodeCreateTool = new NodeCreationTool(this.canvas, {});
+    this.bugDialog = UI.modal('#bug-dialog', {
+      hideElement: '.bt-close',
+    });
+    this.bugTool.dialog = this.bugDialog;
+    $('#bug-dialog .bug-options').on('click', '.item-bug', (e) => {
+      if (this.bugDialog.node) {
+        let label = $(e.currentTarget).attr('data-label')
+        this.bugDialog.node.data('label', label);
+        let dim = this.nodeCreateTool.calculateDimension(this.bugDialog.node.data());
+        this.bugDialog.node.css('width', dim.w);
+        this.bugDialog.node.css('height', dim.h);
+        this.bugDialog.hide();
+      } else UI.warning('No node selected.').show();
+    });
   
   
   
@@ -410,7 +472,7 @@ class RecomposeApp {
         UI.dialog('Please open a kit to see its content.').show();
         return;
       }
-      contentDialog.setContent(this.text).show()
+      this.contentDialog.setContent(this.text).show()
     })
   
     $('#kit-content-dialog .bt-scroll-top').on('click', (e) => {
@@ -447,7 +509,7 @@ class RecomposeApp {
       }
       if (feedbackDialog.learnerMapEdgesData) 
         $('.app-navbar .bt-clear-feedback').trigger('click')
-      console.log(learnerMap)
+      // console.log(learnerMap)
       let data = Object.assign({
         lmid: learnerMap ? learnerMap.map.lmid : null,
         kid: kitMap.map.kid,
@@ -456,7 +518,7 @@ class RecomposeApp {
         cmid: kitMap.map.cmid,
         create_time: null,
         data: null,
-      }, KitBuildUI.buildConceptMapData(this.canvas)); console.log(data); // return
+      }, KitBuildUI.buildConceptMapData(this.canvas)); // console.log(data); // return
       this.ajax.post("kitBuildApi/saveLearnerMap", { data: Core.compress(data) })
         .then(learnerMap => { // console.log(kitMap);
           RecomposeApp.inst.setLearnerMap(learnerMap);
@@ -479,8 +541,8 @@ class RecomposeApp {
         username: RecomposeApp.inst.user.username
       }
       if (!data.username) delete data.username
-      console.log(data);
-      this.ajax.post('kitBuildApi/getLastDraftLearnerMapOfUser', data).then(learnerMap => { console.log(learnerMap)
+      // console.log(data);
+      this.ajax.post('kitBuildApi/getLastDraftLearnerMapOfUser', data).then(learnerMap => { //console.log(learnerMap)
         if (!learnerMap) {
           UI.warning("No user saved map data for this kit.").show()
           return
@@ -582,7 +644,7 @@ class RecomposeApp {
           cmid: kitMap.map.cmid,
           create_time: null,
           data: null,
-        }, learnerMapData); console.log(data); // return
+        }, learnerMapData); // console.log(data); // return
         this.ajax.post("kitBuildApi/saveLearnerMap", { data: Core.compress(data) })
           .then(learnerMap => {
             console.warn("Concept map save-on-feedback has been saved successfully.");
@@ -592,7 +654,7 @@ class RecomposeApp {
       learnerMapData.conceptMap = RecomposeApp.inst.conceptMap
       Analyzer.composePropositions(learnerMapData)
       let direction = learnerMapData.conceptMap.map.direction
-      let feedbacklevel = RecomposeApp.inst.kitMap.parsedOptions.feedbacklevel
+      let feedbacklevel = parseInt(RecomposeApp.inst.kitMap.parsedOptions.feedbacklevel);
       let compare = Analyzer.compare(learnerMapData, direction)
       let level = Analyzer.NONE
       let dialogLevel = Analyzer.NONE;
@@ -614,9 +676,9 @@ class RecomposeApp {
       Analyzer.showCompareMap(compare, this.canvas.cy, direction, level)
       this.canvas.canvasTool.enableIndicator(false).enableConnector(false)
         .clearCanvas().clearIndicatorCanvas()
-      console.log(compare, level)
+      // console.log(compare, level)
       feedbackDialog.setCompare(compare, dialogLevel).show()
-  
+      if (feedbacklevel) feedbackModeDialog.show();
       
     })
     $('.app-navbar').on('click', '.bt-clear-feedback', () => {
@@ -661,7 +723,7 @@ class RecomposeApp {
             cmid: kitMap.map.cmid,
             create_time: null,
             data: null,
-          }, learnerMapData); console.log(data); // return
+          }, learnerMapData); // console.log(data); // return
           confirm.hide()
           
           this.ajax.post("kitBuildApi/saveLearnerMap", { data: Core.compress(data) })
@@ -674,6 +736,93 @@ class RecomposeApp {
     })
   
   }
+
+  onTextSelectionToolEvent(canvasId, event, data, options) {
+    // console.log(this, canvasId, event, data, options);
+    switch(event) {
+      case 'action':
+        this.contentDialog.show();
+        let element = $('#kit-content-dialog .content').get(0);
+        if (data.start && data.end) {
+          let textSelectionTool = this.canvas.canvasTool.tools.get("text-select");
+          textSelectionTool.restoreSelection(element, {
+            start: data.start,
+            end: data.end
+          });
+        }
+        break;
+    }
+  }
+
+  onDistanceColorToolEvent(canvasId, event, data, options) {
+    // console.log(canvasId, event, data, options);
+    switch(event) {
+      case 'action':
+        let cid = data.node.id;
+        let lids = new Set();
+        let cids = new Set();
+        cids.add(cid);
+
+        // find connected links
+        for(let lt of this.conceptMap.linktargets) {
+          if (lt.target_cid == cid) lids.add(lt.lid);
+        }
+        for(let l of this.conceptMap.links) {
+          if (l.source_cid == cid) lids.add(l.lid);
+        } 
+
+        // find all concepts connected to the link
+        for(let l of this.conceptMap.links) {
+          if (lids.has(l.lid)) cids.add(l.source_cid);
+        }
+        for(let l of this.conceptMap.linktargets) {
+          if (lids.has(l.lid)) cids.add(l.target_cid);
+        }
+        
+        // build selection filter
+        let filter = ''
+        cids.forEach(x => filter += filter ? `,[id="${x}"]`: `[id="${x}"]`);
+        let concepts = this.canvas.cy.nodes().filter(filter);
+
+        // select all related concepts.
+        setTimeout(() => {
+          concepts.select().trigger("select");
+          concepts.selectify();
+          if (this.canvas.cy.nodes(":selected").length > 1) {
+            this.canvas.canvasTool.activeTools = [];
+            this.canvas.canvasTool.clearCanvas();
+            this.canvas.canvasTool.drawSelectedNodesBoundingBox();
+          }
+        }, 50);
+        break;
+    }
+  }
+  
+  onBugToolEvent(canvasId, event, data, options) {
+    // console.log(canvasId, event, data, options);
+    switch(event) {
+      case 'action':
+        let node = this.canvas.cy.nodes(`#${data.node.id}`);
+        this.bugDialog.node = node;
+        this.bugDialog.show({width: '300px'});
+        let bugs = node.data('bug-label').split(",");
+        bugs.push(node.data('correct-label'));
+        bugs.forEach((bug, i) => bugs[i] = bug.trim());
+        let shuffled = bugs
+          .map(value => ({ value, sort: Math.random() }))
+          .sort((a, b) => a.sort - b.sort)
+          .map(({ value }) => value);
+        let options = ''
+        shuffled.forEach(bug => {
+          options += `<span class="btn btn-sm btn-warning m-1 item-bug" data-label="${bug}">${bug}</span>`;
+        });
+        $('#bug-dialog .bug-options').html(options);
+        // $('#bug-dialog .input-correct-label').val(node['correct-label'] ? node['correct-label'] : node.label);
+        // $('#bug-dialog .input-bug-label').val(node['bug-label']);
+        break;
+    }
+  }
+
   
   /**
    * 
@@ -742,7 +891,7 @@ class RecomposeApp {
 
 RecomposeApp.canvasId = "recompose-canvas"
 
-RecomposeApp.onBrowserStateChange = event => { console.warn(event)
+RecomposeApp.onBrowserStateChange = event => { console.log(event)
   if (event.newState == "terminated") {
     let stateData = {}
     console.log(RecomposeApp.inst.logger)
@@ -846,7 +995,7 @@ RecomposeApp.processCollabCommand = (command, data) => {
     case "set-kit-map": {
       let kitMap = data.shift()
       let cyData = data.shift()
-      console.log(kitMap, cyData, RecomposeApp.inst.learnerMap)
+      // console.log(kitMap, cyData, RecomposeApp.inst.learnerMap)
       RecomposeApp.inst.setKitMap(kitMap)
 
       // if current user has no saved learnerMap
@@ -858,7 +1007,7 @@ RecomposeApp.processCollabCommand = (command, data) => {
       // RecomposeApp.inst.setLearnerMap()
       RecomposeApp.resetMapToKit(kitMap, RecomposeApp.inst.canvas)
         .then(() => {
-          console.log(cyData)
+          // console.log(cyData)
           RecomposeApp.inst.canvas.cy.elements().remove()
           RecomposeApp.inst.canvas.cy.add(cyData)
           RecomposeApp.inst.canvas.applyElementStyle()
@@ -968,7 +1117,7 @@ RecomposeApp.processCollabCommand = (command, data) => {
       let canvasId = data.shift()
       let edges = data.shift()
       if (!Array.isArray(edges)) break;
-      console.log(edges)
+      // console.log(edges)
       edges.forEach(edge => {
         RecomposeApp.inst.canvas.removeEdge(edge.data.source, edge.data.target)
       })
@@ -1155,10 +1304,13 @@ RecomposeApp.parseKitMapOptions = (kitMap) => {
 RecomposeApp.resetMapToKit = (kitMap, canvas) => {
   return new Promise((resolve, reject) => {
     // will also set and cache the concept map
-    RecomposeApp.inst.setKitMap(kitMap)
-    canvas.cy.elements().remove()
-    canvas.cy.add(KitBuildUI.composeKitMap(kitMap))
-    canvas.applyElementStyle()
+    RecomposeApp.inst.setKitMap(kitMap);
+    canvas.cy.elements().remove();
+    canvas.cy.add(KitBuildUI.composeKitMap(kitMap));
+    canvas.applyElementStyle();
+    for(let n of canvas.cy.nodes()) {
+      if (n.data('bug-label')) n.data('label', '?');
+    }
     if (kitMap.map.layout == "random") {
       canvas.cy.elements().layout({name: 'fcose', animationDuration: 0, fit: false, stop: () => {
         canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).center(null, {duration: 0})

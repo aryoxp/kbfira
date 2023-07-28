@@ -344,6 +344,12 @@ class MakeKitApp {
       node.removeStyle('border-color border-opacity');
     })
 
+    this.bugTool = new KitBuildBugTool(canvas, {
+      dialogContainerSelector: '#admin-content-panel'
+    });
+    this.bugTool.on('event', this.onBugToolEvent.bind(this));
+    canvas.canvasTool.addTool("bug", this.bugTool);
+
     this.canvas = canvas;
     this.session = Core.instance().session();
     this.ajax = Core.instance().ajax();
@@ -742,7 +748,9 @@ class MakeKitApp {
       this.contentDialog.text = text;
       return this.contentDialog;
     }
-  
+
+    this.bugDialog = UI.modal('#bug-dialog', {});
+    this.bugTool.dialog = this.bugDialog;
   
   
   
@@ -1315,7 +1323,7 @@ class MakeKitApp {
         break;
       case 'select':
         if (data.node) {
-          let node = data.node;
+          let node = this.canvas.cy.nodes(`#${data.node.id}`);
           let sel = data.selection;
           if (sel.start == sel.end) {
             node.removeData('selectStart selectEnd');
@@ -1374,6 +1382,17 @@ class MakeKitApp {
     }
   }
   
+  onBugToolEvent(canvasId, event, data, options) {
+    // console.log(canvasId, event, data, options);
+    switch(event) {
+      case 'action':
+        let node = data.node;
+        this.bugDialog.show({width: '300px'});
+        $('#bug-dialog .input-correct-label').val(node['correct-label'] ? node['correct-label'] : node['label']);
+        $('#bug-dialog .input-bug-label').val(node['bug-label']);
+        break;
+    }
+  }
   
   
   

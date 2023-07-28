@@ -280,3 +280,20 @@
     </span>
   </div>
 </div>
+
+<div id="bug-dialog" class="align-items-center" style="display: none;">
+  <div class="card">
+    <div class="card-body">
+      <span class="mt-2 mb-1 d-block"><small>Correct Label</small></span>
+      <input type="text" class="form-control form-control-sm mb-1 input-correct-label" placeholder="Correct Label" aria-label="New Topic Name" aria-describedby="button-create-new-topic">
+      <span class="mt-2 mb-1 d-block"><small>Bug Label</small></span>
+      <input type="text" class="form-control form-control-sm mb-1 input-bug-label" placeholder="Bug Label" aria-label="New Topic Name" aria-describedby="button-create-new-topic">
+      <small>Separate bug labels with comma as the options for students to choose.</small>
+      <hr>
+      <div class="d-flex justify-content-end">
+        <button class="btn btn-sm btn-danger bt-remove-bug" type="button"><i class="bi bi-x-lg"></i> Remove Bug</button>
+        <button class="btn btn-sm btn-primary bt-set-bug ms-1" type="button"><i class="bi bi-bug"></i> Set Bug</button>
+      </div>
+    </div>
+  </div>
+</div>
