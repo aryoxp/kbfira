@@ -13,6 +13,41 @@ class KitBuildApp {
     canvas.toolbar.render()
 
     canvas.addCanvasTool(KitBuildCanvasTool.CENTROID)
+
+    let textSelectionTool = new KitBuildTextSelectionTool(canvas, {
+      element: '#kit-content-dialog .content',
+      gridPos: {x: 0, y: 1}
+    });
+    textSelectionTool.on('event', this.onTextSelectionToolEvent.bind(this));
+    textSelectionTool.showOn = (what, node) => {
+      // only show the text-selection tool on node that has "selectStart" data.
+      return textSelectionTool._showOn(what) && node.data('selectStart');
+    }
+    canvas.canvasTool.addTool("text-select", textSelectionTool);
+
+    let distanceColorTool = new KitBuildDistanceColorTool(canvas, {useMagnet: true});
+    distanceColorTool.on('event', this.onDistanceColorToolEvent.bind(this));
+    canvas.canvasTool.addTool("distance-color", distanceColorTool);
+    canvas.cy.on('drag', 'node', (e) => {
+      let node = e.target;
+      if (node.data('type') != 'concept') return;
+      if (this.conceptMap) {
+        distanceColorTool.showColor(node, this.conceptMap, canvas);
+      }
+    })
+    canvas.cy.on('dragfree', (e) => {
+      let node = e.target;
+      node.removeStyle('border-color border-opacity');
+    })
+
+    this.bugTool = new KitBuildBugTool(canvas, {
+      dialogContainerSelector: '#admin-content-panel'
+    });
+    this.bugTool.on('event', this.onBugToolEvent.bind(this));
+    this.bugTool.showOn = (what, node) => {
+      return (what & this.bugTool.settings.showOn) && node.data('bug-label');
+    }
+    canvas.canvasTool.addTool("bug", this.bugTool);
     
     this.canvas = canvas;
     this.ajax = Core.instance().ajax();
@@ -87,7 +122,15 @@ class KitBuildApp {
       let status = `<span class="mx-2 d-flex align-items-center status-kit">`
         + `<span class="badge rounded-pill bg-primary" role="button" data-bs-toggle="tooltip" data-bs-placement="top" title="${tooltipText}">ID: ${kitMap.map.kid}</span>`
         + `<span class="text-secondary ms-2 text-truncate"><small>${kitMap.map.name}</small></span>`
-        + `</span>`
+        + `</span>`;
+      KitBuild.getTextOfKit(kitMap.map.kid).then(text => {
+        this.text = text;
+        this.contentDialog.setContent(text);
+        let statusText = `<span class="mx-2 d-flex align-items-center status-text">`
+        statusText += `<span class="badge rounded-pill bg-warning text-dark">Text: ${text.title}</span>`;
+        statusText += `</span>`;
+        StatusBar.instance().remove('.status-text').append(statusText);
+      });  
       StatusBar.instance().remove('.status-kit').append(status);
     } else {
       this.setConceptMap()
@@ -152,7 +195,7 @@ class KitBuildApp {
       width: '700px',
     })
   
-    let contentDialog = UI.modal('#kit-content-dialog', {
+    this.contentDialog = UI.modal('#kit-content-dialog', {
       hideElement: '.bt-close',
       backdrop: false,
       get height() { return $('body').height() * .7 | 0 },
@@ -163,11 +206,23 @@ class KitBuildApp {
       resizeHandle: '.resize-handle',
       minWidth: 375,
       minHeight: 200,
-      onShow: () => {}
+      onShow: () => {
+        let sdown = new showdown.Converter({
+          strikethrough: true,
+          tables: true,
+          simplifiedAutoLink: true
+        });
+        sdown.setFlavor('github');
+        let htmlText = this.contentDialog && this.contentDialog.text && this.contentDialog.text.content ? 
+          sdown.makeHtml(this.contentDialog.text.content) : 
+          "<em>Content text unavailable.</em>";
+        $('#kit-content-dialog .content').html(htmlText);
+        hljs.highlightAll();
+      }
     })
-    contentDialog.setContent = (content, type = 'plain') => {
-      contentDialog.content = content
-      return contentDialog
+    this.contentDialog.setContent = (text, type = 'md') => {
+      this.contentDialog.text = text;
+      return this.contentDialog;
     }
   
     let feedbackDialog = UI.modal('#feedback-dialog', {
@@ -208,6 +263,37 @@ class KitBuildApp {
       $('#feedback-dialog .feedback-content').html(content)
       return feedbackDialog
     }
+
+    let feedbackModeDialog = UI.modal("#feedback-mode-dialog", {
+      backdrop: false,
+      width: 300,
+      onShow: () => {
+        $("#feedback-mode-dialog").css('top', '4em').css('right', '1em');
+        $("#feedback-mode-dialog")
+          .off("click")
+          .on("click", ".bt-modify", (e) => {
+            $(".app-navbar .bt-clear-feedback").trigger("click");
+            feedbackDialog.hide();
+            feedbackModeDialog.hide();
+          });
+      }
+    });
+  
+    this.nodeCreateTool = new NodeCreationTool(this.canvas, {});
+    this.bugDialog = UI.modal('#bug-dialog', {
+      hideElement: '.bt-close',
+    });
+    this.bugTool.dialog = this.bugDialog;
+    $('#bug-dialog .bug-options').on('click', '.item-bug', (e) => {
+      if (this.bugDialog.node) {
+        let label = $(e.currentTarget).attr('data-label')
+        this.bugDialog.node.data('label', label);
+        let dim = this.nodeCreateTool.calculateDimension(this.bugDialog.node.data());
+        this.bugDialog.node.css('width', dim.w);
+        this.bugDialog.node.css('height', dim.h);
+        this.bugDialog.hide();
+      } else UI.warning('No node selected.').show();
+    });
   
   
   
@@ -390,8 +476,12 @@ class KitBuildApp {
      * */
   
     $('.app-navbar').on('click', '.bt-content', () => { // console.log(KitBuildApp.inst)
-      if (!KitBuildApp.inst.kitMap) return
-      else contentDialog.setContent().show()
+      if (!KitBuildApp.inst.kitMap) {
+        UI.dialog('Please open a kit to see its content.').show();
+        return;
+      }
+      console.log(this.text);
+      this.contentDialog.setContent(this.text).show()
     })
   
     $('#kit-content-dialog .bt-scroll-top').on('click', (e) => {
@@ -572,7 +662,7 @@ class KitBuildApp {
       learnerMapData.conceptMap = KitBuildApp.inst.conceptMap
       Analyzer.composePropositions(learnerMapData)
       let direction = learnerMapData.conceptMap.map.direction
-      let feedbacklevel = KitBuildApp.inst.kitMap.parsedOptions.feedbacklevel
+      let feedbacklevel = parseInt(KitBuildApp.inst.kitMap.parsedOptions.feedbacklevel)
       let compare = Analyzer.compare(learnerMapData, direction)
       let level = Analyzer.NONE
       let dialogLevel = Analyzer.NONE;
@@ -596,7 +686,7 @@ class KitBuildApp {
         .clearCanvas().clearIndicatorCanvas()
       console.log(compare, level)
       feedbackDialog.setCompare(compare, dialogLevel).show()
-  
+      if (feedbacklevel) feedbackModeDialog.show();
       
     })
     $('.app-navbar').on('click', '.bt-clear-feedback', () => {
@@ -773,6 +863,92 @@ class KitBuildApp {
       }).catch(error => UI.error(`Error: ${error}`).show());
     })
   
+  }
+
+  onTextSelectionToolEvent(canvasId, event, data, options) {
+    // console.log(this, canvasId, event, data, options);
+    switch(event) {
+      case 'action':
+        this.contentDialog.show();
+        let element = $('#kit-content-dialog .content').get(0);
+        if (data.start && data.end) {
+          let textSelectionTool = this.canvas.canvasTool.tools.get("text-select");
+          textSelectionTool.restoreSelection(element, {
+            start: data.start,
+            end: data.end
+          });
+        }
+        break;
+    }
+  }
+
+  onDistanceColorToolEvent(canvasId, event, data, options) {
+    // console.log(canvasId, event, data, options);
+    switch(event) {
+      case 'action':
+        let cid = data.node.id;
+        let lids = new Set();
+        let cids = new Set();
+        cids.add(cid);
+
+        // find connected links
+        for(let lt of this.conceptMap.linktargets) {
+          if (lt.target_cid == cid) lids.add(lt.lid);
+        }
+        for(let l of this.conceptMap.links) {
+          if (l.source_cid == cid) lids.add(l.lid);
+        } 
+
+        // find all concepts connected to the link
+        for(let l of this.conceptMap.links) {
+          if (lids.has(l.lid)) cids.add(l.source_cid);
+        }
+        for(let l of this.conceptMap.linktargets) {
+          if (lids.has(l.lid)) cids.add(l.target_cid);
+        }
+        
+        // build selection filter
+        let filter = ''
+        cids.forEach(x => filter += filter ? `,[id="${x}"]`: `[id="${x}"]`);
+        let concepts = this.canvas.cy.nodes().filter(filter);
+
+        // select all related concepts.
+        setTimeout(() => {
+          concepts.select().trigger("select");
+          concepts.selectify();
+          if (this.canvas.cy.nodes(":selected").length > 1) {
+            this.canvas.canvasTool.activeTools = [];
+            this.canvas.canvasTool.clearCanvas();
+            this.canvas.canvasTool.drawSelectedNodesBoundingBox();
+          }
+        }, 50);
+        break;
+    }
+  }
+  
+  onBugToolEvent(canvasId, event, data, options) {
+    // console.log(canvasId, event, data, options);
+    switch(event) {
+      case 'action':
+        let node = this.canvas.cy.nodes(`#${data.node.id}`);
+        this.bugDialog.node = node;
+        this.bugDialog.show({width: '300px'});
+        let bugs = node.data('bug-label').split(",");
+        bugs.push(node.data('correct-label'));
+        bugs.forEach((bug, i) => bugs[i] = bug.trim());
+        let shuffled = bugs
+          .map(value => ({ value, sort: Math.random() }))
+          .sort((a, b) => a.sort - b.sort)
+          .map(({ value }) => value);
+        let options = ''
+        shuffled.forEach(bug => {
+          options += `<span class="btn btn-sm btn-warning m-1 item-bug" data-label="${bug}">${bug}</span>`;
+        });
+        $('#bug-dialog .bug-options').html(options);
+        // $('#bug-dialog .input-correct-label').val(node['correct-label'] ? node['correct-label'] : node.label);
+        // $('#bug-dialog .input-bug-label').val(node['bug-label']);
+        break;
+    }
   }
   
   /**
@@ -1265,6 +1441,9 @@ KitBuildApp.resetMapToKit = (kitMap, canvas) => {
     canvas.cy.elements().remove()
     canvas.cy.add(KitBuildUI.composeKitMap(kitMap))
     canvas.applyElementStyle()
+    for(let n of canvas.cy.nodes()) {
+      if (n.data('bug-label')) n.data('label', '?');
+    }
     if (kitMap.map.layout == "random") {
       canvas.cy.elements().layout({name: 'fcose', animationDuration: 0, fit: false, stop: () => {
         canvas.toolbar.tools.get(KitBuildToolbar.CAMERA).center(null, {duration: 0})
