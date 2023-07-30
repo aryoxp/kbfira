@@ -19,6 +19,10 @@ class RecomposeApp {
       gridPos: {x: 0, y: 1}
     });
     textSelectionTool.on('event', this.onTextSelectionToolEvent.bind(this));
+    textSelectionTool.showOn = (what, node) => {
+      // only show the text-selection tool on node that has "selectStart" data.
+      return textSelectionTool._showOn(what) && node.data('selectStart');
+    }
     canvas.canvasTool.addTool("text-select", textSelectionTool);
 
     let distanceColorTool = new KitBuildDistanceColorTool(canvas, {useMagnet: true});

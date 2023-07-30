@@ -31,6 +31,7 @@ class Analyzer {
     propositions = [];
     if (!cMap.propositions) {
       let lLinks = new Map(cMap.links.map((link) => [link.lid, link]));
+      let lConcepts = new Map(cMap.concepts.map((concept) => [concept.cid, concept]));
       let concepts_ext = cMap.concepts_ext
         ? new Map(cMap.concepts_ext.map((concept) => [concept.cid, concept]))
         : new Map();
@@ -48,10 +49,14 @@ class Analyzer {
           ? concepts.get(linktarget.target_cid)
           : concepts_ext.get(linktarget.target_cid);
         let prop = {
-          source: sourceConcept,
+          source: JSON.parse(JSON.stringify(sourceConcept)), // deep copy
           link: link,
-          target: targetConcept,
+          target: JSON.parse(JSON.stringify(targetConcept)), // deep copy
         };
+        // change goal map's concept label to learnermap concept's label
+        // to support "bug" feature
+        prop.source.label = lConcepts.get(sourceConcept.cid).label;
+        prop.target.label = lConcepts.get(targetConcept.cid).label;
         if (!prop.link) prop.link = lLinks.get(linktarget.lid);
         if (prop.source && prop.target) propositions.push(prop);
       });
@@ -81,6 +86,7 @@ class Analyzer {
 
   static compare(conceptMap, direction = "multi") {
     if (!conceptMap.conceptMap) return; // this is a goalmap, so nothing to compare with
+    console.log(conceptMap);
     let gPropositions = conceptMap.conceptMap.propositions.map((p) => {
       // console.warn(p)
       if (!p.source || !p.link || !p.target) {

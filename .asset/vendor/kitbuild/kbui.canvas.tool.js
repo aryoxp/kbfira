@@ -71,8 +71,15 @@ class KitBuildCanvasTool {
     }
   }
 
+
+  // default showOn wrapper 
+  // when tool/app overrides showOn()
+  _showOn(what) { 
+    return what & this.settings.showOn
+  }
+
   showOn(what, node) {
-    return what & this.settings.showOn;
+    return this._showOn(what);
   }
 
   showOnMulti(concepts, edges) {
