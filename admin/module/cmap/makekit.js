@@ -1342,7 +1342,7 @@ class MakeKitApp {
     // console.log(canvasId, event, data, options);
     switch(event) {
       case 'action':
-        let cid = data.node.id();
+        let cid = data.node.id;
         let lids = new Set();
         let cids = new Set();
         cids.add(cid);
