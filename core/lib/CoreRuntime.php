@@ -100,6 +100,6 @@ class CoreRuntime {
         flock($fp, LOCK_UN);
       }
       fclose($fp);
-    }
+    } else throw CoreError::instance("Error: Unable to open file: <code>$fileName</code> .");
   }
 }
