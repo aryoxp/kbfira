@@ -31,7 +31,9 @@ class Analyzer {
     propositions = [];
     if (!cMap.propositions) {
       let lLinks = new Map(cMap.links.map((link) => [link.lid, link]));
-      let lConcepts = new Map(cMap.concepts.map((concept) => [concept.cid, concept]));
+      let lConcepts = new Map(
+        cMap.concepts.map((concept) => [concept.cid, concept])
+      );
       let concepts_ext = cMap.concepts_ext
         ? new Map(cMap.concepts_ext.map((concept) => [concept.cid, concept]))
         : new Map();
@@ -48,15 +50,26 @@ class Analyzer {
         let targetConcept = concepts.has(linktarget.target_cid)
           ? concepts.get(linktarget.target_cid)
           : concepts_ext.get(linktarget.target_cid);
+        // console.log(link, sourceConcept, targetConcept);
         let prop = {
-          source: JSON.parse(JSON.stringify(sourceConcept)), // deep copy
+          source: JSON.parse(
+            JSON.stringify(sourceConcept ? sourceConcept : null)
+          ), // deep copy
           link: link,
-          target: JSON.parse(JSON.stringify(targetConcept)), // deep copy
+          target: JSON.parse(
+            JSON.stringify(targetConcept ? targetConcept : null)
+          ), // deep copy
         };
+        
         // change goal map's concept label to learnermap concept's label
         // to support "bug" feature
-        prop.source.label = lConcepts.get(sourceConcept.cid).label;
-        prop.target.label = lConcepts.get(targetConcept.cid).label;
+        if (sourceConcept && targetConcept) {
+          prop.source.label = lConcepts.get(sourceConcept.cid).label;
+          prop.target.label = lConcepts.get(targetConcept.cid).label;
+          // fallback to goalmap's concept label if not set.
+          if (!prop.source.label) prop.source.label = concepts.get(sourceConcept.cid).label;
+          if (!prop.target.label) prop.target.label = concepts.get(targetConcept.cid).label;
+        }
         if (!prop.link) prop.link = lLinks.get(linktarget.lid);
         if (prop.source && prop.target) propositions.push(prop);
       });
